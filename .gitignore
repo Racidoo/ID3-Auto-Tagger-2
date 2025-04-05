@@ -1,0 +1,8 @@
+/build/
+/.vscode/
+/archive/
+cover/
+music/
+*.json
+CMakeFiles/
+CMakeCache.txt
