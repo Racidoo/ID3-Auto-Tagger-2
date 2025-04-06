@@ -19,7 +19,6 @@ Query::~Query() {
 
 std::string Query::getValidToken() {
     if (!isTokenValid()) {
-        // accessToken = getSpotifyAccessToken();
         accessToken = generateAccessToken();
     }
     return accessToken; // Use the stored token
@@ -73,41 +72,6 @@ std::string Query::generateAccessToken() {
             std::cerr << "Failed to initialize cURL" << std::endl;
             return "";
         }
-        // std::string response_data;
-
-        // std::string credentials =
-        //     jsonCredentials["Spotify"]["client_id"].get<std::string>() + ":"
-        //     + jsonCredentials["Spotify"]["client_secret"].get<std::string>();
-        // std::string encoded_credentials = base64_encode(
-        //     reinterpret_cast<const unsigned char *>(credentials.c_str()),
-        //     credentials.length());
-
-        // std::string auth_header = "Authorization: Basic " +
-        // encoded_credentials;
-
-        // struct curl_slist *accessTokenHeaders = nullptr;
-        // accessTokenHeaders =
-        //     curl_slist_append(accessTokenHeaders, auth_header.c_str());
-        // accessTokenHeaders = curl_slist_append(
-        //     accessTokenHeaders,
-        //     "Content-Type: application/x-www-form-urlencoded");
-
-        // // Set cURL options
-        // curl_easy_setopt(
-        //     accessTokenCurl, CURLOPT_URL,
-        //     jsonCredentials["Spotify"]["token_uri"].get<std::string>().c_str());
-        // curl_easy_setopt(accessTokenCurl, CURLOPT_POST, 1L);
-        // curl_easy_setopt(accessTokenCurl, CURLOPT_POSTFIELDS,
-        //                  "grant_type=client_credentials");
-        // curl_easy_setopt(accessTokenCurl, CURLOPT_HTTPHEADER,
-        //                  accessTokenHeaders);
-        // curl_easy_setopt(accessTokenCurl, CURLOPT_WRITEFUNCTION,
-        // writeCallback); curl_easy_setopt(accessTokenCurl, CURLOPT_WRITEDATA,
-        // &response_data);
-
-        // CURLcode res = curl_easy_perform(accessTokenCurl);
-        // curl_easy_cleanup(accessTokenCurl);
-        // curl_slist_free_all(accessTokenHeaders);
 
         std::string response_data;
         std::string postFields =
@@ -117,8 +81,6 @@ std::string Query::generateAccessToken() {
             jsonCredentials["Spotify"]["client_secret"].get<std::string>();
 
         struct curl_slist *accessTokenHeaders = nullptr;
-        // accessTokenHeaders =
-        // curl_slist_append(accessTokenHeaders, auth_header.c_str());
         accessTokenHeaders = curl_slist_append(
             accessTokenHeaders,
             "Content-Type: application/x-www-form-urlencoded");
@@ -163,12 +125,38 @@ std::string Query::generateAccessToken() {
     }
 }
 
+/**
+ * @brief curl callback needed for general textual data
+ *
+ * @param contents
+ * @param size
+ * @param nmemb
+ * @param output
+ * @return size_t
+ */
 size_t Query::writeCallback(void *contents, size_t size, size_t nmemb,
                             std::string *output) {
     size_t total_size = size * nmemb;
     if (output) {
         output->append((char *)contents, total_size);
     }
+    return total_size;
+}
+
+/**
+ * @brief curl callback needed for binary data like images
+ *
+ * @param contents
+ * @param size
+ * @param nmemb
+ * @param output
+ * @return size_t
+ */
+size_t Query::writeImageCallback(void *contents, size_t size, size_t nmemb,
+                                 std::vector<char> *output) {
+    size_t total_size = size * nmemb;
+    output->insert(output->end(), (char *)contents,
+                   (char *)contents + total_size);
     return total_size;
 }
 
@@ -236,22 +224,28 @@ double Query::similarityScoreDate(const std::string &date1,
     return similarityScore(daysSinceEpoch(date1), daysSinceEpoch(date2));
 }
 
-bool Query::downloadImage(const std::string &_url,
-                          const std::string &_outputPath) const {
-
-    FILE *fp = fopen(_outputPath.c_str(), "wb");
-    if (!fp) {
-        std::cerr << "Failed to open file for writing\n";
-        return 1;
-    }
+std::vector<char> Query::downloadImage(const std::string &_url,
+                                       const std::string &_outputPath) const {
+    std::vector<char> imageData;
 
     curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
+    if (!_outputPath.empty()) {
+        FILE *fp = fopen(_outputPath.c_str(), "wb");
+        if (!fp) {
+            std::cerr << "Failed to open file for writing\n";
+            return {};
+        }
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+    } else {
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeImageCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &imageData);
+    }
+
     CURLcode res = curl_easy_perform(curl);
-    return res == CURLE_OK;
+    return imageData;
 }
 
 json Query::exec(const std::string &_cmd) const {

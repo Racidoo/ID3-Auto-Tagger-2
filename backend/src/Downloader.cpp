@@ -1,6 +1,9 @@
 #include "../include/Downloader.h"
 
-Downloader::Downloader() {
+Downloader::Downloader()
+    : trackPath(std::filesystem::current_path() / "music/")
+//   ,coverPath(std::filesystem::current_path() / "cover/")
+{
     Spotify::SpotifyAPI spotify;
     YouTube youTube;
     readBlacklist();
@@ -34,10 +37,6 @@ bool Downloader::writeBlacklist() const {
     return true;
 }
 
-// std::string Downloader::determineOrigin(const std::string &_url) const{
-
-// }
-
 std::string Downloader::fetchResource(const std::string &_url,
                                       std::vector<Spotify::Track> &_tracks) {
 
@@ -65,12 +64,15 @@ std::string Downloader::fetchResource(const std::string &_url,
 
     if (type == "track") {
         _tracks.push_back(spotify.getTrack(id));
+        _tracks.front().set_downloaded(isBlocked(_tracks.front().get_id()));
     } else if (type == "album") {
         for (auto &&track : spotify.getAlbumTracks(id)) {
+            track.set_downloaded(isBlocked(track.get_id()));
             _tracks.push_back(track);
         }
     } else if (type == "playlist") {
         for (auto &&track : spotify.getPlaylistTracks(id)) {
+            track.set_downloaded(isBlocked(track.get_id()));
             _tracks.push_back(track);
         }
     } else if (urlType == "YouTube") {
@@ -79,21 +81,11 @@ std::string Downloader::fetchResource(const std::string &_url,
 }
 
 std::string
-Downloader::downloadResource(const std::vector<Spotify::Track> &_tracks) {
+Downloader::downloadResource(const std::vector<Spotify::Track> &_tracks,
+                             std::function<void(int)> _onProgress) {
     std::string result;
     for (auto &&track : _tracks) {
-        // verify with blacklist
-        if (isBlocked(track.get_id())) {
-            result += track.get_id() + ": Resource already downloaded!\n";
-            continue;
-        }
-        if (!downloadAndTag(track)) {
-            result +=
-                track.get_id() + ": Error while downloading or tagging!\n";
-            continue;
-        }
-        result += track.get_id() + ": Successfully downloaded and tagged " +
-                  track.get_name() + " by " + track.get_stringArtists() + "\n";
+        downloadAndTag(track, _onProgress);
     }
     return result;
 }
@@ -108,28 +100,73 @@ void Downloader::makeBlocked(const Spotify::Track &_track) {
         _track.get_stringArtists();
 }
 
-bool Downloader::downloadAndTag(const Spotify::Track &_track) {
-    auto bestMatch = youTube.findBestMatch(_track);
+void Downloader::downloadAndTag(const Spotify::Track &_track,
+                                std::function<void(int)> _onProgress) {
 
-    std::string trackPath = (std::filesystem::current_path() / "music" /
-                             (_track.get_id() + ".mp3"));
-    std::string coverPath = (std::filesystem::current_path() / "cover" /
-                             (_track.get_id() + ".png"));
-    // download resource
-    std::string command =
-        "yt-dlp -f bestaudio --extract-audio --audio-format mp3 "
-        "--audio-quality 0 -o '" +
-        trackPath + "' https://www.youtube.com/watch?v=" + bestMatch;
-    auto response = std::system(command.c_str());
-    std::cout << command << "\t-> response: " << response << std::endl;
-    if (response != 0)
-        return false;
+    std::thread([this, _onProgress, _track]() {
+        _onProgress(0);
+        auto bestMatch = youTube.findBestMatch(_track);
+        if (bestMatch.empty()) {
+            _onProgress(-1);
+            return;
+        }
+        _onProgress(10);
 
-    if (!_track.writeID3V2Tags(trackPath.c_str()) ||
-        !spotify.downloadImage(_track.get_album().get_imageUrl(), coverPath) ||
-        !_track.setAlbumCover(trackPath, coverPath)) {
-        return false;
-    }
-    makeBlocked(_track);
-    return true;
+        auto trackName = trackPath + _track.get_id() + ".mp3";
+        // auto coverName = coverPath + _track.get_id() + ".png";
+
+        // download resource
+        std::string command =
+            "yt-dlp -f bestaudio --extract-audio --audio-format mp3 "
+            "--audio-quality 0 -o '" +
+            trackName + "' https://www.youtube.com/watch?v=" + bestMatch +
+            " 2>&1";
+
+        FILE *pipe = popen(command.c_str(), "r");
+        if (!pipe) {
+            _onProgress(-1);
+            return;
+        }
+
+        // Read output one character at a time to catch lines ending in '\n' or
+        // '\r'
+        std::string lineBuffer;
+        char ch;
+        while (fread(&ch, 1, 1, pipe) == 1) {
+            if (ch == '\n' || ch == '\r') {
+                if (!lineBuffer.empty()) {
+                    // Process the full line (either full message or progress
+                    // line)
+                    std::smatch match;
+                    std::regex percentRegex(R"(\[download\]\s+(\d+\.\d+)%.*)");
+                    if (std::regex_search(lineBuffer, match, percentRegex)) {
+                        int percent =
+                            10.0f +
+                            (std::stof(match[1].str()) / 100.0f) * 80.0f;
+                        _onProgress(percent); // Progress percentage
+                    }
+
+                    lineBuffer.clear();
+                }
+            } else {
+                lineBuffer += ch;
+            }
+        }
+
+        int status = pclose(pipe);
+        if (status != 0) {
+            _onProgress(-1);
+            return;
+        }
+        _onProgress(90);
+        if (!_track.writeID3V2Tags(trackName.c_str()) ||
+            !_track.setAlbumCover(
+                trackName,
+                spotify.downloadImage(_track.get_album().get_imageUrl()))) {
+            return;
+        }
+        _onProgress(99);
+        makeBlocked(_track);
+        _onProgress(100);
+    }).detach();
 }

@@ -1,49 +1,55 @@
 #include "../include/TrackLabel.h"
 #include "../include/ScrollText.h"
+#include "../include/Spotify/Track.h"
 
 wxDEFINE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
 
 TrackLabel::TrackLabel(wxWindow *_parent, const wxString &_songPath)
     : wxPanel(_parent, wxID_ANY, wxDefaultPosition) {
 
-    TagLib::MPEG::File track(_songPath);
+    localTrack = std::make_unique<TagLib::MPEG::File>(_songPath);
 
-    auto *checkmark = new wxStaticBitmap(
-        this, wxID_ANY, wxBitmap(wxT("img/check-circle.png"), wxBITMAP_TYPE_PNG));
-
-    create(loadImageFromTag(track), track.tag()->title().toCString(),
-           track.tag()->artist().toCString(), track.tag()->album().toCString(),
-           track.tag()->genre().toCString(), {checkmark});
+    TagLib::FileRef fr(TagLib::FileName(_songPath), true,
+                       TagLib::AudioProperties::Accurate);
+    uint length = fr.audioProperties()->length();
+    create(loadImageFromTag(*localTrack),
+           localTrack->tag()->title().toCString(),
+           localTrack->tag()->artist().toCString(),
+           localTrack->tag()->album().toCString(),
+           localTrack->tag()->genre().toCString(), length);
 }
 
 TrackLabel::TrackLabel(wxWindow *_parent, const Spotify::Track &_track)
     : wxPanel(_parent, wxID_ANY, wxDefaultPosition),
       spotifyTrack(std::make_unique<Spotify::Track>(_track)) {
 
-    wxBitmapButton *downloadButton = new wxBitmapButton(
-        this, wxID_ANY,
-        wxBitmap(wxT("img/progress-download.png"), wxBITMAP_TYPE_PNG),
-        wxDefaultPosition, wxSize(64, 64), wxBORDER_NONE);
-    downloadButton->Bind(wxEVT_BUTTON, &TrackLabel::onDownloadButtonClick,
-                         this);
-
     create(loadImageFromURL(spotifyTrack->get_album().get_imageUrl()),
            spotifyTrack->get_name(), spotifyTrack->get_stringArtists(),
            spotifyTrack->get_album().get_name(), "Unknown genre",
-           {downloadButton});
+           spotifyTrack->get_durationMs() / 1000);
 }
 
 TrackLabel::~TrackLabel() {}
 
 void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
                         const wxString &_artist, const wxString &_album,
-                        const wxString &_genre,
-                        std::vector<wxObject *> elements) {
+                        const wxString &_genre, int _length) {
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+    auto *infoSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto *textSizer = new wxBoxSizer(wxVERTICAL);
 
-    int columnWidths[] = {250, 250, 150, 150}; // Title, Artist, Album, Genre
+    int columnWidths[] = {200, 200, 200, 150,
+                          64}; // Title, Artist, Album, Genre, Icon
 
+    progressBar = new CircleProgressBar(this);
+    progressBar->SetMinSize(wxSize(columnWidths[4], columnWidths[4]));
+    progressBar->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onDownloadButtonClick,
+                      this);
+
+    if (localTrack || (spotifyTrack && spotifyTrack->isDownloaded())) {
+        progressBar->SetProgress(100);
+    }
     // Cover Image (Fixed size)
     auto *coverBitmap = new wxStaticBitmap(this, wxID_ANY, _albumCover,
                                            wxDefaultPosition, wxSize(64, 64));
@@ -61,32 +67,35 @@ void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
     auto *genreText = new ScrollText(this, wxID_ANY, _genre, wxDefaultPosition,
                                      wxSize(columnWidths[3], -1));
 
-    auto *textSizer = new wxBoxSizer(wxVERTICAL);
-    textSizer->Add(titleText, 0, wxALIGN_CENTER, 5);
-    textSizer->Add(artistText, 0, wxALIGN_CENTER, 5);
-    auto *infoSizer = new wxBoxSizer(wxHORIZONTAL);
-    infoSizer->Add(coverBitmap, 0, wxALIGN_CENTER, 5);
-    infoSizer->Add(textSizer, 1, wxALIGN_LEFT, 10);
-    infoSizer->Add(albumText, 0, wxALIGN_CENTER, 5);
-    infoSizer->Add(genreText, 0, wxALIGN_CENTER, 5);
+    int minutes = _length / 60;
+    int seconds = _length % 60;
+    int hours = minutes / 60;
+    minutes = minutes % 60;
 
-    auto *elementsSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto duration =
+        wxString(std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") +
+                 std::to_string(seconds));
 
-    for (wxObject *obj : elements) {
-        if (wxWindow *window = dynamic_cast<wxWindow *>(obj)) {
-            elementsSizer->Add(window, 0, wxCENTER, 5);
-        } else if (wxSizer *nestedSizer = dynamic_cast<wxSizer *>(obj)) {
-            elementsSizer->Add(nestedSizer, 1, wxEXPAND);
-        }
-    }
+    auto *lengthText = new wxStaticText(this, wxID_ANY, duration);
 
-    infoSizer->Add(elementsSizer, 1, wxCENTER);
+    textSizer->Add(titleText, 0);
+    textSizer->Add(artistText, 0);
+
+    infoSizer->Add(progressBar, 1, wxEXPAND, 5);
+    infoSizer->Add(coverBitmap, 0, wxSHRINK, 5);
+    infoSizer->Add(textSizer, 0, wxSHRINK, 5);
+    infoSizer->Add(albumText, 0, wxSHRINK, 5);
+    infoSizer->Add(genreText, 0, wxSHRINK, 5);
+    infoSizer->Add(lengthText, 0, wxSHRINK, 5);
 
     // Add the row layout to the main sizer
-    sizer->Add(infoSizer, 1);
+    sizer->Add(infoSizer, 0, wxSHRINK, 5);
 
-    this->SetSizer(sizer);
+    this->SetSizerAndFit(sizer);
+
     this->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
+    titleText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
+    artistText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     coverBitmap->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     albumText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     genreText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
@@ -108,22 +117,12 @@ void TrackLabel::onClick(wxMouseEvent &event) {
     }
     this->Refresh();
 }
-void TrackLabel::onDownloadButtonClick(wxCommandEvent &event) {
+void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     wxCommandEvent trackEvent(EVT_TRACK_DOWNLOAD);
-    if (!spotifyTrack) {
-        wxLogError("spotifyTrack invalid pointer");
-    }
-    if (spotifyTrack->get_id().empty()) {
-        wxLogError("ID empty");
-    }
-    std::cout << "track id '" << spotifyTrack->get_id().c_str() << "'"
-              << std::endl;
-    std::cout.flush();
+    if (!spotifyTrack || spotifyTrack->get_id().empty() || localTrack)
+        return;
     trackEvent.SetString(spotifyTrack->get_id().c_str());
     wxPostEvent(GetParent(), trackEvent); // Send event to parent
-
-    // wxCommandEvent testEvent(EVT_TRACK_DOWNLOAD_COMPLETE);
-    // wxPostEvent(this, testEvent);
 }
 
 wxBitmap TrackLabel::loadImageFromURL(const wxString &url) {
@@ -206,15 +205,13 @@ wxBitmap TrackLabel::loadImageFromTag(TagLib::MPEG::File &track) {
     wxMemoryInputStream imgStream(imageData.data(), imageData.size());
     wxImage image;
     if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY)) {
-        // wxLogError("Failed to load album cover from: %s", track.name());
-        return wxBitmap();
+        wxLogError("Failed to load album cover from: %s", track.name());
+        return wxBitmap(64, 64);
     }
 
     return wxBitmap(image.Rescale(64, 64));
 }
 
-// void TrackLabel::onTaskComplete(wxCommandEvent &) {
-//     this->SetBackgroundColour(*wxGREEN); // Example: Change background color
-//     this->Refresh();                     // Refresh UI
-//     wxLogMessage("TrackLabel received event from parent!");
-// }
+wxSize TrackLabel::DoGetBestSize() const {
+    return wxSize(500, 100); // Or however tall you want each item
+}

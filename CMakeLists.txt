@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Define the project name and version
-project(SpotifyAPI VERSION 0.0)
+project(ID3-Auto-Tagger-2 VERSION 0.0)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 23)

@@ -19,12 +19,6 @@ class Query {
     std::string accessToken;
     std::chrono::steady_clock::time_point tokenExpirationTime;
 
-    // inline static std::filesystem::path getExecutableDir() {
-    //     std::filesystem::path exePath =
-    //         std::filesystem::canonical("/proc/self/exe"); // Linux-specific
-    //     return exePath.parent_path(); // Get directory containing the
-    //     executable
-    // }
     inline const static std::filesystem::path pathCredentials =
         std::filesystem::current_path() / "backend" / "api" /
         "credentials.json";
@@ -42,8 +36,8 @@ class Query {
     json exec(const std::string &_cmd) const;
 
   public:
-    bool downloadImage(const std::string &_url,
-                       const std::string &_outputPath) const;
+    std::vector<char> downloadImage(const std::string &_url,
+                                    const std::string &_outputPath = "") const;
 
   private:
     const std::string type;
@@ -57,6 +51,8 @@ class Query {
     // Callback function to capture response data
     size_t static writeCallback(void *contents, size_t size, size_t nmemb,
                                 std::string *output);
+    size_t static writeImageCallback(void *contents, size_t size, size_t nmemb,
+                                     std::vector<char> *output);
 };
 
 #endif // QUERY_H

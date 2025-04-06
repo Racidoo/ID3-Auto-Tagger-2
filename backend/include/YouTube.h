@@ -18,7 +18,6 @@ class YouTube : protected Query {
         "https://www.googleapis.com/youtube/v3/search?part=snippet&q=";
     inline static const std::string searchContentDetailsUrl =
         "https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=";
-    // std::string API_KEY;
 
   public:
     YouTube();
@@ -30,6 +29,7 @@ class YouTube : protected Query {
                     const std::string &_type = "video");
     json searchContentDetails(const std::vector<std::string> &_videoIDs);
     std::string findBestMatch(const Spotify::Track &_track);
+
 
   private:
     json query(const std::string &_url);

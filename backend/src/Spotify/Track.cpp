@@ -8,7 +8,8 @@ Track::Track(const std::string &_id, const std::string &_name,
              const Album &_album, const std::vector<Artist> &_artists)
     : SpotifyObject(_id, _name, "track"), discNumber(_discNumber),
       durationMs(_durationMs), explicitContent(_explicitContent),
-      trackNumber(_trackNumber), album(_album), artists(_artists) {}
+      trackNumber(_trackNumber), album(_album), artists(_artists),
+      downloaded(false) {}
 
 Track::~Track() {}
 
@@ -34,15 +35,12 @@ bool Track::writeID3V2Tags(TagLib::MPEG::File _file) const {
 }
 
 bool Track::setAlbumCover(const std::string &_mp3Path,
+                          const std::vector<char> &_imageData) const {
+    return setAPICTag(_mp3Path, _imageData);
+}
+
+bool Track::setAlbumCover(const std::string &_mp3Path,
                           const std::string &_imagePath) const {
-    TagLib::MPEG::File file(_mp3Path.c_str());
-
-    if (!file.isValid()) {
-        std::cerr << "Invalid MP3 file: " << _mp3Path << std::endl;
-        return false;
-    }
-
-    // Read the image file
     std::ifstream imageFile(_imagePath, std::ios::binary);
     if (!imageFile) {
         std::cerr << "Could not open image file: " << _imagePath << std::endl;
@@ -52,9 +50,21 @@ bool Track::setAlbumCover(const std::string &_mp3Path,
     std::vector<char> imageData((std::istreambuf_iterator<char>(imageFile)),
                                 std::istreambuf_iterator<char>());
     imageFile.close();
+    return setAPICTag(_mp3Path, imageData);
+}
 
-    if (imageData.empty()) {
-        std::cerr << "Image file is empty: " << _imagePath << std::endl;
+bool Track::setAPICTag(const std::string &_mp3Path,
+                       const std::vector<char> &_imageData) const {
+
+    if (_imageData.empty()) {
+        std::cerr << "Image is empty" << std::endl;
+        return false;
+    }
+
+    TagLib::MPEG::File file(_mp3Path.c_str());
+
+    if (!file.isValid()) {
+        std::cerr << "Invalid MP3 file: " << _mp3Path << std::endl;
         return false;
     }
 
@@ -76,7 +86,7 @@ bool Track::setAlbumCover(const std::string &_mp3Path,
     pictureFrame->setMimeType("image/png"); // Change to "image/jpeg" for JPGs
     pictureFrame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
     pictureFrame->setPicture(
-        TagLib::ByteVector(imageData.data(), imageData.size()));
+        TagLib::ByteVector(_imageData.data(), _imageData.size()));
 
     tag->addFrame(pictureFrame);
 
@@ -85,7 +95,7 @@ bool Track::setAlbumCover(const std::string &_mp3Path,
         std::cerr << "Failed to save changes!" << std::endl;
         return false;
     }
-    std::cout << "Album cover added successfully!" << std::endl;
+    // std::cout << "Album cover added successfully!" << std::endl;
     return true;
 }
 

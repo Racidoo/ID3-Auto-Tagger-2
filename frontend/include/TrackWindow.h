@@ -1,8 +1,10 @@
 #if !defined(TRACK_WINDOW_H)
 #define TRACK_WINDOW_H
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
+#include <wx/scrolwin.h>
+#include <wx/sizer.h>
 #include <wx/wx.h>
 
 #include "TrackLabel.h"
@@ -22,6 +24,7 @@ class TrackWindow : public wxScrolledWindow {
 
     void deleteChildren();
     void appendChildren(TrackLabel *_trackLabel);
+    void onScroll(wxScrollWinEvent &event);
 };
 
 #endif // TRACK_WINDOW_H

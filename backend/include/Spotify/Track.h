@@ -28,6 +28,8 @@ class Track : public SpotifyObject {
     const Album album;
     std::vector<Artist> artists;
 
+    bool downloaded;
+
   public:
     Track(const std::string &_id, const std::string &_name,
           const unsigned int _discNumber, const unsigned long _durationMs,
@@ -41,15 +43,22 @@ class Track : public SpotifyObject {
         return Artist::vecToStr(artists);
     }
     inline unsigned int get_durationMs() const { return durationMs; }
+    inline bool isDownloaded() const { return downloaded; }
+
+    inline void set_downloaded(bool _downloaded) { downloaded = _downloaded; }
 
     bool writeID3V2Tags(TagLib::MPEG::File _file) const;
     bool setAlbumCover(const std::string &_mp3Path,
                        const std::string &_imagePath) const;
+    bool setAlbumCover(const std::string &_mp3Path,
+                       const std::vector<char> &_imageData) const;
     static void printID3V2Tags(TagLib::MPEG::File _file);
 
   private:
     bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
                      const std::string &value) const;
+    bool setAPICTag(const std::string &_mp3Path,
+                    const std::vector<char> &_imageData) const;
 };
 
 } // namespace Spotify

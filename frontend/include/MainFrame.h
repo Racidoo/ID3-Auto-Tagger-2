@@ -8,6 +8,7 @@
 #include <filesystem>
 
 #include "Downloader.h"
+#include "SettingsWindow.h"
 #include "Spotify/SpotifyAPI.h"
 #include "TrackLabel.h"
 #include "TrackWindow.h"
@@ -26,7 +27,8 @@ class MainFrame : public wxFrame {
     // wxBoxSizer *downloadSizer;
     // wxBoxSizer *spotifySizer;
     // wxBoxSizer *youtubeSizer;
-    wxScrolledWindow *mainPanel;
+    wxPanel *mainPanel;
+    SettingsWindow *settingsPanel;
     TrackWindow *spotifyPanel;
     TrackWindow *youtubePanel;
     TrackWindow *downloadPanel;
@@ -37,10 +39,12 @@ class MainFrame : public wxFrame {
     void OnDownloadClicked(wxCommandEvent &event);
     void OnSpotifyClicked(wxCommandEvent &event);
     void OnYouTubeClicked(wxCommandEvent &event);
+    void OnSettingsClicked(wxCommandEvent &event);
 
     void refreshDownloaded();
+    void search(const wxString &_searchText);
 
-    void onTrackAction(wxCommandEvent &_event);
+    void startDownload(wxCommandEvent &_event);
 };
 
 #endif // MAINFRAME_H

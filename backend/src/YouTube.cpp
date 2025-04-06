@@ -169,6 +169,9 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
             topMatches.push_back(id);
         }
     }
+    if (bestScore < 1.5) {
+        return "";
+    }
 
     // If only one top match, return it
     if (topMatches.size() == 1) {
