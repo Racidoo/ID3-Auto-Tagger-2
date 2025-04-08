@@ -3,12 +3,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
     src/App.cpp
     src/CircleProgressBar.cpp
+    src/LabeledTextCtrl.cpp
     src/main.cpp
     src/MainFrame.cpp
-    src/TrackLabel.cpp
-    src/TrackWindow.cpp
     src/ScrollText.cpp
     src/SettingsWindow.cpp
+    src/TrackEditWindow.cpp
+    src/TrackLabel.cpp
+    src/TrackWindow.cpp
 )
 
 # Find wxWidgets

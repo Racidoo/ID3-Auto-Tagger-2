@@ -28,6 +28,7 @@
 #include "Spotify/Track.h"
 
 wxDECLARE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
+wxDECLARE_EVENT(EVT_TRACKLABEL_CLICKED, wxCommandEvent);
 
 class TrackLabel : public wxPanel {
   private:
@@ -36,25 +37,28 @@ class TrackLabel : public wxPanel {
     std::unique_ptr<Spotify::Track> spotifyTrack;
     std::unique_ptr<TagLib::MPEG::File> localTrack;
     CircleProgressBar *progressBar;
-    // std::vector<wxString> &m_activeSongs;
 
     void create(const wxBitmap &_albumCover, const wxString &_title,
                 const wxString &_artist, const wxString &_album,
                 const wxString &_genre, int _length);
+    void onClick(wxMouseEvent &event);
+    void onDownloadButtonClick(wxMouseEvent &event);
 
   public:
     TrackLabel(wxWindow *_parent, const wxString &_songPath);
     TrackLabel(wxWindow *_parent, const Spotify::Track &_track);
     ~TrackLabel();
 
+    // Progress, Cover, Title + Artist, Album, Genre, Length
+    static const inline int columnWidths[] = {64, 64, 200, 200, 150, 50};
+
     Spotify::Track *get_spotifyTrack() const { return spotifyTrack.get(); }
+    TagLib::MPEG::File *get_localTrack() const { return localTrack.get(); }
     CircleProgressBar *get_ProgressBar() const { return progressBar; }
-    
-    wxBitmap loadImageFromURL(const wxString &url);
-    wxBitmap loadImageFromTag(TagLib::MPEG::File &track);
-    void onClick(wxMouseEvent &event);
-    void onDownloadButtonClick(wxMouseEvent &event);
-    void onTaskComplete(wxCommandEvent &);
+
+    static wxBitmap loadImageFromURL(const wxString &_url, const wxSize &_size);
+    static wxBitmap loadImageFromTag(TagLib::MPEG::File *_track,
+                                     const wxSize &_size);
 
     wxSize DoGetBestSize() const override;
 };

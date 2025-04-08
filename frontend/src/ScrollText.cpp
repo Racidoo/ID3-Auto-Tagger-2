@@ -7,11 +7,11 @@ wxBEGIN_EVENT_TABLE(ScrollText, wxPanel) EVT_PAINT(ScrollText::onPaint)
             ScrollText::ScrollText(wxWindow *parent, wxWindowID _id,
                                    const wxString &_text, const wxPoint &_pos,
                                    const wxSize &_size)
-    : wxPanel(parent, _id, _pos, _size, wxFULL_REPAINT_ON_RESIZE),
+    : wxPanel(parent, _id, _pos, _size, wxFULL_REPAINT_ON_RESIZE | wxBG_STYLE_TRANSPARENT),
       fullText(_text), timer(this),
       font(wxFontInfo(10).Family(wxFONTFAMILY_DEFAULT)) {
 
-    this->SetBackgroundStyle(wxBG_STYLE_PAINT); // Needed for custom drawing
+    // this->SetBackgroundStyle(wxBG_STYLE_TRANSPARENT); // Needed for custom drawing
     this->SetFont(font);
 
     // Measure text width

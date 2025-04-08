@@ -1,4 +1,6 @@
 #include "../include/MainFrame.h"
+#include "../include/TrackEditWindow.h"
+#include <taglib/mpegfile.h>
 
 enum {
     IDM_TOOLBAR_DOWNLOAD = 200,
@@ -6,6 +8,8 @@ enum {
     IDM_TOOLBAR_YOUTUBE,
     IDM_TOOLBAR_SETTINGS
 };
+
+wxDEFINE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
 
 // Constructor for main window
 MainFrame::MainFrame()
@@ -47,10 +51,10 @@ MainFrame::MainFrame()
     youtubePanel = new TrackWindow(mainPanel);
     settingsPanel = new SettingsWindow(mainPanel);
 
-    mainPanel->SetBackgroundColour(*wxBLUE);
-    downloadPanel->SetBackgroundColour(*wxYELLOW);
-    spotifyPanel->SetBackgroundColour(*wxGREEN);
-    youtubePanel->SetBackgroundColour(*wxRED);
+    // mainPanel->SetBackgroundColour(*wxBLUE);
+    // downloadPanel->SetBackgroundColour(*wxYELLOW);
+    // spotifyPanel->SetBackgroundColour(*wxGREEN);
+    // youtubePanel->SetBackgroundColour(*wxRED);
 
     wxTextCtrl *searchBar =
         new wxTextCtrl(mainPanel, wxID_ANY, wxEmptyString, wxDefaultPosition,
@@ -81,6 +85,8 @@ MainFrame::MainFrame()
     // Set default screen
     ShowPanel(downloadPanel);
 
+    auto trackEditWindow = new TrackEditWindow(this);
+
     // Bind toolbar events
     Bind(wxEVT_TOOL, &MainFrame::OnDownloadClicked, this, IDM_TOOLBAR_DOWNLOAD);
     Bind(wxEVT_TOOL, &MainFrame::OnSpotifyClicked, this, IDM_TOOLBAR_SPOTIFY);
@@ -88,11 +94,32 @@ MainFrame::MainFrame()
     Bind(wxEVT_TOOL, &MainFrame::OnSettingsClicked, this, IDM_TOOLBAR_SETTINGS);
 
     this->Bind(EVT_TRACK_DOWNLOAD, &MainFrame::startDownload, this);
+    this->Bind(EVT_SHOW_TRACK_DETAILS,
+               [this, trackEditWindow](wxCommandEvent &event) {
+                   TrackWindow *trackWindow =
+                       dynamic_cast<TrackWindow *>(event.GetEventObject());
+                   if (!trackWindow) {
+                       wxLogMessage("Could not derive TrackWindow from %s",
+                                    event.GetEventObject());
+                       return;
+                   }
+                   std::vector<TagLib::MPEG::File *> tracks;
+                   for (auto &&activeSong : trackWindow->get_activeSongs()) {
+                       tracks.push_back(activeSong->get_localTrack());
+                   }
+                   if (tracks.empty()) {
+                       trackEditWindow->Hide();
+                       return;
+                   }
+                   trackEditWindow->Show();
+                   trackEditWindow->show(tracks);
+               });
 
     // Set main layout
     auto sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(toolBar, 0, wxSHRINK, 0);
     sizer->Add(mainPanel, 1, wxEXPAND);
+    sizer->Add(trackEditWindow, 0, wxSHRINK, 5);
     SetSizer(sizer);
 }
 
@@ -109,7 +136,6 @@ void MainFrame::ShowPanel(wxScrolledWindow *panel) {
 
 void MainFrame::OnDownloadClicked(wxCommandEvent &event) {
     refreshDownloaded();
-    ShowPanel(downloadPanel);
 }
 
 void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
@@ -124,32 +150,6 @@ void MainFrame::OnSettingsClicked(wxCommandEvent &event) {
     ShowPanel(settingsPanel);
 }
 
-void MainFrame::refreshDownloaded() {
-    downloadPanel->GetSizer()->Clear(true); // true deletes child widgets
-    std::filesystem::path musicPath = std::filesystem::current_path() / "music";
-
-    // Check if the directory exists
-    if (!std::filesystem::exists(musicPath) ||
-        !std::filesystem::is_directory(musicPath)) {
-        wxMessageBox("Music directory not found!", "Error", wxICON_ERROR);
-        return;
-    }
-
-    // Iterate through the files in the directory
-    for (const auto &file : std::filesystem::directory_iterator(musicPath)) {
-        if (file.is_regular_file()) { // Only add files, not directories
-            auto trackLabel =
-                new TrackLabel(downloadPanel, file.path().string());
-            downloadPanel->GetSizer()->Add(trackLabel, 0, wxEXPAND);
-        }
-    }
-
-    // Update the layout
-    downloadPanel->GetSizer()->Layout();
-    downloadPanel->Layout();
-    downloadPanel->Fit();
-}
-
 void MainFrame::startDownload(wxCommandEvent &_event) {
     TrackLabel *chosenTrackLabel =
         spotifyPanel->get_trackLabels().at(_event.GetString().ToStdString());
@@ -160,6 +160,33 @@ void MainFrame::startDownload(wxCommandEvent &_event) {
                        progress); // yt-dlp output should be inserted here
             chosenTrackLabel->get_ProgressBar()->SetProgress(progress);
         });
+}
+
+void MainFrame::refreshDownloaded() {
+    std::filesystem::path musicPath = std::filesystem::current_path() / "music";
+
+    // Check if the directory exists
+    if (!std::filesystem::exists(musicPath) ||
+        !std::filesystem::is_directory(musicPath)) {
+        wxMessageBox("Music directory not found!", "Error", wxICON_ERROR);
+        return;
+    }
+    downloadPanel->deleteChildren();
+
+    // Iterate through the files in the directory
+    for (const auto &file : std::filesystem::directory_iterator(musicPath)) {
+        if (file.is_regular_file()) { // Only add files, not directories
+            // auto trackLabel =
+            //     new TrackLabel(downloadPanel, file.path().string());
+            // downloadPanel->GetSizer()->Add(trackLabel, 0, wxEXPAND);
+            downloadPanel->appendChildren(
+                new TrackLabel(downloadPanel, file.path().string()));
+        }
+    }
+
+    downloadPanel->FitInside();
+    downloadPanel->Layout();
+    ShowPanel(downloadPanel);
 }
 
 void MainFrame::search(const wxString &_searchText) {
