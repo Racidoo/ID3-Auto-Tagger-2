@@ -7,15 +7,18 @@ YouTube::~YouTube() {}
 
 json YouTube::query(const std::string &_url) {
     std::string response;
-    curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    auto queryCurl(curl_easy_init());
+    curl_easy_setopt(queryCurl, CURLOPT_URL, _url.c_str());
+    curl_easy_setopt(queryCurl, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(queryCurl, CURLOPT_WRITEDATA, &response);
 
-    CURLcode res = curl_easy_perform(curl);
+    CURLcode res = curl_easy_perform(queryCurl);
     if (res != CURLE_OK) {
         std::cerr << "Curl request failed: " << curl_easy_strerror(res)
                   << std::endl;
     }
+    if (queryCurl)
+        curl_easy_cleanup(queryCurl);
     return json::parse(response);
 }
 
@@ -39,8 +42,7 @@ json YouTube::searchList(const std::string &_query, const std::string &_service,
         //     "\"dailyLimitExceeded\"}],\"status\":\"FAILED\"}}");
 
         auto result =
-            query(searchListUrl +
-                  std::string(curl_easy_escape(curl, _query.c_str(), 0)) +
+            query(searchListUrl + std::string(curl_escape(_query.c_str(), 0)) +
                   "&type=" + _type.c_str() + "&maxResults=" +
                   std::to_string(_maxResults) + "&key=" + accessToken);
         std::ofstream("result.json") << result.dump(4);
@@ -48,18 +50,13 @@ json YouTube::searchList(const std::string &_query, const std::string &_service,
     }
 }
 
-json YouTube::searchContentDetails(const std::vector<std::string> &_videoIDs) {
-    std::stringstream matches;
-    for (size_t i = 0; i < _videoIDs.size(); i++) {
-        matches << _videoIDs[i] << (i < _videoIDs.size() - 1 ? "," : "");
-    }
-    return query(searchContentDetailsUrl + matches.str() +
-                 "&key=" + accessToken);
+json YouTube::searchContentDetails(const std::string &_videoID) {
+    return query(searchContentDetailsUrl + _videoID + "&key=" + accessToken);
 }
 
 // Check if artist name appears in video title
-bool YouTube::artistInTitle(const std::string &title,
-                            const std::string &artist) {
+bool YouTube::findInString(const std::string &title,
+                           const std::string &artist) {
     return toLower(title).find(toLower(artist)) != std::string::npos;
 }
 
@@ -132,6 +129,7 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
                 continue;
             }
         }
+
         std::string title =
             googleAPI ? video["snippet"]["title"] : video["title"];
         std::string channel =
@@ -142,17 +140,46 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
                 ? video["snippet"]["publishedAt"].get<std::string>().substr(0,
                                                                             10)
                 : video["upload_date"].get<std::string>();
+        unsigned int duration;
 
-        double score = similarityScore(searchQuery, title);
+        json contentDetails;
+        double score(0);
+        if (googleAPI) {
+            contentDetails = searchContentDetails(id)["items"][0];
+            // std::cout << contentDetails.dump(4) << std::endl;
+            duration =
+                parse_duration(contentDetails["contentDetails"]["duration"]);
+        } else {
+            duration = responseSearchList["duration"].get<unsigned int>();
+        }
+        score += similarityScore(_track.get_durationMs() / 1000, duration);
+        if (score < 0.1) {
+            std::cout << "video length " << duration
+                      << " exceeds Spotify track "
+                      << _track.get_durationMs() / 1000 << std::endl;
+            continue;
+        }
+        if (findInString(title, _track.get_name())) {
+            score += 1;
+        }
+        if (googleAPI &&
+            contentDetails["contentDetails"]["licensedContent"].get<bool>() ==
+                true)
+            score = 1.0; // Boost if content is licensed
+
+        //  = similarityScore(searchQuery, title);
+        // std::cout << score << std::endl;
 
         for (auto &&artist : _track.get_artists()) {
-            if (artistInTitle(title, artist.get_name())) {
+            if (findInString(title, artist.get_name())) {
                 // normalize, so all artists need to be in title for
                 // perfect score
                 score += 1.0 / _track.get_artists().size();
+                std::cout << "Artist: " << score << std::endl;
             }
-            if (artistInTitle(channel, artist.get_name())) {
+            if (findInString(channel, artist.get_name())) {
                 score += 1.0 / _track.get_artists().size();
+                std::cout << "Channel: " << score << std::endl;
             }
         }
 
@@ -169,39 +196,9 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
             topMatches.push_back(id);
         }
     }
-    if (bestScore < 1.5) {
+    if (topMatches.empty()) {
+        std::cout << "No matches found!" << std::endl;
         return "";
     }
-
-    // If only one top match, return it
-    if (topMatches.size() == 1) {
-        return topMatches[0];
-    }
-    json results;
-    if (googleAPI) {
-        results = searchContentDetails(topMatches)["items"];
-        // std::cout << results.dump(4) << std::endl;
-    } else {
-        results = responseSearchList;
-    }
-
-    bestScore = 0.0;
-    std::string bestMatch;
-
-    for (auto &&result : results) {
-        unsigned int duration =
-            googleAPI ? parse_duration(result["contentDetails"]["duration"])
-                      : result["duration"].get<unsigned int>();
-        double score =
-            similarityScore(_track.get_durationMs() / 1000, duration);
-        if (googleAPI &&
-            result["contentDetails"]["licensedContent"].get<bool>() == true)
-            score += 1.0; // Boost if content is licensed
-        std::cout << result["id"] << "\t" << score << std::endl;
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = result["id"];
-        }
-    }
-    return bestMatch;
+    return topMatches[0];
 }

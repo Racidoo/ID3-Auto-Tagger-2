@@ -8,7 +8,6 @@
 
 #include "Query.h"
 #include "Spotify/Track.h"
-// #include "Video.h"
 
 using json = nlohmann::json;
 
@@ -27,14 +26,13 @@ class YouTube : protected Query {
                     const std::string &_service = "yt-dlp",
                     unsigned int _maxResults = 5,
                     const std::string &_type = "video");
-    json searchContentDetails(const std::vector<std::string> &_videoIDs);
+    json searchContentDetails(const std::string &_videoIDs);
     std::string findBestMatch(const Spotify::Track &_track);
-
 
   private:
     json query(const std::string &_url);
 
-    bool artistInTitle(const std::string &title, const std::string &artist);
+    bool findInString(const std::string &title, const std::string &artist);
     unsigned int parse_duration(const std::string &iso8601_duration);
 };
 

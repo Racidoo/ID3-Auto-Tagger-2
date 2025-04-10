@@ -14,8 +14,6 @@ using json = nlohmann::json;
 
 class Query {
   protected:
-    CURL *curl;
-    struct curl_slist *headers;
     std::string accessToken;
     std::chrono::steady_clock::time_point tokenExpirationTime;
 

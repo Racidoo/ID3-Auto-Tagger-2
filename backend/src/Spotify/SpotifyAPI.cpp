@@ -6,30 +6,21 @@ SpotifyAPI::SpotifyAPI() : Query("Spotify") {}
 
 SpotifyAPI::~SpotifyAPI() {}
 
-bool SpotifyAPI::authenticate() {
-    if (!curl) {
-        return false;
-    }
-    if (headers) {
-        curl_slist_free_all(headers);
-        headers = nullptr;
-    }
-    headers = curl_slist_append(
-        headers, ("Authorization: Bearer " + getValidToken()).c_str());
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    return true;
-}
-
 json SpotifyAPI::handleRequest(const std::string &_request) {
+
+    std::string response_data;
+    auto curl(curl_easy_init());
+    struct curl_slist *headers(nullptr);
+
     if (!curl) {
         std::cerr << "cURL not initialized!" << std::endl;
         return {};
     }
 
-    std::string response_data;
-
-    authenticate();
+    headers = curl_slist_append(
+        headers, ("Authorization: Bearer " + getValidToken()).c_str());
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
     // Ensure headers are set
     if (headers) {
@@ -37,7 +28,6 @@ json SpotifyAPI::handleRequest(const std::string &_request) {
     } else {
         std::cerr << "Error: Headers not initialized!" << std::endl;
     }
-    // std::cout << "Using auth token: " << accessToken << std::endl;
 
     // Set the request URL
     curl_easy_setopt(curl, CURLOPT_URL, _request.c_str());
@@ -52,6 +42,8 @@ json SpotifyAPI::handleRequest(const std::string &_request) {
                   << std::endl;
         return {};
     }
+    if (curl)
+        curl_easy_cleanup(curl);
 
     if (response_data.empty()) {
         std::cerr << "Error: Received empty response!" << std::endl;
@@ -67,33 +59,13 @@ json SpotifyAPI::handleRequest(const std::string &_request) {
     if (response.contains("error")) {
         std::cerr << response.dump(4) << std::endl;
     }
-
     return response;
 }
 
-bool SpotifyAPI::executeRequest(std::string &response_data) {
-    response_data.clear();
-    CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        std::cerr << "cURL Error: " << curl_easy_strerror(res) << std::endl;
-        return false;
-    }
-    return true;
-}
-
-// size_t SpotifyAPI::writeCallback(void *contents, size_t size, size_t nmemb,
-//                                  std::string *output) {
-//     size_t total_size = size * nmemb;
-//     if (output) {
-//         output->append((char *)contents, total_size);
-//     }
-
-//     return total_size;
-// }
 json SpotifyAPI::searchTrack(const std::string &_query) {
     std::stringstream url;
     url << "https://api.spotify.com/v1/search?q="
-        << curl_easy_escape(curl, _query.c_str(), 0) << "&type=track";
+        << curl_escape(_query.c_str(), 0) << "&type=track";
     return handleRequest(url.str());
 }
 

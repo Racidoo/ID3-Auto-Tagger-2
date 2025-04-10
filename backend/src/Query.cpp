@@ -1,21 +1,11 @@
 #include "../include/Query.h"
 
 Query::Query(const std::string &_type)
-    : curl(curl_easy_init()), headers(nullptr),
-      tokenExpirationTime(std::chrono::steady_clock::now()), type(_type) {
-    if (!curl) {
-        std::cerr << "cURL initialization failed!" << std::endl;
-        return;
-    }
+    : tokenExpirationTime(std::chrono::steady_clock::now()), type(_type) {
     getValidToken();
 }
 
-Query::~Query() {
-    if (headers)
-        curl_slist_free_all(headers);
-    if (curl)
-        curl_easy_cleanup(curl);
-}
+Query::~Query() {}
 
 std::string Query::getValidToken() {
     if (!isTokenValid()) {
@@ -227,7 +217,7 @@ double Query::similarityScoreDate(const std::string &date1,
 std::vector<char> Query::downloadImage(const std::string &_url,
                                        const std::string &_outputPath) const {
     std::vector<char> imageData;
-
+    auto curl(curl_easy_init());
     curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -245,6 +235,8 @@ std::vector<char> Query::downloadImage(const std::string &_url,
     }
 
     CURLcode res = curl_easy_perform(curl);
+    if (curl)
+        curl_easy_cleanup(curl);
     return imageData;
 }
 
