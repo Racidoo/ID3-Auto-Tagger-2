@@ -30,6 +30,9 @@ class TrackWindow : public wxScrolledWindow {
         return activeSongs;
     }
 
+    void createHeader();
+    void sortByHeader();
+
     void deleteChildren();
     void appendChildren(TrackLabel *_trackLabel);
     void onScroll(wxScrollWinEvent &event);

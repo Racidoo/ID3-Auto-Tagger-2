@@ -1,5 +1,5 @@
 #include "../include/TrackWindow.h"
-// #include <wx/scrolwin.h>
+#include "../include/LabeledTextCtrl.h"
 #include <wx/event.h>
 
 TrackWindow::TrackWindow(wxWindow *_parent)
@@ -13,6 +13,42 @@ TrackWindow::TrackWindow(wxWindow *_parent)
 
 TrackWindow::~TrackWindow() {}
 
+void TrackWindow::createHeader() {
+    auto headerSizer = new wxFlexGridSizer(1, 6, 5, 5);
+    auto titleHeader =
+        new wxStaticText(this, wxID_ANY, wxT("Title"), wxDefaultPosition,
+                         wxSize(TrackLabel::columnWidths[2], -1));
+    auto albumHeader =
+        new wxStaticText(this, wxID_ANY, wxT("Album"), wxDefaultPosition,
+                         wxSize(TrackLabel::columnWidths[3], -1));
+    auto genreHeader =
+        new wxStaticText(this, wxID_ANY, wxT("Genre"), wxDefaultPosition,
+                         wxSize(TrackLabel::columnWidths[4], -1));
+    auto lengthHeader =
+        new wxStaticText(this, wxID_ANY, wxT("Length"), wxDefaultPosition,
+                         wxSize(TrackLabel::columnWidths[5], -1));
+
+    headerSizer->Add(new wxStaticText(this, wxID_ANY, wxEmptyString,
+                                      wxDefaultPosition,
+                                      wxSize(TrackLabel::columnWidths[0], -1)),
+                     0, wxEXPAND, 5);
+    headerSizer->Add(new wxStaticText(this, wxID_ANY, wxEmptyString,
+                                      wxDefaultPosition,
+                                      wxSize(TrackLabel::columnWidths[1], -1)),
+                     0, wxEXPAND, 5);
+    headerSizer->Add(titleHeader, 0, wxEXPAND, 5);
+    headerSizer->Add(albumHeader, 0, wxEXPAND, 5);
+    headerSizer->Add(genreHeader, 0, wxEXPAND, 5);
+    headerSizer->Add(lengthHeader, 0, wxEXPAND, 5);
+    GetSizer()->Add(headerSizer);
+    GetSizer()->AddSpacer(10);
+}
+
+void TrackWindow::sortByHeader(){
+     
+}
+
+
 /**
  * @brief Clears elements of Sizer and clears trackLabels.
  * Clears all children of the window and trackLabels map.
@@ -21,6 +57,8 @@ void TrackWindow::deleteChildren() {
     // Clear the sizer (all child elements)
     this->GetSizer()->Clear(true);
     trackLabels.clear();
+    activeSongs.clear();
+    createHeader();
 }
 
 /**
@@ -29,11 +67,6 @@ void TrackWindow::deleteChildren() {
  */
 void TrackWindow::appendChildren(TrackLabel *_trackLabel) {
     mainSizer->Add(_trackLabel, 0, wxEXPAND, 5);
-    // _trackLabel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &evt) {
-    //     wxWindow *clicked = dynamic_cast<wxWindow *>(evt.GetEventObject());
-    //     wxLogMessage("Clicked child: %p", clicked);
-    //     evt.Skip();
-    // });
     if (_trackLabel->get_spotifyTrack()) {
         trackLabels.insert(
             {_trackLabel->get_spotifyTrack()->get_id(), _trackLabel});

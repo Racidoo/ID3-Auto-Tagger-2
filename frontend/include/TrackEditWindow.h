@@ -1,6 +1,9 @@
 #if !defined(TRACK_EDIT_WINDOW_H)
 #define TRACK_EDIT_WINDOW_H
 
+#include <functional> // for std::hash
+#include <optional>
+#include <string> // for std::string
 #include <taglib/mpegfile.h>
 #include <wx/wx.h>
 
@@ -26,6 +29,9 @@ class TrackEditWindow : public wxPanel {
     ~TrackEditWindow();
 
     void show(const std::vector<TagLib::MPEG::File *> &_tracks);
+
+    static std::size_t bitmapHash(const wxBitmap &bmp);
+    static bool bitmapsEqual(const wxBitmap &a, const wxBitmap &b);
 
   private:
     /**
@@ -54,7 +60,6 @@ class TrackEditWindow : public wxPanel {
         // Get the common value from the first file
         std::string commonValue = getAttribute(firstFile->ID3v2Tag());
 
-        // Check all files for matching attribute values
         for (auto *file : files) {
             if (!file->hasID3v2Tag())
                 return "";
@@ -62,6 +67,37 @@ class TrackEditWindow : public wxPanel {
                 return "";
         }
         return commonValue;
+    }
+
+    /**
+     * @brief Get the Common Bitmap object
+     * 
+     * @tparam Container 
+     * @tparam Getter 
+     * @param files 
+     * @param _size 
+     * @param getAttribute 
+     * @return wxBitmap 
+     */
+    template <typename Container, typename Getter>
+    wxBitmap getCommonBitmap(const Container &files, const wxSize &_size,
+                             Getter getAttribute) {
+        if (files.empty())
+            return wxBitmap(_size);
+
+        // Access the first file, and check it has the expected tag
+        auto *firstFile = files.front();
+        if (!firstFile->hasID3v2Tag())
+            return wxBitmap(_size);
+
+        // Get the common value from the first file
+        wxBitmap commonBitmap = getAttribute(firstFile);
+
+        for (auto *file : files) {
+            if (!bitmapsEqual(getAttribute(file), commonBitmap))
+                return wxBitmap(_size);
+        }
+        return commonBitmap;
     }
 };
 

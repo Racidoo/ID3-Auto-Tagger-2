@@ -86,6 +86,7 @@ MainFrame::MainFrame()
     ShowPanel(downloadPanel);
 
     auto trackEditWindow = new TrackEditWindow(this);
+    trackEditWindow->Hide();
 
     // Bind toolbar events
     Bind(wxEVT_TOOL, &MainFrame::OnDownloadClicked, this, IDM_TOOLBAR_DOWNLOAD);
@@ -94,6 +95,7 @@ MainFrame::MainFrame()
     Bind(wxEVT_TOOL, &MainFrame::OnSettingsClicked, this, IDM_TOOLBAR_SETTINGS);
 
     this->Bind(EVT_TRACK_DOWNLOAD, &MainFrame::startDownload, this);
+
     this->Bind(EVT_SHOW_TRACK_DETAILS,
                [this, trackEditWindow](wxCommandEvent &event) {
                    TrackWindow *trackWindow =
@@ -112,8 +114,60 @@ MainFrame::MainFrame()
                        return;
                    }
                    trackEditWindow->Show();
+                   trackEditWindow->GetParent()->Layout();
                    trackEditWindow->show(tracks);
                });
+    this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
+        std::string value = event.GetString().ToStdString();
+        Spotify::Track::tag_type_t type =
+            static_cast<Spotify::Track::tag_type_t>(event.GetInt());
+        for (auto &&activeSong : downloadPanel->get_activeSongs()) {
+            auto track = activeSong->get_localTrack();
+            if (!track)
+                return;
+            switch (type) {
+            case Spotify::Track::TITLE: {
+                track->tag()->setTitle(value);
+                break;
+            }
+            case Spotify::Track::ARTIST: {
+                track->tag()->setArtist(value);
+                break;
+            }
+            case Spotify::Track::ALBUM: {
+                track->tag()->setAlbum(value);
+                break;
+            }
+            case Spotify::Track::ALBUM_ARTIST: {
+                Spotify::Track::setTagValue(*track, "TPE2", value);
+                break;
+            }
+            case Spotify::Track::GENRE: {
+                track->tag()->setGenre(value);
+                break;
+            }
+            case Spotify::Track::LABEL: {
+                Spotify::Track::setTagValue(*track, "TPUB", value);
+                break;
+            }
+            case Spotify::Track::YEAR: {
+                track->tag()->setYear(std::stoi(value));
+
+                break;
+            }
+            case Spotify::Track::TRACK: {
+                track->tag()->setTrack(std::stoi(value));
+                break;
+            }
+            case Spotify::Track::DISC: {
+                Spotify::Track::setTagValue(*track, "TPOS", value);
+                break;
+            }
+            }
+            track->save();
+        }
+        refreshDownloaded();
+    });
 
     // Set main layout
     auto sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -176,14 +230,11 @@ void MainFrame::refreshDownloaded() {
     // Iterate through the files in the directory
     for (const auto &file : std::filesystem::directory_iterator(musicPath)) {
         if (file.is_regular_file()) { // Only add files, not directories
-            // auto trackLabel =
-            //     new TrackLabel(downloadPanel, file.path().string());
-            // downloadPanel->GetSizer()->Add(trackLabel, 0, wxEXPAND);
             downloadPanel->appendChildren(
                 new TrackLabel(downloadPanel, file.path().string()));
         }
     }
-
+// downloadPanel->ge
     downloadPanel->FitInside();
     downloadPanel->Layout();
     ShowPanel(downloadPanel);

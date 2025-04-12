@@ -83,7 +83,7 @@ bool Track::setAPICTag(const std::string &_mp3Path,
 
     // Create new APIC frame
     auto *pictureFrame = new TagLib::ID3v2::AttachedPictureFrame();
-    pictureFrame->setMimeType("image/png"); // Change to "image/jpeg" for JPGs
+    pictureFrame->setMimeType("image/jpeg");
     pictureFrame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
     pictureFrame->setPicture(
         TagLib::ByteVector(_imageData.data(), _imageData.size()));
@@ -104,7 +104,7 @@ void Track::printID3V2Tags(TagLib::MPEG::File _file) {
 }
 
 bool Track::setTagValue(TagLib::MPEG::File &file, const char *frameID,
-                        const std::string &value) const {
+                        const std::string &value) {
     if (!file.isValid() || !file.ID3v2Tag()) {
         return false;
     }

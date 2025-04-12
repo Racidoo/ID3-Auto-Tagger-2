@@ -39,7 +39,7 @@ void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
                         const wxString &_genre, int _length) {
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto *infoSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto *infoSizer = new wxFlexGridSizer(1, 6, 5, 5);
     auto *textSizer = new wxBoxSizer(wxVERTICAL);
 
     progressBar = new CircleProgressBar(this);
@@ -94,10 +94,7 @@ void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
     infoSizer->Add(genreText, 0, wxSHRINK, 5);
     infoSizer->Add(lengthText, 0, wxSHRINK, 5);
 
-    // Add the row layout to the main sizer
-    sizer->Add(infoSizer, 0, wxSHRINK, 5);
-
-    this->SetSizerAndFit(sizer);
+    this->SetSizerAndFit(infoSizer);
 
     this->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     titleText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
@@ -107,37 +104,25 @@ void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
     genreText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
 }
 
+/**
+ * @brief
+ *
+ * @param event
+ */
 void TrackLabel::onClick(wxMouseEvent &event) {
-    // m_isActive = !m_isActive;
-    // if (m_isActive) {
-
-    if (GetParent()) {
+    if (localTrack && GetParent()) {
         wxCommandEvent notifyEvent(EVT_TRACKLABEL_CLICKED, GetId());
         notifyEvent.SetEventObject(this);
         wxPostEvent(GetParent(), notifyEvent);
-        // wxLogDebug(wxT("sent EVT_TRACKLABEL_CLICKED"));
     }
     event.Skip();
-
-    // wxCommandEvent trackEvent(EVT_TRACKLABEL_CLICKED);
-    // if (!localTrack)
-    //     return;
-    // trackEvent.SetString(localTrack->name());
-    // wxPostEvent(GetParent(), trackEvent); // Send event to parent
-
-    // m_activeSongs.push_back(m_songPath);
-    // this->SetBackgroundColour(*wxLIGHT_GREY);
-    // } else {
-    // auto it =
-    //     std::find(m_activeSongs.begin(), m_activeSongs.end(),
-    //     m_songPath);
-    // if (it != m_activeSongs.end()) {
-    //     m_activeSongs.erase(it);
-    // }
-    // this->SetBackgroundColour(wxNullColour);
-    // }
-    // this->Refresh();
 }
+
+/**
+ * @brief
+ *
+ * @param event
+ */
 void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     wxCommandEvent trackEvent(EVT_TRACK_DOWNLOAD);
     if (!spotifyTrack || spotifyTrack->get_id().empty() || localTrack)
@@ -145,14 +130,14 @@ void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     trackEvent.SetString(spotifyTrack->get_id().c_str());
     wxPostEvent(GetParent(), trackEvent); // Send event to parent
 }
-// void TrackLabel::onClick(wxMouseEvent &event) {
-//     wxCommandEvent trackEvent(EVT_TRACKLABEL_CLICKED);
-//     if (!localTrack)
-//         return;
-//     trackEvent.SetString(localTrack->name());
-//     wxPostEvent(GetParent(), trackEvent); // Send event to parent
-// }
 
+/**
+ * @brief
+ *
+ * @param _url
+ * @param _size
+ * @return wxBitmap
+ */
 wxBitmap TrackLabel::loadImageFromURL(const wxString &_url,
                                       const wxSize &_size) {
     wxImage image;
@@ -202,6 +187,9 @@ wxBitmap TrackLabel::loadImageFromURL(const wxString &_url,
 
 wxBitmap TrackLabel::loadImageFromTag(TagLib::MPEG::File *_track,
                                       const wxSize &_size) {
+    if (!_track->hasID3v2Tag()) {
+        return wxBitmap();
+    }
     // Get ID3v2 tag
     auto tag = _track->ID3v2Tag();
     if (!tag) {
@@ -229,6 +217,14 @@ wxBitmap TrackLabel::loadImageFromTag(TagLib::MPEG::File *_track,
     if (imageData.isEmpty()) {
         // wxLogError("APIC frame contains no image data in: %s", track.name());
         return wxBitmap();
+    }
+
+    // Add missing EOI marker if needed
+    if (!(imageData.size() >= 2 &&
+          imageData[imageData.size() - 2] == (char)0xFF &&
+          imageData[imageData.size() - 1] == (char)0xD9)) {
+        imageData.append((char)0xFF);
+        imageData.append((char)0xD9);
     }
 
     // Convert to wxWidgets image

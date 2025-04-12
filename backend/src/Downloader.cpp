@@ -113,7 +113,7 @@ void Downloader::downloadAndTag(const Spotify::Track &_track,
         _onProgress(10);
 
         auto trackName = trackPath + _track.get_id() + ".mp3";
-        // auto coverName = coverPath + _track.get_id() + ".png";
+        // auto coverName = coverPath + _track.get_id() + ".jpg";
 
         // download resource
         std::string command =

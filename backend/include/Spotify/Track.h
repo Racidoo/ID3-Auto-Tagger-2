@@ -37,6 +37,18 @@ class Track : public SpotifyObject {
           const Album &_album, const std::vector<Artist> &_artists);
     ~Track();
 
+    enum tag_type_t {
+        TITLE = 0,
+        ARTIST,
+        ALBUM,
+        ALBUM_ARTIST,
+        GENRE,
+        LABEL,
+        YEAR,
+        TRACK,
+        DISC
+    };
+
     inline const std::vector<Artist> get_artists() const { return artists; }
     inline const Album get_album() const { return album; }
     inline const std::string get_stringArtists() const {
@@ -54,9 +66,10 @@ class Track : public SpotifyObject {
                        const std::vector<char> &_imageData) const;
     static void printID3V2Tags(TagLib::MPEG::File _file);
 
+    static bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
+                            const std::string &value);
+
   private:
-    bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
-                     const std::string &value) const;
     bool setAPICTag(const std::string &_mp3Path,
                     const std::vector<char> &_imageData) const;
 };
