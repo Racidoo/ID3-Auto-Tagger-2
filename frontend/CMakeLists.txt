@@ -1,13 +1,20 @@
 project(SpotifyAPI_Frontend)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
+    src/AlbumLabel.cpp
     src/App.cpp
+    src/ArtistLabel.cpp
     src/CircleProgressBar.cpp
     src/LabeledTextCtrl.cpp
+    src/IconProvider.cpp
     src/main.cpp
     src/MainFrame.cpp
+    src/MediaLabel.cpp
+    include/MediaWindow.hpp
+    src/PlaylistLabel.cpp
     src/ScrollText.cpp
     src/SettingsWindow.cpp
+    src/SpotifyWindow.cpp
     src/TrackEditWindow.cpp
     src/TrackLabel.cpp
     src/TrackWindow.cpp
@@ -15,7 +22,7 @@ set(SOURCES
 
 # Find wxWidgets
 # set(CMAKE_PREFIX_PATH /usr/include/wx-3.0/wx/)
-find_package(wxWidgets REQUIRED COMPONENTS core base)
+find_package(wxWidgets REQUIRED COMPONENTS core base adv)
 include(${wxWidgets_USE_FILE})
 
 find_package(wxWidgets REQUIRED)

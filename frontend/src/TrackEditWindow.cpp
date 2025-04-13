@@ -1,5 +1,5 @@
 #include "../include/TrackEditWindow.h"
-#include "../include/TrackLabel.h"
+#include "../include/MediaLabel.h"
 
 TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                                  const wxPoint &_pos, const wxSize &_size)
@@ -56,7 +56,7 @@ void TrackEditWindow::show(const std::vector<TagLib::MPEG::File *> &_tracks) {
 
     albumCover->SetBitmap(
         getCommonBitmap(_tracks, albumCover->GetSize(), [this](auto *track) {
-            return TrackLabel::loadImageFromTag(track, albumCover->GetSize());
+            return MediaLabel::loadImageFromTag(track, albumCover->GetSize());
         }));
     titleText->SetValue(getCommonAttribute(
         _tracks, [](auto *tag) { return tag->title().toCString(); }));

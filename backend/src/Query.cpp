@@ -203,7 +203,9 @@ double Query::similarityScore(int duration1, int duration2) {
 double Query::similarityScoreDate(const std::string &date1,
                                   const std::string &date2) {
     auto daysSinceEpoch = [](std::string date) -> int {
-        if (date.find('-') == std::string::npos) {
+        if (date.size() == 4) {
+            date.append("-01-01");
+        } else if (date.find('-') == std::string::npos) {
             date.insert(6, "-");
             date.insert(4, "-");
         }

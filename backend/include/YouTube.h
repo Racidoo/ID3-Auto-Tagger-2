@@ -27,7 +27,8 @@ class YouTube : protected Query {
                     unsigned int _maxResults = 5,
                     const std::string &_type = "video");
     json searchContentDetails(const std::string &_videoIDs);
-    std::string findBestMatch(const Spotify::Track &_track);
+    std::string findBestMatch(const Spotify::Track &_track,
+                              std::function<void(int)> _onProgress);
 
   private:
     json query(const std::string &_url);

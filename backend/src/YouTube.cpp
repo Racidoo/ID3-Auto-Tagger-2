@@ -92,12 +92,13 @@ unsigned int YouTube::parse_duration(const std::string &iso8601_duration) {
 }
 
 // Select best match from YouTube results
-std::string YouTube::findBestMatch(const Spotify::Track &_track) {
+std::string YouTube::findBestMatch(const Spotify::Track &_track,
+                                   std::function<void(int)> _onProgress) {
     double bestScore = 0.0;
     std::vector<std::string> topMatches;
     std::string searchQuery =
         _track.get_stringArtists() + " - " + _track.get_name();
-    std::cout << "Search query: " << searchQuery << std::endl;
+    // std::cout << "Search query: " << searchQuery << std::endl;
 
     bool googleAPI(true);
 
@@ -117,6 +118,7 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
     } else {
         responseSearchList = responseSearchList["items"];
     }
+    _onProgress(5);
     // std::cout << responseSearchList.dump(4) << std::endl;
     for (const auto &video : responseSearchList) {
         // skip all non-videos
@@ -154,9 +156,9 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
         }
         score += similarityScore(_track.get_durationMs() / 1000, duration);
         if (score < 0.1) {
-            std::cout << "video length " << duration
-                      << " exceeds Spotify track "
-                      << _track.get_durationMs() / 1000 << std::endl;
+            // std::cout << "video length " << duration
+            //           << " exceeds Spotify track "
+            //           << _track.get_durationMs() / 1000 << std::endl;
             continue;
         }
         if (findInString(title, _track.get_name())) {
@@ -175,19 +177,19 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
                 // normalize, so all artists need to be in title for
                 // perfect score
                 score += 1.0 / _track.get_artists().size();
-                std::cout << "Artist: " << score << std::endl;
+                // std::cout << "Artist: " << score << std::endl;
             }
             if (findInString(channel, artist.get_name())) {
                 score += 1.0 / _track.get_artists().size();
-                std::cout << "Channel: " << score << std::endl;
+                // std::cout << "Channel: " << score << std::endl;
             }
         }
 
         score += similarityScoreDate(_track.get_album().get_releaseDate(),
                                      uploadDate);
 
-        std::cout << "score: " << score << "\t" << id << "\t" << title
-                  << std::endl;
+        // std::cout << "score: " << score << "\t" << id << "\t" << title
+        //           << std::endl;
         if (score > bestScore) {
             bestScore = score;
             topMatches.clear();
@@ -195,9 +197,10 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track) {
         } else if (score == bestScore) {
             topMatches.push_back(id);
         }
+        _onProgress(5 / responseSearchList.size());
     }
     if (topMatches.empty()) {
-        std::cout << "No matches found!" << std::endl;
+        std::cerr << "No matches found!" << std::endl;
         return "";
     }
     return topMatches[0];

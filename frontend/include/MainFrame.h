@@ -1,18 +1,16 @@
 #if !defined(MAINFRAME_H)
 #define MAINFRAME_H
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <wx/wx.h>
 
-#include <filesystem>
-
-#include "Downloader.h"
 #include "SettingsWindow.h"
 #include "Spotify/SpotifyAPI.h"
+#include "SpotifyWindow.h"
 #include "TrackLabel.h"
 #include "TrackWindow.h"
-#include "YouTube.h"
 
 // Define a main window class
 class MainFrame : public wxFrame {
@@ -21,19 +19,12 @@ class MainFrame : public wxFrame {
     ~MainFrame() = default;
 
   private:
-    Downloader downloader;
-
     wxBoxSizer *mainSizer;
-    // wxBoxSizer *downloadSizer;
-    // wxBoxSizer *spotifySizer;
-    // wxBoxSizer *youtubeSizer;
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;
-    TrackWindow *spotifyPanel;
+    SpotifyWindow *spotifyPanel;
     TrackWindow *youtubePanel;
     TrackWindow *downloadPanel;
-
-    void OnButtonClick(wxCommandEvent &event);
 
     void ShowPanel(wxScrolledWindow *panel);
     void OnDownloadClicked(wxCommandEvent &event);
@@ -42,9 +33,6 @@ class MainFrame : public wxFrame {
     void OnSettingsClicked(wxCommandEvent &event);
 
     void refreshDownloaded();
-    void search(const wxString &_searchText);
-
-    void startDownload(wxCommandEvent &_event);
 };
 
 #endif // MAINFRAME_H

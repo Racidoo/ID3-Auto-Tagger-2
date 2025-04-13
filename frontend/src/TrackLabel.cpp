@@ -1,4 +1,5 @@
 #include "../include/TrackLabel.h"
+#include "../include/MediaLabel.h"
 #include "../include/ScrollText.h"
 #include "../include/Spotify/Track.h"
 
@@ -13,8 +14,8 @@ TrackLabel::TrackLabel(wxWindow *_parent, const wxString &_songPath)
     TagLib::FileRef fr(TagLib::FileName(_songPath), true,
                        TagLib::AudioProperties::Accurate);
     uint length = fr.audioProperties()->length();
-    create(loadImageFromTag(localTrack.get(),
-                            wxSize(columnWidths[0], columnWidths[0])),
+    create(MediaLabel::loadImageFromTag(
+               localTrack.get(), wxSize(columnWidths[0], columnWidths[0])),
            localTrack->tag()->title().toCString(),
            localTrack->tag()->artist().toCString(),
            localTrack->tag()->album().toCString(),
@@ -25,11 +26,12 @@ TrackLabel::TrackLabel(wxWindow *_parent, const Spotify::Track &_track)
     : wxPanel(_parent, wxID_ANY, wxDefaultPosition),
       spotifyTrack(std::make_unique<Spotify::Track>(_track)) {
 
-    create(loadImageFromURL(spotifyTrack->get_album().get_imageUrl(),
-                            wxSize(columnWidths[0], columnWidths[0])),
-           spotifyTrack->get_name(), spotifyTrack->get_stringArtists(),
-           spotifyTrack->get_album().get_name(), "Unknown genre",
-           spotifyTrack->get_durationMs() / 1000);
+    create(
+        MediaLabel::loadImageFromURL(spotifyTrack->get_album().get_imageUrl(),
+                                     wxSize(columnWidths[0], columnWidths[0])),
+        spotifyTrack->get_name(), spotifyTrack->get_stringArtists(),
+        spotifyTrack->get_album().get_name(), "Unknown genre",
+        spotifyTrack->get_durationMs() / 1000);
 }
 
 TrackLabel::~TrackLabel() {}
@@ -129,113 +131,6 @@ void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
         return;
     trackEvent.SetString(spotifyTrack->get_id().c_str());
     wxPostEvent(GetParent(), trackEvent); // Send event to parent
-}
-
-/**
- * @brief
- *
- * @param _url
- * @param _size
- * @return wxBitmap
- */
-wxBitmap TrackLabel::loadImageFromURL(const wxString &_url,
-                                      const wxSize &_size) {
-    wxImage image;
-    if (wxFileExists(_url)) {
-
-        // Load from file
-        image.LoadFile(_url, wxBITMAP_TYPE_ANY);
-        if (!image.IsOk()) {
-            wxLogError("Failed to load image: %s", _url);
-            return wxNullBitmap;
-        }
-        return wxBitmap(image);
-    }
-    wxHTTP http;
-    http.SetHeader("User-Agent", "Mozilla/5.0"); // Mimic a browser
-    http.SetTimeout(10);                         // 10 seconds timeout
-
-    // Parse the URL
-    wxURI uri(_url);
-    wxString host = uri.GetServer();
-    wxString path = uri.GetPath();
-    if (path.IsEmpty())
-        path = "/";
-
-    // Connect to the host
-    if (!http.Connect(host)) {
-        wxLogError("Failed to connect to host: %s", host);
-        return wxBitmap();
-    }
-
-    // Get the image as a stream
-    wxInputStream *stream = http.GetInputStream(path);
-    if (!stream || !stream->IsOk()) {
-        wxLogError("Failed to get input stream from %s", _url);
-        return wxBitmap();
-    }
-    wxMemoryOutputStream memStream;
-    stream->Read(memStream);
-    wxMemoryInputStream inputStream(memStream);
-    if (image.LoadFile(inputStream, wxBITMAP_TYPE_ANY))
-        return wxBitmap(image.Rescale(_size.GetWidth(), _size.GetHeight()));
-
-    wxLogError("Failed to load image from stream");
-
-    return wxBitmap(50, 50); // Return empty bitmap if load fails
-}
-
-wxBitmap TrackLabel::loadImageFromTag(TagLib::MPEG::File *_track,
-                                      const wxSize &_size) {
-    if (!_track->hasID3v2Tag()) {
-        return wxBitmap();
-    }
-    // Get ID3v2 tag
-    auto tag = _track->ID3v2Tag();
-    if (!tag) {
-        // wxLogError("No ID3v2 tag found in: %s", track.name());
-        return wxBitmap();
-    }
-
-    // Search for an APIC (Attached Picture) frame
-    TagLib::ID3v2::FrameList frames = tag->frameListMap()["APIC"];
-    if (frames.isEmpty()) {
-        // wxLogError("No album cover found in: %s", track.name());
-        return wxBitmap();
-    }
-
-    // Extract image data
-    auto *apic =
-        dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frames.front());
-    if (!apic) {
-        // wxLogError("Invalid APIC frame in: %s", track.name());
-        return wxBitmap();
-    }
-
-    // Get raw image data
-    TagLib::ByteVector imageData = apic->picture();
-    if (imageData.isEmpty()) {
-        // wxLogError("APIC frame contains no image data in: %s", track.name());
-        return wxBitmap();
-    }
-
-    // Add missing EOI marker if needed
-    if (!(imageData.size() >= 2 &&
-          imageData[imageData.size() - 2] == (char)0xFF &&
-          imageData[imageData.size() - 1] == (char)0xD9)) {
-        imageData.append((char)0xFF);
-        imageData.append((char)0xD9);
-    }
-
-    // Convert to wxWidgets image
-    wxMemoryInputStream imgStream(imageData.data(), imageData.size());
-    wxImage image;
-    if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY)) {
-        wxLogError("Failed to load album cover from: %s", _track->name());
-        return wxBitmap(64, 64);
-    }
-
-    return wxBitmap(image.Rescale(_size.GetWidth(), _size.GetHeight()));
 }
 
 wxSize TrackLabel::DoGetBestSize() const {

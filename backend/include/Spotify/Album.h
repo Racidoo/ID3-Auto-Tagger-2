@@ -14,7 +14,6 @@ class Album : public SpotifyObject {
     const std::string albumType;
     const unsigned int totalTracks;
     const std::string releaseDate;
-    const std::string imageURL;
     std::vector<Artist> artists;
 
     // optional attributes
@@ -29,7 +28,6 @@ class Album : public SpotifyObject {
     ~Album();
 
     inline const std::string get_releaseDate() const { return releaseDate; }
-    inline const std::string get_imageUrl() const { return imageURL; }
     inline const std::string get_label() const { return label; }
     inline const std::string get_copyright() const { return copyright; }
     inline const std::string get_artists() const {

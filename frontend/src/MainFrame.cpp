@@ -1,4 +1,5 @@
 #include "../include/MainFrame.h"
+#include "../include/IconProvider.h"
 #include "../include/TrackEditWindow.h"
 #include <taglib/mpegfile.h>
 
@@ -21,21 +22,21 @@ MainFrame::MainFrame()
     toolBar->SetToolBitmapSize(wxSize(32, 32));
     toolBar->SetMinSize(wxSize(32 + 10, -1)); // Add a little padding if needed
 
+    toolBar->AddTool(IDM_TOOLBAR_DOWNLOAD, wxEmptyString,
+                     wxArtProvider::GetBitmap(wxART_DOWNLOADED, wxART_TOOLBAR),
+                     wxNullBitmap, wxITEM_NORMAL, wxT("Download"),
+                     wxT("View Downloaded Tracks"));
     toolBar->AddTool(
-        IDM_TOOLBAR_DOWNLOAD, wxEmptyString,
-        wxBitmap(wxT("img/cloud-download-alt.png"), wxBITMAP_TYPE_PNG),
-        wxNullBitmap, wxITEM_NORMAL, wxT("Download"),
-        wxT("View Downloaded Tracks"));
-    toolBar->AddTool(IDM_TOOLBAR_SPOTIFY, wxEmptyString,
-                     wxBitmap(wxT("img/spotify.png"), wxBITMAP_TYPE_PNG),
-                     wxNullBitmap, wxITEM_NORMAL, wxT("Spotify"),
-                     wxT("Open Spotify Screen"));
-    toolBar->AddTool(IDM_TOOLBAR_YOUTUBE, wxEmptyString,
-                     wxBitmap(wxT("img/youtube.png"), wxBITMAP_TYPE_PNG),
-                     wxNullBitmap, wxITEM_NORMAL, wxT("YouTube"),
-                     wxT("Open YouTube Screen"));
+        IDM_TOOLBAR_SPOTIFY, wxEmptyString,
+        wxArtProvider::GetBitmap(wxART_BRAND_SPOTIFY, wxART_TOOLBAR),
+        wxNullBitmap, wxITEM_NORMAL, wxT("Spotify"),
+        wxT("Open Spotify Screen"));
+    // toolBar->AddTool(IDM_TOOLBAR_YOUTUBE, wxEmptyString,
+    //  wxArtProvider::GetBitmap(wxART_BRAND_YOUTUBE,wxART_TOOLBAR ),
+    //                  wxNullBitmap, wxITEM_NORMAL, wxT("YouTube"),
+    //                  wxT("Open YouTube Screen"));
     toolBar->AddTool(IDM_TOOLBAR_SETTINGS, wxEmptyString,
-                     wxBitmap(wxT("img/customize.png"), wxBITMAP_TYPE_PNG),
+                     wxArtProvider::GetBitmap(wxART_CUSTOMIZE, wxART_TOOLBAR),
                      wxNullBitmap, wxITEM_NORMAL, wxT("Settings"),
                      wxT("Open Settings Screen"));
     toolBar->Realize();
@@ -47,33 +48,10 @@ MainFrame::MainFrame()
 
     // Create panels for different screens (Initially hidden)
     downloadPanel = new TrackWindow(mainPanel);
-    spotifyPanel = new TrackWindow(mainPanel);
+    spotifyPanel = new SpotifyWindow(mainPanel);
     youtubePanel = new TrackWindow(mainPanel);
     settingsPanel = new SettingsWindow(mainPanel);
 
-    // mainPanel->SetBackgroundColour(*wxBLUE);
-    // downloadPanel->SetBackgroundColour(*wxYELLOW);
-    // spotifyPanel->SetBackgroundColour(*wxGREEN);
-    // youtubePanel->SetBackgroundColour(*wxRED);
-
-    wxTextCtrl *searchBar =
-        new wxTextCtrl(mainPanel, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                       wxDefaultSize, wxTE_PROCESS_ENTER);
-    searchBar->Bind(wxEVT_TEXT_ENTER, [this, searchBar](wxCommandEvent &event) {
-        this->search(searchBar->GetValue());
-    });
-    wxBitmapButton *searchButton = new wxBitmapButton(
-        mainPanel, wxID_ANY,
-        wxBitmap(wxT("img/magnifying-glass-play.png"), wxBITMAP_TYPE_PNG),
-        wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-    searchButton->Bind(wxEVT_BUTTON, [this, searchBar](wxCommandEvent &event) {
-        this->search(searchBar->GetValue());
-    });
-
-    auto searchSizer = new wxBoxSizer(wxHORIZONTAL);
-    searchSizer->Add(searchBar, 1, wxEXPAND, 5);
-    searchSizer->Add(searchButton, 0, wxEXPAND, 5);
-    mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(downloadPanel, 1, wxEXPAND);
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);
     mainSizer->Add(youtubePanel, 1, wxEXPAND);
@@ -93,8 +71,6 @@ MainFrame::MainFrame()
     Bind(wxEVT_TOOL, &MainFrame::OnSpotifyClicked, this, IDM_TOOLBAR_SPOTIFY);
     Bind(wxEVT_TOOL, &MainFrame::OnYouTubeClicked, this, IDM_TOOLBAR_YOUTUBE);
     Bind(wxEVT_TOOL, &MainFrame::OnSettingsClicked, this, IDM_TOOLBAR_SETTINGS);
-
-    this->Bind(EVT_TRACK_DOWNLOAD, &MainFrame::startDownload, this);
 
     this->Bind(EVT_SHOW_TRACK_DETAILS,
                [this, trackEditWindow](wxCommandEvent &event) {
@@ -204,18 +180,6 @@ void MainFrame::OnSettingsClicked(wxCommandEvent &event) {
     ShowPanel(settingsPanel);
 }
 
-void MainFrame::startDownload(wxCommandEvent &_event) {
-    TrackLabel *chosenTrackLabel =
-        spotifyPanel->get_trackLabels().at(_event.GetString().ToStdString());
-    Spotify::Track chosenTrack = *chosenTrackLabel->get_spotifyTrack();
-    downloader.downloadResource(
-        {chosenTrack}, [chosenTrackLabel](int progress) {
-            wxLogDebug("%i",
-                       progress); // yt-dlp output should be inserted here
-            chosenTrackLabel->get_ProgressBar()->SetProgress(progress);
-        });
-}
-
 void MainFrame::refreshDownloaded() {
     std::filesystem::path musicPath = std::filesystem::current_path() / "music";
 
@@ -234,28 +198,8 @@ void MainFrame::refreshDownloaded() {
                 new TrackLabel(downloadPanel, file.path().string()));
         }
     }
-// downloadPanel->ge
+    // downloadPanel->ge
     downloadPanel->FitInside();
     downloadPanel->Layout();
     ShowPanel(downloadPanel);
-}
-
-void MainFrame::search(const wxString &_searchText) {
-    std::vector<Spotify::Track> tracks;
-    std::string origin =
-        downloader.fetchResource(_searchText.ToStdString(), tracks);
-    TrackWindow *activePanel;
-    if (origin == "Spotify") {
-        activePanel = spotifyPanel;
-    } else if (origin == "YouTube") {
-        activePanel = youtubePanel;
-    } else
-        return;
-    activePanel->deleteChildren();
-    for (auto &&track : tracks) {
-        activePanel->appendChildren(new TrackLabel(activePanel, track));
-    }
-    activePanel->FitInside();
-    activePanel->Layout();
-    ShowPanel(activePanel);
 }

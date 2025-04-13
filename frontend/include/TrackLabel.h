@@ -6,23 +6,14 @@
 // #include <vector>
 // #include <wx-3.0/wx/grid.h>
 // #include <wx/image.h>
-#include <wx/mstream.h>
 // #include <wx-3.0/wx/sizer.h>
 // #include <wx-3.0/wx/statbmp.h>
-#include <wx/url.h>
 // #include <wx-3.0/wx/wfstream.h>
 // #include <wx-3.0/wx/wx.h>
 
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
-
-#include <taglib/attachedpictureframe.h>
-#include <taglib/audioproperties.h>
-#include <taglib/fileref.h>
-#include <taglib/id3v2tag.h>
-#include <taglib/mpegfile.h>
-#include <taglib/textidentificationframe.h>
 
 #include "CircleProgressBar.h"
 #include "Spotify/Track.h"
@@ -55,10 +46,6 @@ class TrackLabel : public wxPanel {
     Spotify::Track *get_spotifyTrack() const { return spotifyTrack.get(); }
     TagLib::MPEG::File *get_localTrack() const { return localTrack.get(); }
     CircleProgressBar *get_ProgressBar() const { return progressBar; }
-
-    static wxBitmap loadImageFromURL(const wxString &_url, const wxSize &_size);
-    static wxBitmap loadImageFromTag(TagLib::MPEG::File *_track,
-                                     const wxSize &_size);
 
     wxSize DoGetBestSize() const override;
 };

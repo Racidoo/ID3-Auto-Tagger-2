@@ -59,36 +59,18 @@ json SpotifyAPI::handleRequest(const std::string &_request) {
     if (response.contains("error")) {
         std::cerr << response.dump(4) << std::endl;
     }
+    std::ofstream("response.json") << response.dump(4);
     return response;
 }
 
-json SpotifyAPI::searchTrack(const std::string &_query) {
-    std::stringstream url;
-    url << "https://api.spotify.com/v1/search?q="
-        << curl_escape(_query.c_str(), 0) << "&type=track";
-    return handleRequest(url.str());
-}
-
-json SpotifyAPI::search(searchItem_type _type, const std::string &_q,
-                        const std::string &_market, const std::string &_limit,
-                        const std::string &_offset) {
-    return {};
-}
-
 Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
-    std::vector<Artist> albumArtists;
-    for (auto &&artist : _jsonAlbum.at("artists")) {
-        albumArtists.emplace_back(artist.at("id").get<std::string>(),
-                                  artist.at("name").get<std::string>());
-    }
-
     Album album(_jsonAlbum.at("id").get<std::string>(),
                 _jsonAlbum.at("name").get<std::string>(),
                 _jsonAlbum.at("album_type").get<std::string>(),
                 _jsonAlbum.at("total_tracks").get<unsigned int>(),
                 _jsonAlbum.at("release_date").get<std::string>(),
                 _jsonAlbum.at("images").at(1).at("url").get<std::string>(),
-                albumArtists);
+                createArtists(_jsonAlbum.at("artists")));
     if (_fullTags) {
         const std::string id = _jsonAlbum.at("id").get<std::string>();
         json jsonFullAlbum = handleRequest(urlAPI + "albums/" + id);
@@ -98,13 +80,28 @@ Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
     return album;
 }
 
+Artist SpotifyAPI::createArtist(const json &_jsonArtist) const {
+    return Artist(_jsonArtist.at("id").get<std::string>(),
+                  _jsonArtist.at("name").get<std::string>(),
+                  _jsonArtist.contains("images") &&
+                          !_jsonArtist.at("images").empty()
+                      ? _jsonArtist.at("images")[1].at("url").get<std::string>()
+                      : "");
+}
+
 std::vector<Artist> SpotifyAPI::createArtists(const json &_jsonArtists) const {
-    std::vector<Artist> trackArtists;
+    std::vector<Artist> artists;
     for (auto &&artist : _jsonArtists) {
-        trackArtists.emplace_back(artist.at("id").get<std::string>(),
-                                  artist.at("name").get<std::string>());
+        artists.push_back(createArtist(artist));
     }
-    return trackArtists;
+    return artists;
+}
+
+Playlist SpotifyAPI::createPlaylist(const json &_jsonPlaylist) const {
+    return Playlist(_jsonPlaylist.at("id").get<std::string>(),
+                    _jsonPlaylist.at("name").get<std::string>(),
+                    _jsonPlaylist.at("images")[0].at("url").get<std::string>(),
+                    createUser(_jsonPlaylist.at("owner")));
 }
 
 Track SpotifyAPI::createTrack(const json &_jsonTrack,
@@ -116,6 +113,26 @@ Track SpotifyAPI::createTrack(const json &_jsonTrack,
                  _jsonTrack.at("explicit").get<bool>(),
                  _jsonTrack.at("track_number").get<unsigned int>(), _album,
                  createArtists(_jsonTrack["artists"]));
+}
+
+User SpotifyAPI::createUser(const json &_jsonUser) const {
+    return User(_jsonUser.at("id").get<std::string>(),
+                _jsonUser.at("display_name").get<std::string>(),
+                _jsonUser.contains("images")
+                    ? _jsonUser.at("images")[1].at("url").get<std::string>()
+                    : "");
+}
+
+Album SpotifyAPI::getAlbum(const std::string &_id) {
+    return createAlbum(handleRequest(urlAPI + "albums/" + _id));
+}
+
+Artist SpotifyAPI::getArtist(const std::string &_id) {
+    return createArtist(handleRequest(urlAPI + "artists/" + _id));
+}
+
+Playlist SpotifyAPI::getPlaylist(const std::string &_id) {
+    return createPlaylist(handleRequest(urlAPI + "playlists/" + _id));
 }
 
 Track SpotifyAPI::getTrack(const std::string &_id) {
@@ -140,7 +157,6 @@ std::vector<Track> SpotifyAPI::getAlbumTracks(const std::string &_id) {
 
 std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
     json jsonPlaylist = handleRequest(urlAPI + "playlists/" + _id);
-    std::ofstream("response.json") << jsonPlaylist.dump(4);
     json jsonTracks = jsonPlaylist.at("tracks");
     std::vector<Track> tracks;
 
@@ -152,6 +168,88 @@ std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
     return tracks;
 }
 
+json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
+                        const std::string &_market, const std::string &_limit,
+                        const std::string &_offset) {
+    std::string typeStr;
+    switch (_type) {
+    case searchItem_type::TRACK:
+        typeStr = "track";
+        break;
+    case searchItem_type::ALBUM:
+        typeStr = "album";
+        break;
+    case searchItem_type::ARTIST:
+        typeStr = "artist";
+        break;
+    case searchItem_type::PLAYLIST:
+        typeStr = "playlist";
+        break;
+    }
+
+    std::stringstream url;
+    url << "https://api.spotify.com/v1/search?q="
+        << curl_escape(_query.c_str(), 0) << "&type=" << typeStr;
+
+    if (!_market.empty())
+        url << "&market=" << _market;
+    if (!_limit.empty())
+        url << "&limit=" << _limit;
+    if (!_offset.empty())
+        url << "&offset=" << _offset;
+
+    json result = handleRequest(url.str());
+    return result.at(typeStr + 's').at("items"); // e.g., result["tracks"]
+}
+
+std::vector<Track> SpotifyAPI::searchTrack(const std::string &_query,
+                                           const std::string &_market,
+                                           const std::string &_limit,
+                                           const std::string &_offset) {
+    std::vector<Track> tracks;
+    for (auto &&jsonTrack : search(TRACK, _query, _market, _limit, _offset)) {
+        tracks.push_back(
+            createTrack(jsonTrack, createAlbum(jsonTrack.at("album"))));
+    }
+    return tracks;
+}
+
+std::vector<Album> SpotifyAPI::searchAlbum(const std::string &_query,
+                                           const std::string &_market,
+                                           const std::string &_limit,
+                                           const std::string &_offset) {
+    std::vector<Album> albums;
+    for (auto &&jsonAlbum : search(ALBUM, _query, _market, _limit, _offset)) {
+        albums.push_back(createAlbum(jsonAlbum));
+    }
+    return albums;
+}
+
+std::vector<Artist> SpotifyAPI::searchArtist(const std::string &_query,
+                                             const std::string &_market,
+                                             const std::string &_limit,
+                                             const std::string &_offset) {
+    std::vector<Artist> artists;
+    for (auto &&jsonArtist : search(ARTIST, _query, _market, _limit, _offset)) {
+        artists.push_back(createArtist(jsonArtist));
+    }
+    return artists;
+}
+
+std::vector<Playlist> SpotifyAPI::searchPlaylist(const std::string &_query,
+                                                 const std::string &_market,
+                                                 const std::string &_limit,
+                                                 const std::string &_offset) {
+    std::vector<Playlist> playlists;
+    for (auto &&jsonPlaylist :
+         search(PLAYLIST, _query, _market, _limit, _offset)) {
+        if (jsonPlaylist == nullptr)
+            continue;
+        playlists.push_back(createPlaylist(jsonPlaylist));
+    }
+    return playlists;
+}
+
 /**
  * @brief
  *
@@ -161,22 +259,14 @@ std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
  */
 std::string SpotifyAPI::searchId(const std::string &_filename,
                                  const std::string &_type) {
-    // std::string filepath =
-    //     (std::filesystem::current_path() / _filename).string();
-    // std::cout << filepath << std::endl;
     TagLib::FileRef file(_filename.c_str());
     if (!file.isNull()) {
         std::cout << "Filename: " << file.file()->name() << std::endl;
     } else {
         std::cerr << "Error: Invalid file!" << std::endl;
     }
-    // auto file = _track.name();
-    // std::string filename = _track.name();
     std::string title;
     std::string artist;
-    // if (_track.isValid())
-    //     std::cout << "Filename: " << _track.name().to8Bit(true) <<
-    //     std::endl;
     std::string query;
 
     if (file.tag()) {
@@ -191,59 +281,47 @@ std::string SpotifyAPI::searchId(const std::string &_filename,
     } else {
         query = artist + " - " + title;
     }
-
-    // std::cout << "Query for Spotify API: " << query << std::endl;
-
-    // std::ofstream outfile(std::filesystem::current_path() /
-    // "response.json");
-    json response = searchTrack(query);
+    std::vector<Track> tracks = searchTrack(query);
 
     double bestScore = 0.0;
-    std::vector<json *> topMatches;
+    std::vector<Track *> topMatches;
     int num_res(0);
     double allScores;
-    for (auto &&result : response["tracks"]["items"]) {
+    for (auto &&track : tracks) {
         num_res++;
         double score;
         if (!title.empty()) {
-            score = similarityScore(title, result["name"]);
+            score = similarityScore(title, track.get_name());
         } else {
             score = similarityScore(title, _filename);
         }
         // Bonus, if tracklength matches
         score += similarityScore(file.audioProperties()->lengthInSeconds(),
-                                 result["duration_ms"].get<int>() / 1000);
+                                 track.get_durationMs() / 1000);
         // Bonus, if album is single
-        if (result["album"]["album_type"] == "single") {
+        if (track.get_album().get_type() == "single") {
             score += 1;
         }
-        std::cout << result["id"] << "\tscore: " << score << std::endl;
+        std::cout << track.get_id() << "\tscore: " << score << std::endl;
 
         if (score > bestScore) {
             bestScore = score;
             topMatches.clear();
-            topMatches.push_back(&result);
+            topMatches.push_back(&track);
         } else if (score == bestScore) {
-            topMatches.push_back(&result);
+            topMatches.push_back(&track);
         }
         allScores += score;
     }
     double middle = allScores / num_res;
 
-    std::string image = "cover.jpg";
+    // std::string image = "cover.jpg";
 
     // If only one top match, return it
     if (topMatches.size() == 1) {
         std::cout << "Mean deviation: " << bestScore - middle << std::endl;
-        // const std::string url = (*topMatches[0])
-        //                             .at("album")
-        //                             .at("images")
-        //                             .at(1)
-        //                             .at("url")
-        //                             .get<std::string>();
-        // downloadImage(url, image);
 
-        return (*topMatches[0])["id"];
+        return topMatches[0]->get_id();
     }
 
     // std::cout << "length" <<

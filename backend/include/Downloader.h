@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <regex>
+#include <set>
 #include <string>
 #include <vector>
 // #include <thread>
@@ -34,9 +35,24 @@ class Downloader {
     Downloader(/* args */);
     ~Downloader();
 
-    void verifyTags();
-    std::string fetchResource(const std::string &_url,
-                              std::vector<Spotify::Track> &_tracks);
+    enum class SearchCategory {
+        Track,
+        Album,
+        Artist,
+        Playlist,
+        // Add more categories here if needed
+    };
+
+    struct SearchResult {
+        std::vector<Spotify::Track> tracks;
+        std::vector<Spotify::Album> albums;
+        std::vector<Spotify::Artist> artists;
+        std::vector<Spotify::Playlist> playlists;
+    };
+
+    // void verifyTags();
+    SearchResult fetchResource(const std::string &_query,
+                               const std::set<SearchCategory> &categories);
     std::string downloadResource(const std::vector<Spotify::Track> &_tracks,
                                  std::function<void(int)> _onProgress);
 };

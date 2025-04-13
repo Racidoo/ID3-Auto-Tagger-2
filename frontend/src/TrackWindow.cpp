@@ -3,11 +3,9 @@
 #include <wx/event.h>
 
 TrackWindow::TrackWindow(wxWindow *_parent)
-    : wxScrolledWindow(_parent, wxID_ANY),
-      mainSizer(new wxBoxSizer(wxVERTICAL)) {
-
+    : wxScrolledWindow(_parent, wxID_ANY) {
     this->SetScrollRate(15, 15);
-    this->SetSizer(mainSizer);
+    this->SetSizer(new wxBoxSizer(wxVERTICAL));
     Bind(EVT_TRACKLABEL_CLICKED, &TrackWindow::processClickedLabel, this);
 }
 
@@ -44,10 +42,7 @@ void TrackWindow::createHeader() {
     GetSizer()->AddSpacer(10);
 }
 
-void TrackWindow::sortByHeader(){
-     
-}
-
+void TrackWindow::sortByHeader() {}
 
 /**
  * @brief Clears elements of Sizer and clears trackLabels.
@@ -55,7 +50,7 @@ void TrackWindow::sortByHeader(){
  */
 void TrackWindow::deleteChildren() {
     // Clear the sizer (all child elements)
-    this->GetSizer()->Clear(true);
+    GetSizer()->Clear(true);
     trackLabels.clear();
     activeSongs.clear();
     createHeader();
@@ -66,7 +61,7 @@ void TrackWindow::deleteChildren() {
  * @param _trackLabel The new TrackLabel to be added.
  */
 void TrackWindow::appendChildren(TrackLabel *_trackLabel) {
-    mainSizer->Add(_trackLabel, 0, wxEXPAND, 5);
+    GetSizer()->Add(_trackLabel, 0, wxEXPAND, 5);
     if (_trackLabel->get_spotifyTrack()) {
         trackLabels.insert(
             {_trackLabel->get_spotifyTrack()->get_id(), _trackLabel});

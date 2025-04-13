@@ -2,7 +2,6 @@
 #define TRACK_EDIT_WINDOW_H
 
 #include <functional> // for std::hash
-#include <optional>
 #include <string> // for std::string
 #include <taglib/mpegfile.h>
 #include <wx/wx.h>

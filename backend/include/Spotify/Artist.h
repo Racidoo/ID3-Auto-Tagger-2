@@ -12,7 +12,8 @@ namespace Spotify {
 class Artist : public SpotifyObject {
   private:
   public:
-    Artist(const std::string &_id, const std::string &_name);
+    Artist(const std::string &_id, const std::string &_name,
+           const std::string &_imageURL);
     ~Artist();
 
     static std::string vecToStr(const std::vector<Artist> &_artists,

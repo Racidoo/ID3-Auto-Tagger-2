@@ -52,26 +52,11 @@ void CircleProgressBar::OnPaint(wxPaintEvent &_event) {
     wxBitmap iconBitmap;
 
     if (progress == 0) {
-        if (!_iconDownload.IsOk()) {
-            wxLogWarning(wxT("Failed to load ") +
-                         std::string(std::filesystem::current_path() / "img" /
-                                     "progress-download.png"));
-        } else
-            iconBitmap = _iconDownload;
+        iconBitmap = wxArtProvider::GetBitmap(wxART_CIRCLE_DOWNLOAD);
     } else if (progress == 100) {
-        if (!_iconCheck.IsOk()) {
-            wxLogWarning(wxT("Failed to load ") +
-                         std::string(std::filesystem::current_path() / "img" /
-                                     "check-circle.png"));
-        } else
-            iconBitmap = _iconCheck;
+        iconBitmap = wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK);
     } else if (progress == -1) {
-        if (!_iconXmark.IsOk()) {
-            wxLogWarning(wxT("Failed to load ") +
-                         std::string(std::filesystem::current_path() / "img" /
-                                     "circle-xmark.png"));
-        } else
-            iconBitmap = _iconXmark;
+        iconBitmap = wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK);
     }
 
     if (iconBitmap.IsOk()) {

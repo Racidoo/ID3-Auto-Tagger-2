@@ -49,6 +49,7 @@ class Track : public SpotifyObject {
         DISC
     };
 
+    const std::string get_imageUrl() = delete;
     inline const std::vector<Artist> get_artists() const { return artists; }
     inline const Album get_album() const { return album; }
     inline const std::string get_stringArtists() const {

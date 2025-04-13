@@ -15,7 +15,7 @@ wxDECLARE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
 class TrackWindow : public wxScrolledWindow {
   private:
     std::unordered_map<std::string, TrackLabel *> trackLabels;
-    wxBoxSizer *mainSizer;
+    // wxBoxSizer *mainSizer;
     std::set<TrackLabel *> activeSongs;
 
   public:

@@ -5,11 +5,13 @@ set(SOURCES
     # src/main.cpp
     src/Query.cpp
     src/Downloader.cpp
-    src/Spotify/SpotifyAPI.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp
+    src/Spotify/Playlist.cpp
+    src/Spotify/SpotifyAPI.cpp
     src/Spotify/SpotifyObject.cpp
     src/Spotify/Track.cpp
+    src/Spotify/User.cpp
     src/YouTube.cpp
     lib/base64/base64.cpp
     # Add more source files here
