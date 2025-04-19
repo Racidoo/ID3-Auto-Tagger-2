@@ -17,8 +17,8 @@ class PlaylistLabel : public MediaLabel {
     inline const Spotify::Playlist *get_spotifyPlaylist() const {
         return spotifyPlaylist.get();
     }
-    inline const Spotify::Playlist &getSpotifyObject() const {
-        return *spotifyPlaylist;
+    inline const Spotify::Playlist *getSpotifyObject() const override {
+        return spotifyPlaylist.get();
     }
 };
 

@@ -168,6 +168,17 @@ std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
     return tracks;
 }
 
+/**
+ * @brief
+ *
+ * @param _type
+ * @param _query
+ * @param _market
+ * @param _limit
+ * @param _offset
+ * @throws std::runtime_error - forwards HTML Error codes
+ * @return json
+ */
 json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
                         const std::string &_market, const std::string &_limit,
                         const std::string &_offset) {
@@ -199,6 +210,9 @@ json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
         url << "&offset=" << _offset;
 
     json result = handleRequest(url.str());
+    if (result.contains("error")) {
+        throw std::runtime_error(result.dump());
+    }
     return result.at(typeStr + 's').at("items"); // e.g., result["tracks"]
 }
 

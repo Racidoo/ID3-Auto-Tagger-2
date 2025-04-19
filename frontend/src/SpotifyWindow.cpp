@@ -78,12 +78,37 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent) : wxScrolledWindow(_parent) {
     albumWindow->Hide();
     artistWindow->Hide();
     playlistWindow->Hide();
+    trackHeader->Hide();
+    albumHeader->Hide();
+    artistHeader->Hide();
+    playlistHeader->Hide();
 
-    trackWindow->SetScrollRate(0, 0);
-    
+    // trackWindow->SetScrollRate(0, 0);
+
     SetSizerAndFit(mainSizer);
 
     this->Bind(EVT_TRACK_DOWNLOAD, &SpotifyWindow::startDownload, this);
+    this->Bind(EVT_MEDIA_LABEL_CLICKED, [this](wxCommandEvent &event) {
+        auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
+        if (!label)
+            return;
+        const Spotify::SpotifyObject *obj = label->getSpotifyObject();
+        if (!obj)
+            return;
+
+        std::string id = obj->get_id();
+        std::string type = obj->get_type();
+
+        std::cout << "Clicked object ID: " << id << ", Type: " << type
+                  << std::endl;
+        // track search for artist not supported
+        if (type == "artist") {
+            return;
+        }
+
+        std::string url("https://open.spotify.com/intl-de/" + type + "/" + id);
+        showSearchResults(downloader.fetchResource(url));
+    });
 }
 
 SpotifyWindow::~SpotifyWindow() {}

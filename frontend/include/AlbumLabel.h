@@ -16,8 +16,8 @@ class AlbumLabel : public MediaLabel {
     inline const Spotify::Album *get_spotifyAlbum() const {
         return spotifyAlbum.get();
     }
-    inline const Spotify::Album &getSpotifyObject() const {
-        return *spotifyAlbum;
+    inline const Spotify::SpotifyObject *getSpotifyObject() const override {
+        return spotifyAlbum.get();
     }
 };
 #endif // ALBUM_LABEL_H

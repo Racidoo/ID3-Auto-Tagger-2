@@ -37,6 +37,13 @@ bool Downloader::writeBlacklist() const {
     return true;
 }
 
+/**
+ * @brief 
+ * 
+ * @param _query 
+ * @param categories 
+ * @return Downloader::SearchResult 
+ */
 Downloader::SearchResult
 Downloader::fetchResource(const std::string &_query,
                           const std::set<SearchCategory> &categories) {

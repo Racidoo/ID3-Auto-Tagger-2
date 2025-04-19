@@ -25,7 +25,8 @@ class YouTube : protected Query {
     json searchList(const std::string &_query,
                     const std::string &_service = "yt-dlp",
                     unsigned int _maxResults = 5,
-                    const std::string &_type = "video");
+                    const std::string &_type = "video",
+                    const std::string &_nextPageToken = "");
     json searchContentDetails(const std::string &_videoIDs);
     std::string findBestMatch(const Spotify::Track &_track,
                               std::function<void(int)> _onProgress);

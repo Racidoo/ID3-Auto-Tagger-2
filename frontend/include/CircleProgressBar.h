@@ -13,6 +13,7 @@ class CircleProgressBar : public wxWindow {
     CircleProgressBar(wxWindow *_parent, wxWindowID _id = wxID_ANY);
 
     void SetProgress(int _progress);
+    inline int get_progress() const { return progress; }
 
   protected:
     void OnPaint(wxPaintEvent &_event);

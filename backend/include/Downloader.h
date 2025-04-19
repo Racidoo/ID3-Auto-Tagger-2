@@ -52,7 +52,7 @@ class Downloader {
 
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
-                               const std::set<SearchCategory> &categories);
+                               const std::set<SearchCategory> &categories = {});
     std::string downloadResource(const std::vector<Spotify::Track> &_tracks,
                                  std::function<void(int)> _onProgress);
 };

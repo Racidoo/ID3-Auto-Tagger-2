@@ -3,6 +3,7 @@
 
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <exception>
 #include <string>
 
 #include "Album.h"

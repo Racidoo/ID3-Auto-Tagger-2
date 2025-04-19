@@ -1,7 +1,10 @@
 #include "../include/MediaLabel.h"
 
+wxDEFINE_EVENT(EVT_MEDIA_LABEL_CLICKED, wxCommandEvent);
+
 MediaLabel::MediaLabel(wxWindow *_parent, const wxBitmap &_cover,
-                       const wxString &_title, const std::vector<wxString> &_infoLines)
+                       const wxString &_title,
+                       const std::vector<wxString> &_infoLines)
     : wxPanel(_parent, wxID_ANY, wxDefaultPosition) {
     auto coverBitmap = new wxStaticBitmap(this, wxID_ANY, _cover);
     auto titleText = new wxStaticText(this, wxID_ANY, _title, wxDefaultPosition,
@@ -19,7 +22,20 @@ MediaLabel::MediaLabel(wxWindow *_parent, const wxBitmap &_cover,
         mainSizer->Add(infoText, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     }
 
+    coverBitmap->Bind(wxEVT_LEFT_DOWN, &MediaLabel::onClick, this);
+    titleText->Bind(wxEVT_LEFT_DOWN, &MediaLabel::onClick, this);
+    this->Bind(wxEVT_LEFT_DOWN, &MediaLabel::onClick, this);
+
     SetSizerAndFit(mainSizer);
+}
+
+void MediaLabel::onClick(wxMouseEvent &_event) {
+
+    wxCommandEvent notifyEvent(EVT_MEDIA_LABEL_CLICKED, GetId());
+    notifyEvent.SetEventObject(this);
+    wxPostEvent(GetParent(), notifyEvent);
+
+    _event.Skip();
 }
 
 /**

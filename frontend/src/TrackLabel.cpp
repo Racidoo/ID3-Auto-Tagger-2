@@ -127,7 +127,8 @@ void TrackLabel::onClick(wxMouseEvent &event) {
  */
 void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     wxCommandEvent trackEvent(EVT_TRACK_DOWNLOAD);
-    if (!spotifyTrack || spotifyTrack->get_id().empty() || localTrack)
+    if (!spotifyTrack || spotifyTrack->get_id().empty() || localTrack ||
+        progressBar->get_progress() == 100)
         return;
     trackEvent.SetString(spotifyTrack->get_id().c_str());
     wxPostEvent(GetParent(), trackEvent); // Send event to parent

@@ -23,8 +23,10 @@ json YouTube::query(const std::string &_url) {
 }
 
 // Function to perform YouTube API search
+
 json YouTube::searchList(const std::string &_query, const std::string &_service,
-                         unsigned int _maxResults, const std::string &_type) {
+                         unsigned int _maxResults, const std::string &_type,
+                         const std::string &_nextPageToken) {
     if (_service == "yt-dlp") {
         auto result = exec(std::string("yt-dlp \"ytsearch") +
                            std::to_string(_maxResults) + ':' + _query +
@@ -41,10 +43,16 @@ json YouTube::searchList(const std::string &_query, const std::string &_service,
         //     "rquota.\",\"domain\":\"usageLimits\",\"reason\":"
         //     "\"dailyLimitExceeded\"}],\"status\":\"FAILED\"}}");
 
-        auto result =
-            query(searchListUrl + std::string(curl_escape(_query.c_str(), 0)) +
-                  "&type=" + _type.c_str() + "&maxResults=" +
-                  std::to_string(_maxResults) + "&key=" + accessToken);
+        std::string url = searchListUrl +
+                          std::string(curl_escape(_query.c_str(), 0)) +
+                          "&type=" + _type.c_str() +
+                          "&maxResults=" + std::to_string(_maxResults) +
+                          "&key=" + accessToken;
+        if (!_nextPageToken.empty()) {
+            url += "&pageToken=" + _nextPageToken;
+        }
+        auto result = query(url);
+        std::cout << url << std::endl;
         std::ofstream("result.json") << result.dump(4);
         return result;
     }
@@ -98,107 +106,109 @@ std::string YouTube::findBestMatch(const Spotify::Track &_track,
     std::vector<std::string> topMatches;
     std::string searchQuery =
         _track.get_stringArtists() + " - " + _track.get_name();
-    // std::cout << "Search query: " << searchQuery << std::endl;
+    std::cout << "Search query: " << searchQuery << std::endl;
 
     bool googleAPI(true);
+    std::string nextPageToken;
+    int maxPages = 3; // limit how many times we page through results
 
-    // ToDo: API limit reached, fallback to yt-dlp
-    auto responseSearchList = searchList(searchQuery, "google");
-    if (responseSearchList.contains("error")) {
-        if (responseSearchList["error"].contains("code") &&
-            responseSearchList["error"]["code"] == 403) {
-            // If Quota is reached try slower, fallback api
-            responseSearchList = searchList(searchQuery, "yt-dlp");
-            googleAPI = false;
-        } else {
-            std::cerr << "Unknown error!:\n"
-                      << responseSearchList.dump(4) << std::endl;
-            return "";
+    for (int page = 0; page < maxPages; ++page) {
+        auto responseSearchList =
+            searchList(searchQuery, "google", 5, "video", nextPageToken);
+
+        if (responseSearchList.contains("error")) {
+            if (responseSearchList["error"].contains("code") &&
+                responseSearchList["error"]["code"] == 403) {
+                responseSearchList = searchList(searchQuery, "yt-dlp");
+                googleAPI = false;
+            } else {
+                std::cerr << "Unknown error!:\n"
+                          << responseSearchList.dump(4) << std::endl;
+                return "";
+            }
         }
-    } else {
-        responseSearchList = responseSearchList["items"];
-    }
-    _onProgress(5);
-    // std::cout << responseSearchList.dump(4) << std::endl;
-    for (const auto &video : responseSearchList) {
-        // skip all non-videos
+
         if (googleAPI) {
-            if (video["id"]["kind"] != "youtube#video") {
+            if (responseSearchList.contains("nextPageToken")) {
+                nextPageToken =
+                    responseSearchList["nextPageToken"].get<std::string>();
+            }
+            responseSearchList = responseSearchList["items"];
+        }
+
+        _onProgress(5);
+        // std::cout << responseSearchList.dump(4) << std::endl;
+        for (const auto &video : responseSearchList) {
+            if (googleAPI) {
+                if (video["id"]["kind"] != "youtube#video")
+                    continue;
+            } else {
+                if (video["_type"] != "video")
+                    continue;
+            }
+
+            std::string title =
+                googleAPI ? video["snippet"]["title"] : video["title"];
+            std::string channel =
+                googleAPI ? video["snippet"]["channelTitle"] : video["channel"];
+            std::string id = googleAPI ? video["id"]["videoId"] : video["id"];
+            std::string uploadDate =
+                googleAPI
+                    ? video["snippet"]["publishedAt"].get<std::string>().substr(
+                          0, 10)
+                    : video["upload_date"].get<std::string>();
+            unsigned int duration;
+
+            json contentDetails;
+            double score(0);
+            if (googleAPI) {
+                contentDetails = searchContentDetails(id)["items"][0];
+                duration = parse_duration(
+                    contentDetails["contentDetails"]["duration"]);
+            } else {
+                duration = responseSearchList["duration"].get<unsigned int>();
+            }
+
+            score += similarityScore(_track.get_durationMs() / 1000, duration);
+            if (score < 0.1) {
+                std::cout << "video length " << duration
+                          << " exceeds Spotify track "
+                          << _track.get_durationMs() / 1000 << std::endl;
                 continue;
             }
-        } else {
-            if (video["_type"] != "video") {
+            if (!findInString(title, _track.get_name()))
                 continue;
+
+            if (googleAPI && contentDetails["contentDetails"]["licensedContent"]
+                                     .get<bool>() == true)
+                score = 1.0;
+
+            for (auto &&artist : _track.get_artists()) {
+                if (findInString(title, artist.get_name()))
+                    score += 1.0 / _track.get_artists().size();
+                if (findInString(channel, artist.get_name()))
+                    score += 1.0 / _track.get_artists().size();
             }
-        }
 
-        std::string title =
-            googleAPI ? video["snippet"]["title"] : video["title"];
-        std::string channel =
-            googleAPI ? video["snippet"]["channelTitle"] : video["channel"];
-        std::string id = googleAPI ? video["id"]["videoId"] : video["id"];
-        std::string uploadDate =
-            googleAPI
-                ? video["snippet"]["publishedAt"].get<std::string>().substr(0,
-                                                                            10)
-                : video["upload_date"].get<std::string>();
-        unsigned int duration;
+            score += similarityScoreDate(_track.get_album().get_releaseDate(),
+                                         uploadDate);
 
-        json contentDetails;
-        double score(0);
-        if (googleAPI) {
-            contentDetails = searchContentDetails(id)["items"][0];
-            // std::cout << contentDetails.dump(4) << std::endl;
-            duration =
-                parse_duration(contentDetails["contentDetails"]["duration"]);
-        } else {
-            duration = responseSearchList["duration"].get<unsigned int>();
-        }
-        score += similarityScore(_track.get_durationMs() / 1000, duration);
-        if (score < 0.1) {
-            // std::cout << "video length " << duration
-            //           << " exceeds Spotify track "
-            //           << _track.get_durationMs() / 1000 << std::endl;
-            continue;
-        }
-        if (findInString(title, _track.get_name())) {
-            score += 1;
-        }
-        if (googleAPI &&
-            contentDetails["contentDetails"]["licensedContent"].get<bool>() ==
-                true)
-            score = 1.0; // Boost if content is licensed
-
-        //  = similarityScore(searchQuery, title);
-        // std::cout << score << std::endl;
-
-        for (auto &&artist : _track.get_artists()) {
-            if (findInString(title, artist.get_name())) {
-                // normalize, so all artists need to be in title for
-                // perfect score
-                score += 1.0 / _track.get_artists().size();
-                // std::cout << "Artist: " << score << std::endl;
+            std::cout << "score: " << score << "\t" << id << "\t" << title
+                      << std::endl;
+            if (score > bestScore) {
+                bestScore = score;
+                topMatches.clear();
+                topMatches.push_back(id);
+            } else if (score == bestScore) {
+                topMatches.push_back(id);
             }
-            if (findInString(channel, artist.get_name())) {
-                score += 1.0 / _track.get_artists().size();
-                // std::cout << "Channel: " << score << std::endl;
-            }
+            _onProgress(5 / responseSearchList.size());
         }
 
-        score += similarityScoreDate(_track.get_album().get_releaseDate(),
-                                     uploadDate);
-
-        // std::cout << "score: " << score << "\t" << id << "\t" << title
-        //           << std::endl;
-        if (score > bestScore) {
-            bestScore = score;
-            topMatches.clear();
-            topMatches.push_back(id);
-        } else if (score == bestScore) {
-            topMatches.push_back(id);
-        }
-        _onProgress(5 / responseSearchList.size());
+        if (!topMatches.empty())
+            break; // Stop if we found something good
     }
+
     if (topMatches.empty()) {
         std::cerr << "No matches found!" << std::endl;
         return "";
