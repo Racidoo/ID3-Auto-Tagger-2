@@ -11,7 +11,7 @@ LabeledTextCtrl::LabeledTextCtrl(wxWindow *_parent, wxWindowID _winid,
     textCtrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition,
                               wxDefaultSize, wxTE_PROCESS_ENTER);
     textCtrl->SetHint(_labelText);
-    sizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+    sizer->Add(label, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT, 5);
     sizer->Add(textCtrl, 1, wxEXPAND);
     SetSizerAndFit(sizer);
 

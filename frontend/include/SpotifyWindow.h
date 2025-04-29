@@ -17,13 +17,13 @@
 #include "Spotify/Track.h"
 #include "TrackWindow.h"
 
-using AlbumWindow = MediaWindow<AlbumLabel, Spotify::Album>;
-using ArtistWindow = MediaWindow<ArtistLabel, Spotify::Artist>;
-using PlaylistWindow = MediaWindow<PlaylistLabel, Spotify::Playlist>;
+using AlbumWindow = MediaWindow<AlbumLabel>;
+using ArtistWindow = MediaWindow<ArtistLabel>;
+using PlaylistWindow = MediaWindow<PlaylistLabel>;
 
 class SpotifyWindow : public wxScrolledWindow {
   private:
-    Downloader downloader;
+    Downloader *downloader;
 
     wxStaticText *trackHeader;
     wxStaticText *albumHeader;
@@ -47,6 +47,7 @@ class SpotifyWindow : public wxScrolledWindow {
 
     void search(const wxString &_searchText);
     void showSearchResults(const Downloader::SearchResult &result);
+    void loadAdditionalSearchResults(const wxString& _type);
     void startDownload(wxCommandEvent &_event);
 }
 

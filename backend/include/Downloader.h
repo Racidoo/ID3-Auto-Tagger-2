@@ -22,7 +22,8 @@ class Downloader {
 
     json blacklist;
 
-    bool readBlacklist();
+    // bool readBlacklist();
+    bool loadOrCreateBlacklist();
     bool writeBlacklist() const;
 
     bool isBlocked(const std::string &_id) const;
@@ -52,7 +53,10 @@ class Downloader {
 
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
-                               const std::set<SearchCategory> &categories = {});
+                               const std::set<SearchCategory> &categories = {},
+                               const std::string &_market = "DE",
+                               const std::string &_limit = "5",
+                               const std::string &_offset = "0");
     std::string downloadResource(const std::vector<Spotify::Track> &_tracks,
                                  std::function<void(int)> _onProgress);
 };

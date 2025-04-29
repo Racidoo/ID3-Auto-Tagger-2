@@ -6,24 +6,33 @@ Downloader::Downloader()
 {
     Spotify::SpotifyAPI spotify;
     YouTube youTube;
-    readBlacklist();
+    loadOrCreateBlacklist();
 }
 
 Downloader::~Downloader() { writeBlacklist(); }
 
-bool Downloader::readBlacklist() {
-    std::ifstream blacklistFile("blacklist.json");
-    if (!blacklistFile.is_open()) {
-        std::cerr << "Could not read blacklist.json!" << std::endl;
+bool Downloader::loadOrCreateBlacklist() {
+    const std::filesystem::path path = "blacklist.json";
+
+    if (!std::filesystem::exists(path)) {
+        // Create missing blacklist.json with default object structure
+        blacklist = {
+            {"blacklist",
+             json::array()} // "blacklist" key maps to an empty array
+        };
+
+        std::ofstream file(path);
+        file << blacklist.dump(4);
         return false;
     }
 
-    try {
-        blacklist = json::parse(blacklistFile); // Parse only once
-    } catch (const json::parse_error &e) {
-        std::cerr << "JSON parse error: " << e.what() << std::endl;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Could not open blacklist.json!" << std::endl;
         return false;
     }
+
+    file >> blacklist;
     return true;
 }
 
@@ -38,15 +47,17 @@ bool Downloader::writeBlacklist() const {
 }
 
 /**
- * @brief 
- * 
- * @param _query 
- * @param categories 
- * @return Downloader::SearchResult 
+ * @brief
+ *
+ * @param _query
+ * @param categories
+ * @return Downloader::SearchResult
  */
 Downloader::SearchResult
 Downloader::fetchResource(const std::string &_query,
-                          const std::set<SearchCategory> &categories) {
+                          const std::set<SearchCategory> &categories,
+                          const std::string &_market, const std::string &_limit,
+                          const std::string &_offset) {
 
     std::regex spotifyUrlPattern(
         R"(https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(playlist|album|track)\/([\w]+))");
@@ -93,7 +104,8 @@ Downloader::fetchResource(const std::string &_query,
         for (auto &&cat : categories) {
             switch (cat) {
             case SearchCategory::Track: {
-                auto tracks = spotify.searchTrack(_query, "DE", "5");
+                auto tracks =
+                    spotify.searchTrack(_query, _market, _limit, _offset);
                 for (auto &t : tracks) {
                     t.set_downloaded(isBlocked(t.get_id()));
                     result.tracks.push_back(std::move(t));
@@ -101,21 +113,24 @@ Downloader::fetchResource(const std::string &_query,
                 break;
             }
             case SearchCategory::Album: {
-                auto albums = spotify.searchAlbum(_query, "DE", "5");
+                auto albums =
+                    spotify.searchAlbum(_query, _market, _limit, _offset);
                 for (auto &a : albums) {
                     result.albums.push_back(std::move(a));
                 }
                 break;
             }
             case SearchCategory::Artist: {
-                auto artists = spotify.searchArtist(_query, "DE", "5");
+                auto artists =
+                    spotify.searchArtist(_query, _market, _limit, _offset);
                 for (auto &a : artists) {
                     result.artists.push_back(std::move(a));
                 }
                 break;
             }
             case SearchCategory::Playlist: {
-                auto playlists = spotify.searchPlaylist(_query, "DE", "5");
+                auto playlists =
+                    spotify.searchPlaylist(_query, _market, _limit, _offset);
                 for (auto &p : playlists) {
                     result.playlists.push_back(std::move(p));
                 }

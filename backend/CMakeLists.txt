@@ -30,6 +30,7 @@ find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(TAGLIB REQUIRED taglib)
+# find_package(TAGLIB REQUIRED)
 
 target_include_directories(backend PRIVATE ${TAGLIB_INCLUDE_DIRS})
 target_link_libraries(backend PRIVATE CURL::libcurl nlohmann_json::nlohmann_json ${TAGLIB_LIBRARIES})

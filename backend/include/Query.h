@@ -40,6 +40,8 @@ class Query {
   private:
     const std::string type;
 
+    // void ensureExists(const std::filesystem::path &path);
+
   public:
     Query(const std::string &_type);
     virtual ~Query();

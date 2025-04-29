@@ -30,6 +30,26 @@ bool Query::isTokenValid() const {
  */
 std::string Query::generateAccessToken() {
 
+    if (!std::filesystem::exists(pathCredentials)) {
+        std::cerr << "Could not open " << pathCredentials
+                  << ". Created new file. Please ensure proper content!"
+                  << std::endl;
+        if (pathCredentials.has_extension()) {
+            std::filesystem::create_directories(pathCredentials.parent_path());
+            std::ofstream(pathCredentials);
+        } else {
+            std::filesystem::create_directories(pathCredentials);
+        }
+        json jsonTempCredentials;
+        jsonTempCredentials["OAuth"]["Google"]["auth_token"] = "";
+        jsonTempCredentials["OAuth"]["Spotify"]["client_id"] = "";
+        jsonTempCredentials["OAuth"]["Spotify"]["client_secret"] = "";
+        jsonTempCredentials["OAuth"]["Spotify"]["token_uri"] =
+            "https://accounts.spotify.com/api/token";
+
+        std::ofstream(pathCredentials) << jsonTempCredentials.dump(4);
+    }
+
     auto fileCredentials = std::ifstream(pathCredentials);
     if (!fileCredentials.is_open()) {
         std::cerr << "Could not open " << pathCredentials << std::endl;
@@ -38,7 +58,7 @@ std::string Query::generateAccessToken() {
 
     if (type == "Google") {
         if (!jsonCredentials.contains("Google") ||
-            !jsonCredentials["Google"].contains("auth_token")) {
+            jsonCredentials["Google"].at("auth_token").empty()) {
             throw std::runtime_error(
                 "Please provide 'auth_token' from Google API");
         }
@@ -47,12 +67,12 @@ std::string Query::generateAccessToken() {
         return jsonCredentials["Google"]["auth_token"].get<std::string>();
     } else if (type == "Spotify") {
         if (!jsonCredentials.contains("Spotify") ||
-            !jsonCredentials["Spotify"].contains("client_id") ||
-            !jsonCredentials["Spotify"].contains("client_secret")) {
+            jsonCredentials["Spotify"].at("client_id").empty() ||
+            jsonCredentials["Spotify"].at("client_secret").empty()) {
             throw std::runtime_error("Please provide 'client_id' and "
                                      "'client_secret' from Spotify API");
         }
-        if (!jsonCredentials["Spotify"].contains("token_uri")) {
+        if (jsonCredentials["Spotify"].at("token_uri").empty()) {
             throw std::runtime_error(
                 "Please provide 'token_uri' from Spotify API");
         }
@@ -114,6 +134,16 @@ std::string Query::generateAccessToken() {
         throw std::runtime_error("'" + type + " is not supported");
     }
 }
+
+// void Query::ensureExists(const std::filesystem::path& path) {
+//     if (std::filesystem::exists(path)) return;
+//     if (path.has_extension()) {
+//         std::filesystem::create_directories(path.parent_path());
+//         std::ofstream(path);
+//     } else {
+//         std::filesystem::create_directories(path);
+//     }
+// }
 
 /**
  * @brief curl callback needed for general textual data

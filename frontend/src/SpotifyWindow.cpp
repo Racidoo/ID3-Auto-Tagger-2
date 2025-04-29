@@ -11,6 +11,11 @@ enum {
 
 SpotifyWindow::SpotifyWindow(wxWindow *_parent) : wxScrolledWindow(_parent) {
     this->SetScrollRate(15, 15);
+    try {
+        downloader = new Downloader();
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << '\n';
+    }
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -58,30 +63,30 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent) : wxScrolledWindow(_parent) {
     artistWindow = new ArtistWindow(this);
     playlistWindow = new PlaylistWindow(this);
 
-    trackHeader = new wxStaticText(this, wxID_ANY, wxT("Tracks"));
-    albumHeader = new wxStaticText(this, wxID_ANY, wxT("Albums"));
-    artistHeader = new wxStaticText(this, wxID_ANY, wxT("Artists"));
-    playlistHeader = new wxStaticText(this, wxID_ANY, wxT("Playlists"));
+    // trackHeader = new wxStaticText(this, wxID_ANY, wxT("Tracks"));
+    // albumHeader = new wxStaticText(this, wxID_ANY, wxT("Albums"));
+    // artistHeader = new wxStaticText(this, wxID_ANY, wxT("Artists"));
+    // playlistHeader = new wxStaticText(this, wxID_ANY, wxT("Playlists"));
 
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
-    mainSizer->Add(trackHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    // mainSizer->Add(trackHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(trackWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
-    mainSizer->Add(albumHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    // mainSizer->Add(albumHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(albumWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
-    mainSizer->Add(artistHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    // mainSizer->Add(artistHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(artistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
-    mainSizer->Add(playlistHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    // mainSizer->Add(playlistHeader, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(playlistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
     trackWindow->Hide();
     albumWindow->Hide();
     artistWindow->Hide();
     playlistWindow->Hide();
-    trackHeader->Hide();
-    albumHeader->Hide();
-    artistHeader->Hide();
-    playlistHeader->Hide();
+    // trackHeader->Hide();
+    // albumHeader->Hide();
+    // artistHeader->Hide();
+    // playlistHeader->Hide();
 
     // trackWindow->SetScrollRate(0, 0);
 
@@ -107,13 +112,20 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent) : wxScrolledWindow(_parent) {
         }
 
         std::string url("https://open.spotify.com/intl-de/" + type + "/" + id);
-        showSearchResults(downloader.fetchResource(url));
+        showSearchResults(downloader->fetchResource(url));
+    });
+    this->Bind(EVT_MEDIA_WINDOW_EXPAND_CLICKED, [this](wxCommandEvent event) {
+        wxLogDebug("MediaWindow expand clicked. type: " + event.GetString());
     });
 }
 
 SpotifyWindow::~SpotifyWindow() {}
 
 void SpotifyWindow::search(const wxString &_searchText) {
+    if (!downloader) {
+        std::cerr << "Downloader not fully initialized" << std::endl;
+        return;
+    }
     std::set<Downloader::SearchCategory> activeCategories;
 
     if (trackButton->GetValue())
@@ -126,7 +138,7 @@ void SpotifyWindow::search(const wxString &_searchText) {
         activeCategories.insert(Downloader::SearchCategory::Playlist);
 
     Downloader::SearchResult result =
-        downloader.fetchResource(_searchText.ToStdString(), activeCategories);
+        downloader->fetchResource(_searchText.ToStdString(), activeCategories);
     showSearchResults(result);
 }
 
@@ -139,40 +151,40 @@ void SpotifyWindow::showSearchResults(const Downloader::SearchResult &result) {
 
     if (!result.tracks.empty()) {
         trackWindow->Show();
-        trackHeader->Show();
+        // trackHeader->Show();
         for (const auto &track : result.tracks)
             trackWindow->appendChildren(new TrackLabel(trackWindow, track));
     } else {
         trackWindow->Hide();
-        trackHeader->Hide();
+        // trackHeader->Hide();
     }
 
     if (!result.albums.empty()) {
         albumWindow->Show();
-        albumHeader->Show();
+        // albumHeader->Show();
         for (const auto &album : result.albums)
             albumWindow->appendChildren(new AlbumLabel(albumWindow, album));
     } else {
         albumWindow->Hide();
-        albumHeader->Hide();
+        // albumHeader->Hide();
     }
     if (!result.artists.empty()) {
-        artistHeader->Show();
+        // artistHeader->Show();
         artistWindow->Show();
         for (const auto &artist : result.artists)
             artistWindow->appendChildren(new ArtistLabel(artistWindow, artist));
     } else {
-        artistHeader->Hide();
+        // artistHeader->Hide();
         artistWindow->Hide();
     }
     if (!result.playlists.empty()) {
-        playlistHeader->Show();
+        // playlistHeader->Show();
         playlistWindow->Show();
         for (const auto &playlist : result.playlists)
             playlistWindow->appendChildren(
                 new PlaylistLabel(playlistWindow, playlist));
     } else {
-        playlistHeader->Hide();
+        // playlistHeader->Hide();
         playlistWindow->Hide();
     }
 
@@ -180,11 +192,28 @@ void SpotifyWindow::showSearchResults(const Downloader::SearchResult &result) {
     Layout();
 }
 
+void SpotifyWindow::loadAdditionalSearchResults(const wxString &_type) {
+    std::set<Downloader::SearchCategory> activeCategories;
+
+    if (_type == "track")
+        activeCategories.insert(Downloader::SearchCategory::Track);
+    if (_type == "album")
+        activeCategories.insert(Downloader::SearchCategory::Album);
+    if (_type == "artist")
+        activeCategories.insert(Downloader::SearchCategory::Artist);
+    if (_type == "playlist")
+        activeCategories.insert(Downloader::SearchCategory::Playlist);
+}
+
 void SpotifyWindow::startDownload(wxCommandEvent &_event) {
+    if (!downloader) {
+        std::cerr << "Downloader not fully initialized" << std::endl;
+        return;
+    }
     TrackLabel *chosenTrackLabel =
         trackWindow->get_trackLabels().at(_event.GetString().ToStdString());
     Spotify::Track chosenTrack = *chosenTrackLabel->get_spotifyTrack();
-    downloader.downloadResource(
+    downloader->downloadResource(
         {chosenTrack}, [chosenTrackLabel](int progress) {
             chosenTrackLabel->get_ProgressBar()->SetProgress(progress);
         });
