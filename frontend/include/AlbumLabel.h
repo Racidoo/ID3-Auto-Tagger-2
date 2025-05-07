@@ -6,6 +6,7 @@
 
 #include "MediaLabel.h"
 #include "Spotify/Album.h"
+
 class AlbumLabel : public MediaLabel {
   private:
     std::unique_ptr<Spotify::Album> spotifyAlbum;

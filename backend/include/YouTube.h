@@ -11,7 +11,7 @@
 
 using json = nlohmann::json;
 
-class YouTube : protected Query {
+class YouTube : public Query {
   private:
     inline static const std::string searchListUrl =
         "https://www.googleapis.com/youtube/v3/search?part=snippet&q=";
@@ -20,6 +20,7 @@ class YouTube : protected Query {
 
   public:
     YouTube();
+    YouTube(const std::string &_accessToken);
     ~YouTube();
 
     json searchList(const std::string &_query,

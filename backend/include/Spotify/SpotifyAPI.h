@@ -1,9 +1,9 @@
 #if !defined(SPOTIFY_API_H)
 #define SPOTIFY_API_H
 
+#include <exception>
 #include <nlohmann/json.hpp>
 #include <sstream>
-#include <exception>
 #include <string>
 
 #include "Album.h"
@@ -20,6 +20,7 @@ namespace Spotify {
 class SpotifyAPI : public Query {
   public:
     SpotifyAPI();
+    SpotifyAPI(const std::string &_clientId, const std::string &_clientSecret);
     ~SpotifyAPI();
 
     static SpotifyAPI &getInstance() {
@@ -59,13 +60,14 @@ class SpotifyAPI : public Query {
     Track getTrack(const std::string &_id);
     std::vector<Track> getAlbumTracks(const std::string &_id);
     std::vector<Track> getPlaylistTracks(const std::string &_id);
-    std::string searchId(const std::string &_filename,
-                         const std::string &_type);
+    std::string searchId(const std::string &_filename);
+    void loadAdditionalData(Track &_track);
+    void verifyTags(const std::string &_filename);
 
   private:
     inline const static std::string urlAPI = "https://api.spotify.com/v1/";
-    inline const static std::string urlToken =
-        "https://accounts.spotify.com/api/token";
+    // inline const static std::string urlToken =
+    //     "https://accounts.spotify.com/api/token";
 
     json handleRequest(const std::string &_request);
 
@@ -73,7 +75,7 @@ class SpotifyAPI : public Query {
                 const std::string &_market = "", const std::string &_limit = "",
                 const std::string &_offset = "");
 
-    Album createAlbum(const json &_jsonAlbum, bool _fullTags = true);
+    Album createAlbum(const json &_jsonAlbum, bool _fullTags = false);
     Artist createArtist(const json &_jsonArtist) const;
     std::vector<Artist> createArtists(const json &_jsonArtists) const;
     Playlist createPlaylist(const json &_jsonPlaylist) const;

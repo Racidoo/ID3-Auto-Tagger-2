@@ -99,9 +99,9 @@ bool Track::setAPICTag(const std::string &_mp3Path,
     return true;
 }
 
-void Track::printID3V2Tags(TagLib::MPEG::File _file) {
-    // std::cout << "title: " _file.tag()->title() << "\n"
-}
+// void Track::printID3V2Tags(TagLib::MPEG::File _file) {
+// std::cout << "title: " _file.tag()->title() << "\n"
+// }
 
 bool Track::setTagValue(TagLib::MPEG::File &file, const char *frameID,
                         const std::string &value) {
@@ -121,6 +121,31 @@ bool Track::setTagValue(TagLib::MPEG::File &file, const char *frameID,
         id3v2tag->addFrame(newFrame);
     }
     return true;
+}
+
+void Track::verifyTags(const std::string &_filepath) {
+
+    auto localFile = TagLib::MPEG::File(_filepath.c_str());
+    auto localTags = localFile.tag();
+    if (localTags->title().toCString() != this->name) {
+        std::cout << "Changed title from '" << localTags->title().toCString()
+                  << "' to '" << this->name << "'" << std::endl;
+        localTags->setTitle(this->get_name().c_str());
+    }
+    if (localTags->artist().toCString() != this->get_stringArtists()) {
+        std::cout << "Changed artist from '" << localTags->artist().toCString()
+                  << "' to '" << this->get_stringArtists() << "'" << std::endl;
+        localTags->setArtist(this->get_stringArtists().c_str());
+    }
+    if (localTags->album().toCString() != this->album.get_name()) {
+        std::cout << "Changed album from '" << localTags->album().toCString()
+                  << "' to '" << this->album.get_name() << "'" << std::endl;
+        localTags->setAlbum(this->album.get_name().c_str());
+    }
+    //    if (localFile.ID3v2Tag()->frameListMap()["APIC"].isEmpty()){
+
+    //    }
+    localFile.save();
 }
 
 } // namespace Spotify

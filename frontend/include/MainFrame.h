@@ -6,11 +6,10 @@
 #include <string>
 #include <wx/wx.h>
 
-#include "SettingsWindow.h"
-#include "Spotify/SpotifyAPI.h"
-#include "SpotifyWindow.h"
-#include "TrackLabel.h"
-#include "TrackWindow.h"
+class Downloader;
+class SettingsWindow;
+class SpotifyWindow;
+class TrackWindow;
 
 // Define a main window class
 class MainFrame : public wxFrame {
@@ -19,6 +18,7 @@ class MainFrame : public wxFrame {
     ~MainFrame() = default;
 
   private:
+    Downloader *downloader;
     wxBoxSizer *mainSizer;
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;

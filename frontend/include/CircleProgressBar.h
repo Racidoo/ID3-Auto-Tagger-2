@@ -6,8 +6,6 @@
 #include <wx/dcclient.h>
 #include <wx/wx.h>
 
-#include "IconProvider.h"
-
 class CircleProgressBar : public wxWindow {
   public:
     CircleProgressBar(wxWindow *_parent, wxWindowID _id = wxID_ANY);

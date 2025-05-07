@@ -54,7 +54,8 @@ wxBitmap IconProvider::CreateBitmap(const wxArtID &_id,
                                     wxIMAGE_QUALITY_HIGH));
     }
     if (_id == wxART_SEARCH) {
-        wxImage img(wxT("img/music-magnifying-glass_256.png"), wxBITMAP_TYPE_PNG);
+        wxImage img(wxT("img/music-magnifying-glass_256.png"),
+                    wxBITMAP_TYPE_PNG);
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
                                     wxIMAGE_QUALITY_HIGH));
     }
@@ -85,6 +86,16 @@ wxBitmap IconProvider::CreateBitmap(const wxArtID &_id,
     }
     if (_id == wxART_ARROW_RIGHT) {
         wxImage img(wxT("img/angle-circle-right_256.png"), wxBITMAP_TYPE_PNG);
+        return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
+                                    wxIMAGE_QUALITY_HIGH));
+    }
+    if (_id == wxART_ASSESSMENT) {
+        wxImage img(wxT("img/assessment_256.png"), wxBITMAP_TYPE_PNG);
+        return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
+                                    wxIMAGE_QUALITY_HIGH));
+    }
+    if (_id == wxART_TRASH_XMARK) {
+        wxImage img(wxT("img/trash-xmark_256.png"), wxBITMAP_TYPE_PNG);
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
                                     wxIMAGE_QUALITY_HIGH));
     }

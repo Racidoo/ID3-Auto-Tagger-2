@@ -1,4 +1,5 @@
 #include "../include/CircleProgressBar.h"
+#include "../include/IconProvider.h"
 
 BEGIN_EVENT_TABLE(CircleProgressBar, wxWindow)
 EVT_PAINT(CircleProgressBar::OnPaint)

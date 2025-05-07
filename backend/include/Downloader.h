@@ -14,8 +14,8 @@
 
 class Downloader {
   private:
-    Spotify::SpotifyAPI spotify;
-    YouTube youTube;
+    Spotify::SpotifyAPI *spotify;
+    YouTube *youTube;
 
     std::string trackPath;
     // std::string coverPath;
@@ -29,12 +29,21 @@ class Downloader {
     bool isBlocked(const std::string &_id) const;
     void makeBlocked(const Spotify::Track &_track);
 
-    void downloadAndTag(const Spotify::Track &_track,
+    void downloadAndTag(Spotify::Track &_track,
                         std::function<void(int)> _onProgress);
 
   public:
     Downloader(/* args */);
     ~Downloader();
+
+    Spotify::SpotifyAPI *get_spotify() { return spotify; }
+    YouTube *get_youtube() { return youTube; }
+
+    bool is_initialized() const;
+    bool initialize();
+    bool initializeSpotify(const std::string &_spotifyclientId = "",
+                           const std::string &_spotifyClientSecret = "");
+    bool initializeYouTube(const std::string &_googleAuthToken = "");
 
     enum class SearchCategory {
         Track,
@@ -57,8 +66,9 @@ class Downloader {
                                const std::string &_market = "DE",
                                const std::string &_limit = "5",
                                const std::string &_offset = "0");
-    std::string downloadResource(const std::vector<Spotify::Track> &_tracks,
+    std::string downloadResource(std::vector<Spotify::Track> &&_tracks,
                                  std::function<void(int)> _onProgress);
+    void deleteLocalTrack(const std::filesystem::path &_filepath);
 };
 
 #endif // DOWNLOADER_H

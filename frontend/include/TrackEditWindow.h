@@ -2,11 +2,11 @@
 #define TRACK_EDIT_WINDOW_H
 
 #include <functional> // for std::hash
-#include <string> // for std::string
+#include <string>     // for std::string
 #include <taglib/mpegfile.h>
 #include <wx/wx.h>
 
-#include "LabeledTextCtrl.h"
+class LabeledTextCtrl;
 
 class TrackEditWindow : public wxPanel {
   private:
@@ -70,13 +70,13 @@ class TrackEditWindow : public wxPanel {
 
     /**
      * @brief Get the Common Bitmap object
-     * 
-     * @tparam Container 
-     * @tparam Getter 
-     * @param files 
-     * @param _size 
-     * @param getAttribute 
-     * @return wxBitmap 
+     *
+     * @tparam Container
+     * @tparam Getter
+     * @param files
+     * @param _size
+     * @param getAttribute
+     * @return wxBitmap
      */
     template <typename Container, typename Getter>
     wxBitmap getCommonBitmap(const Container &files, const wxSize &_size,

@@ -1,6 +1,12 @@
 #include "../include/MainFrame.h"
+#include "../include/Downloader.h"
 #include "../include/IconProvider.h"
+#include "../include/LabeledTextCtrl.h"
+#include "../include/SettingsWindow.h"
+#include "../include/SpotifyWindow.h"
 #include "../include/TrackEditWindow.h"
+#include "../include/TrackLabel.h"
+#include "../include/TrackWindow.h"
 #include <taglib/mpegfile.h>
 
 enum {
@@ -15,7 +21,8 @@ wxDEFINE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
 // Constructor for main window
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "ID3 Auto Tagger 2", wxDefaultPosition,
-              wxSize(800, 600)) {
+              wxSize(800, 600)),
+      downloader(new Downloader()) {
     wxInitAllImageHandlers();
 
     auto toolBar = CreateToolBar(wxVERTICAL, wxID_ANY);
@@ -47,21 +54,20 @@ MainFrame::MainFrame()
     mainPanel->SetSizer(mainSizer);
 
     // Create panels for different screens (Initially hidden)
-    downloadPanel = new TrackWindow(mainPanel);
-    spotifyPanel = new SpotifyWindow(mainPanel);
-    youtubePanel = new TrackWindow(mainPanel);
-    settingsPanel = new SettingsWindow(mainPanel);
+    downloadPanel = new TrackWindow(mainPanel, downloader);
+    spotifyPanel = new SpotifyWindow(mainPanel, downloader);
+    youtubePanel = new TrackWindow(mainPanel, downloader);
+    settingsPanel = new SettingsWindow(mainPanel, downloader);
 
     mainSizer->Add(downloadPanel, 1, wxEXPAND);
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);
     mainSizer->Add(youtubePanel, 1, wxEXPAND);
+    mainSizer->Add(settingsPanel, 1, wxEXPAND);
 
     spotifyPanel->Hide();
     youtubePanel->Hide();
     downloadPanel->Hide();
-
-    // Set default screen
-    ShowPanel(downloadPanel);
+    settingsPanel->Hide();
 
     auto trackEditWindow = new TrackEditWindow(this);
     trackEditWindow->Hide();
@@ -151,6 +157,12 @@ MainFrame::MainFrame()
     sizer->Add(mainPanel, 1, wxEXPAND);
     sizer->Add(trackEditWindow, 0, wxSHRINK, 5);
     SetSizer(sizer);
+
+    // Set default screen
+    if (!downloader->is_initialized()) {
+        ShowPanel(settingsPanel);
+    } else
+        ShowPanel(downloadPanel);
 }
 
 void MainFrame::ShowPanel(wxScrolledWindow *panel) {
@@ -169,6 +181,11 @@ void MainFrame::OnDownloadClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
+    if (!downloader->is_initialized()) {
+        wxLogError(wxT(
+            "Provide credentials in the Settings, before using API-Services!"));
+        return;
+    }
     ShowPanel(spotifyPanel);
 }
 

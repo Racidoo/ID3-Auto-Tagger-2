@@ -13,14 +13,17 @@
 using json = nlohmann::json;
 
 class Query {
-  protected:
+  private:
     std::string accessToken;
+    std::string clientId;
+    std::string clientSecret;
     std::chrono::steady_clock::time_point tokenExpirationTime;
 
     inline const static std::filesystem::path pathCredentials =
         std::filesystem::current_path() / "backend" / "api" /
         "credentials.json";
 
+  protected:
     bool isTokenValid() const;
     std::string generateAccessToken();
     static std::string toLower(const std::string &str);
@@ -39,14 +42,26 @@ class Query {
 
   private:
     const std::string type;
+    bool initialized;
 
     // void ensureExists(const std::filesystem::path &path);
 
   public:
     Query(const std::string &_type);
+    Query(const std::string &_type, const std::string &_clientId,
+          const std::string &_clientSecret, const std::string &_accessToken);
     virtual ~Query();
 
+    inline std::string get_clientId() const { return clientId; };
+    inline std::string get_clientSecret() const { return clientSecret; };
+    inline bool is_initialized() const { return initialized; }
+    
+    void set_accessToken(const std::string &_accessToken);
+    void set_clientId(const std::string &_clientId);
+    void set_clientSecret(const std::string &_clientSecret);
+
     std::string getValidToken();
+    void saveCredentials();
 
     // Callback function to capture response data
     size_t static writeCallback(void *contents, size_t size, size_t nmemb,

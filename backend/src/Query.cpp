@@ -1,7 +1,17 @@
 #include "../include/Query.h"
 
 Query::Query(const std::string &_type)
-    : tokenExpirationTime(std::chrono::steady_clock::now()), type(_type) {
+    : tokenExpirationTime(std::chrono::steady_clock::now()), type(_type),
+      initialized(false) {
+    getValidToken();
+}
+
+Query::Query(const std::string &_type, const std::string &_clientId,
+             const std::string &_clientSecret, const std::string &_accessToken)
+    : tokenExpirationTime(std::chrono::steady_clock::now()), type(_type),
+      initialized(false), clientId(_clientId), clientSecret(_clientSecret),
+      accessToken(_accessToken) {
+    saveCredentials();
     getValidToken();
 }
 
@@ -11,6 +21,7 @@ std::string Query::getValidToken() {
     if (!isTokenValid()) {
         accessToken = generateAccessToken();
     }
+    initialized = accessToken.empty() ? false : true;
     return accessToken; // Use the stored token
 }
 
@@ -20,6 +31,28 @@ bool Query::isTokenValid() const {
                                        std::chrono::seconds(0))
                 ? true
                 : std::chrono::steady_clock::now() < tokenExpirationTime);
+}
+
+void Query::saveCredentials() {
+    if (pathCredentials.has_extension()) {
+        std::filesystem::create_directories(pathCredentials.parent_path());
+        std::ofstream(pathCredentials);
+    } else {
+        std::filesystem::create_directories(pathCredentials);
+    }
+    json jsonCredentials = json::parse(std::ifstream(pathCredentials));
+
+    if (type == "Google") {
+        jsonCredentials["OAuth"]["Google"]["auth_token"] = accessToken;
+
+    } else if (type == "Spotify") {
+        jsonCredentials["OAuth"]["Spotify"]["client_id"] = clientId;
+        jsonCredentials["OAuth"]["Spotify"]["client_secret"] = clientSecret;
+        jsonCredentials["OAuth"]["Spotify"]["token_uri"] =
+            "https://accounts.spotify.com/api/token";
+    }
+
+    std::ofstream(pathCredentials) << jsonCredentials.dump(4);
 }
 
 /**
@@ -34,20 +67,7 @@ std::string Query::generateAccessToken() {
         std::cerr << "Could not open " << pathCredentials
                   << ". Created new file. Please ensure proper content!"
                   << std::endl;
-        if (pathCredentials.has_extension()) {
-            std::filesystem::create_directories(pathCredentials.parent_path());
-            std::ofstream(pathCredentials);
-        } else {
-            std::filesystem::create_directories(pathCredentials);
-        }
-        json jsonTempCredentials;
-        jsonTempCredentials["OAuth"]["Google"]["auth_token"] = "";
-        jsonTempCredentials["OAuth"]["Spotify"]["client_id"] = "";
-        jsonTempCredentials["OAuth"]["Spotify"]["client_secret"] = "";
-        jsonTempCredentials["OAuth"]["Spotify"]["token_uri"] =
-            "https://accounts.spotify.com/api/token";
-
-        std::ofstream(pathCredentials) << jsonTempCredentials.dump(4);
+        saveCredentials();
     }
 
     auto fileCredentials = std::ifstream(pathCredentials);
@@ -72,6 +92,9 @@ std::string Query::generateAccessToken() {
             throw std::runtime_error("Please provide 'client_id' and "
                                      "'client_secret' from Spotify API");
         }
+        clientId = jsonCredentials["Spotify"]["client_id"].get<std::string>();
+        clientSecret =
+            jsonCredentials["Spotify"]["client_secret"].get<std::string>();
         if (jsonCredentials["Spotify"].at("token_uri").empty()) {
             throw std::runtime_error(
                 "Please provide 'token_uri' from Spotify API");
@@ -85,10 +108,8 @@ std::string Query::generateAccessToken() {
 
         std::string response_data;
         std::string postFields =
-            "grant_type=client_credentials&client_id=" +
-            jsonCredentials["Spotify"]["client_id"].get<std::string>() +
-            "&client_secret=" +
-            jsonCredentials["Spotify"]["client_secret"].get<std::string>();
+            "grant_type=client_credentials&client_id=" + clientId +
+            "&client_secret=" + clientSecret;
 
         struct curl_slist *accessTokenHeaders = nullptr;
         accessTokenHeaders = curl_slist_append(
@@ -125,14 +146,14 @@ std::string Query::generateAccessToken() {
                 std::chrono::seconds(response_json.at("expires_in").get<int>());
             return response_json["access_token"];
         } else {
-            throw std::runtime_error(
-                "Failed to retrieve access token! Response:" +
-                response_json.dump(4));
+            std::cerr << "Failed to retrieve access token! Response:" +
+                             response_json.dump(4)
+                      << std::endl;
         }
     } else {
-        std::cout << "Not supported" << std::endl;
-        throw std::runtime_error("'" + type + " is not supported");
+        std::cerr << "'" + type + " is not supported" << std::endl;
     }
+    return "";
 }
 
 // void Query::ensureExists(const std::filesystem::path& path) {
@@ -290,4 +311,17 @@ json Query::exec(const std::string &_cmd) const {
         first = false;
     }
     return json::parse(result += "]");
+}
+
+void Query::set_accessToken(const std::string &_accessToken) {
+    accessToken = _accessToken;
+    saveCredentials();
+}
+void Query::set_clientId(const std::string &_clientId) {
+    clientId = _clientId;
+    saveCredentials();
+}
+void Query::set_clientSecret(const std::string &_clientSecret) {
+    clientSecret = _clientSecret;
+    saveCredentials();
 }

@@ -1,5 +1,6 @@
 #include "../include/TrackEditWindow.h"
 #include "../include/MediaLabel.h"
+#include "../include/LabeledTextCtrl.h"
 
 TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                                  const wxPoint &_pos, const wxSize &_size)

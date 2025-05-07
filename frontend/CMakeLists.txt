@@ -10,6 +10,7 @@ set(SOURCES
     src/main.cpp
     src/MainFrame.cpp
     src/MediaLabel.cpp
+    src/MultiInputDialog.cpp
     include/MediaWindow.hpp
     src/PlaylistLabel.cpp
     src/ScrollText.cpp

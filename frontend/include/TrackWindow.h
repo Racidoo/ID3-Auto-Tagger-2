@@ -8,18 +8,18 @@
 #include <wx/sizer.h>
 #include <wx/wx.h>
 
-#include "TrackLabel.h"
-
 wxDECLARE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
+class Downloader;
+class TrackLabel;
 
 class TrackWindow : public wxScrolledWindow {
   private:
     std::unordered_map<std::string, TrackLabel *> trackLabels;
-    // wxBoxSizer *mainSizer;
+    Downloader *downloader;
     std::set<TrackLabel *> activeSongs;
 
   public:
-    TrackWindow(wxWindow *_parent);
+    TrackWindow(wxWindow *_parent, Downloader* _downloader);
     ~TrackWindow();
 
     inline std::unordered_map<std::string, TrackLabel *>

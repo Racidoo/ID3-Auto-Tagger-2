@@ -1,12 +1,20 @@
 #include "../include/TrackWindow.h"
+#include "../include/Downloader.h"
 #include "../include/LabeledTextCtrl.h"
+#include "../include/TrackLabel.h"
 #include <wx/event.h>
 
-TrackWindow::TrackWindow(wxWindow *_parent)
-    : wxScrolledWindow(_parent, wxID_ANY) {
+TrackWindow::TrackWindow(wxWindow *_parent, Downloader* _downloader)
+    : wxScrolledWindow(_parent, wxID_ANY), downloader(_downloader) {
     this->SetScrollRate(15, 15);
     this->SetSizer(new wxBoxSizer(wxVERTICAL));
     Bind(EVT_TRACKLABEL_CLICKED, &TrackWindow::processClickedLabel, this);
+    Bind(EVT_TRACK_DELETE, [this] (wxCommandEvent&_event){
+        downloader->deleteLocalTrack(_event.GetString().ToStdString());
+    });
+    Bind(EVT_TRACK_VERIFY, [this] (wxCommandEvent&_event){
+        downloader->get_spotify()->verifyTags(_event.GetString().ToStdString());
+    });
 }
 
 TrackWindow::~TrackWindow() {}
@@ -34,10 +42,10 @@ void TrackWindow::createHeader() {
                                       wxDefaultPosition,
                                       wxSize(TrackLabel::columnWidths[1], -1)),
                      0, wxEXPAND, 5);
-    headerSizer->Add(titleHeader, 0, wxEXPAND, 5);
-    headerSizer->Add(albumHeader, 0, wxEXPAND, 5);
-    headerSizer->Add(genreHeader, 0, wxEXPAND, 5);
-    headerSizer->Add(lengthHeader, 0, wxEXPAND, 5);
+    headerSizer->Add(titleHeader, 0, wxALL, 5);
+    headerSizer->Add(albumHeader, 0, wxALL, 5);
+    headerSizer->Add(genreHeader, 0, wxALL, 5);
+    headerSizer->Add(lengthHeader, 0, wxALL, 5);
     GetSizer()->Add(headerSizer);
     GetSizer()->AddSpacer(10);
 }
@@ -107,3 +115,5 @@ void TrackWindow::processClickedLabel(wxCommandEvent &event) {
         wxPostEvent(GetParent(), notifyEvent);
     }
 }
+
+

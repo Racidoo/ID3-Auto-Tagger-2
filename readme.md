@@ -40,3 +40,7 @@ If not already done, the tool will provide an empty credentials file `backend/ap
     }
 }
 ```
+
+Alternatively, if no credentials are provided the tool will start in a restricted mode. In the settings menu the credentials can also be provided.
+
+> The Auth Token for the Google API will not be checked instantly but rather with the first download. If the Token is not valid, the much slower fallback via yt-dlp will be used.

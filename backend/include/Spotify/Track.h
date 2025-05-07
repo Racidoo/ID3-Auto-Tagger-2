@@ -50,8 +50,8 @@ class Track : public SpotifyObject {
     };
 
     const std::string get_imageUrl() = delete;
-    inline const std::vector<Artist> get_artists() const { return artists; }
-    inline const Album get_album() const { return album; }
+    inline std::vector<Artist> get_artists() const { return artists; }
+    inline Album get_album() const { return album; }
     inline const std::string get_stringArtists() const {
         return Artist::vecToStr(artists);
     }
@@ -65,10 +65,12 @@ class Track : public SpotifyObject {
                        const std::string &_imagePath) const;
     bool setAlbumCover(const std::string &_mp3Path,
                        const std::vector<char> &_imageData) const;
-    static void printID3V2Tags(TagLib::MPEG::File _file);
+    // static void printID3V2Tags(TagLib::MPEG::File _file);
 
     static bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
                             const std::string &value);
+
+    void verifyTags(const std::string &_filepath);
 
   private:
     bool setAPICTag(const std::string &_mp3Path,

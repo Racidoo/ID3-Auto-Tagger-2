@@ -1,15 +1,62 @@
 #include "../include/Downloader.h"
 
 Downloader::Downloader()
-    : trackPath(std::filesystem::current_path() / "music/")
+    : trackPath(std::filesystem::current_path() / "music/"), spotify(nullptr),
+      youTube(nullptr)
 //   ,coverPath(std::filesystem::current_path() / "cover/")
 {
-    Spotify::SpotifyAPI spotify;
-    YouTube youTube;
+    initialize();
     loadOrCreateBlacklist();
 }
 
-Downloader::~Downloader() { writeBlacklist(); }
+Downloader::~Downloader() {
+    writeBlacklist();
+    if (spotify)
+        delete spotify;
+    if (youTube)
+        delete youTube;
+}
+
+bool Downloader::is_initialized() const { return (spotify && youTube); }
+
+bool Downloader::initialize() {
+
+    return initializeSpotify() && initializeYouTube();
+}
+
+bool Downloader::initializeSpotify(const std::string &_spotifyclientId,
+                                   const std::string &_spotifyClientSecret) {
+    if (!spotify) {
+        Spotify::SpotifyAPI *temp =
+            (_spotifyclientId.empty() && _spotifyClientSecret.empty()
+                 ? new Spotify::SpotifyAPI()
+                 : new Spotify::SpotifyAPI(_spotifyclientId,
+                                           _spotifyClientSecret));
+        if (temp->is_initialized()) {
+            spotify = temp;
+        } else {
+            delete temp;
+        }
+    }
+    return spotify;
+}
+
+bool Downloader::initializeYouTube(const std::string &_googleAuthToken) {
+    if (!youTube) {
+        std::cout << "Initializing YouTube...";
+        YouTube *temp =
+            (_googleAuthToken.empty() ? new YouTube()
+                                      : new YouTube(_googleAuthToken));
+        if (temp->is_initialized()) {
+            std::cout << " success!" << std::endl;
+            youTube = temp;
+        } else {
+            std::cout << " failed!" << std::endl;
+            delete temp;
+        }
+    }
+    return youTube;
+}
 
 bool Downloader::loadOrCreateBlacklist() {
     const std::filesystem::path path = "blacklist.json";
@@ -83,17 +130,17 @@ Downloader::fetchResource(const std::string &_query,
     // }
 
     if (type == "track") {
-        auto track = spotify.getTrack(id);
+        auto track = spotify->getTrack(id);
         result.tracks.push_back(track);
         track.set_downloaded(isBlocked(track.get_id()));
     } else if (type == "album") {
-        auto tracks = spotify.getAlbumTracks(id);
+        auto tracks = spotify->getAlbumTracks(id);
         for (auto &&track : tracks) {
             track.set_downloaded(isBlocked(track.get_id()));
             result.tracks.push_back(track);
         }
     } else if (type == "playlist") {
-        auto tracks = spotify.getPlaylistTracks(id);
+        auto tracks = spotify->getPlaylistTracks(id);
         for (auto &&track : tracks) {
             track.set_downloaded(isBlocked(track.get_id()));
             result.tracks.push_back(track);
@@ -105,7 +152,7 @@ Downloader::fetchResource(const std::string &_query,
             switch (cat) {
             case SearchCategory::Track: {
                 auto tracks =
-                    spotify.searchTrack(_query, _market, _limit, _offset);
+                    spotify->searchTrack(_query, _market, _limit, _offset);
                 for (auto &t : tracks) {
                     t.set_downloaded(isBlocked(t.get_id()));
                     result.tracks.push_back(std::move(t));
@@ -114,7 +161,7 @@ Downloader::fetchResource(const std::string &_query,
             }
             case SearchCategory::Album: {
                 auto albums =
-                    spotify.searchAlbum(_query, _market, _limit, _offset);
+                    spotify->searchAlbum(_query, _market, _limit, _offset);
                 for (auto &a : albums) {
                     result.albums.push_back(std::move(a));
                 }
@@ -122,7 +169,7 @@ Downloader::fetchResource(const std::string &_query,
             }
             case SearchCategory::Artist: {
                 auto artists =
-                    spotify.searchArtist(_query, _market, _limit, _offset);
+                    spotify->searchArtist(_query, _market, _limit, _offset);
                 for (auto &a : artists) {
                     result.artists.push_back(std::move(a));
                 }
@@ -130,7 +177,7 @@ Downloader::fetchResource(const std::string &_query,
             }
             case SearchCategory::Playlist: {
                 auto playlists =
-                    spotify.searchPlaylist(_query, _market, _limit, _offset);
+                    spotify->searchPlaylist(_query, _market, _limit, _offset);
                 for (auto &p : playlists) {
                     result.playlists.push_back(std::move(p));
                 }
@@ -142,9 +189,8 @@ Downloader::fetchResource(const std::string &_query,
     return result;
 }
 
-std::string
-Downloader::downloadResource(const std::vector<Spotify::Track> &_tracks,
-                             std::function<void(int)> _onProgress) {
+std::string Downloader::downloadResource(std::vector<Spotify::Track> &&_tracks,
+                                         std::function<void(int)> _onProgress) {
     std::string result;
     for (auto &&track : _tracks) {
         downloadAndTag(track, _onProgress);
@@ -162,12 +208,12 @@ void Downloader::makeBlocked(const Spotify::Track &_track) {
         _track.get_stringArtists();
 }
 
-void Downloader::downloadAndTag(const Spotify::Track &_track,
+void Downloader::downloadAndTag(Spotify::Track &_track,
                                 std::function<void(int)> _onProgress) {
 
-    std::thread([this, _onProgress, _track]() {
+    std::thread([this, _onProgress, _track]() mutable {
         _onProgress(0);
-        auto bestMatch = youTube.findBestMatch(_track, _onProgress);
+        auto bestMatch = youTube->findBestMatch(_track, _onProgress);
         if (bestMatch.empty()) {
             _onProgress(-1);
             return;
@@ -175,7 +221,6 @@ void Downloader::downloadAndTag(const Spotify::Track &_track,
         _onProgress(10);
 
         auto trackName = trackPath + _track.get_id() + ".mp3";
-        // auto coverName = coverPath + _track.get_id() + ".jpg";
 
         // download resource
         std::string command =
@@ -228,6 +273,9 @@ void Downloader::downloadAndTag(const Spotify::Track &_track,
             _onProgress(-1);
             return;
         }
+
+        spotify->loadAdditionalData(_track);
+
         if (!_track.writeID3V2Tags(trackName.c_str())) {
             _onProgress(-1);
             return;
@@ -236,7 +284,7 @@ void Downloader::downloadAndTag(const Spotify::Track &_track,
 
         if (!_track.setAlbumCover(
                 trackName,
-                spotify.downloadImage(_track.get_album().get_imageUrl()))) {
+                spotify->downloadImage(_track.get_album().get_imageUrl()))) {
             _onProgress(-1);
             return;
         }
@@ -244,4 +292,26 @@ void Downloader::downloadAndTag(const Spotify::Track &_track,
         makeBlocked(_track);
         _onProgress(100);
     }).detach();
+}
+
+void Downloader::deleteLocalTrack(const std::filesystem::path &_filepath) {
+    std::string possibleId(_filepath.stem().string());
+
+    if (isBlocked(possibleId)) {
+        blacklist["blacklist"].erase(possibleId);
+    } else {
+        std::cout << possibleId << " is not included in blacklist!"
+                  << std::endl;
+    }
+    if (std::filesystem::exists(_filepath)) {
+        if (std::filesystem::remove(_filepath)) {
+            std::cout << "File deleted successfully.\n";
+        } else {
+            std::cerr << "Could not remove " << _filepath
+                      << ":Failed to delete the file.\n";
+        }
+    } else {
+        std::cerr << "Could not remove " << _filepath
+                  << ": File does not exist.\n";
+    }
 }

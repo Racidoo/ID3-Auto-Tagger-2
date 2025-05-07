@@ -11,9 +11,9 @@ namespace Spotify {
 
 class Album : public SpotifyObject {
   private:
-    const std::string albumType;
-    const unsigned int totalTracks;
-    const std::string releaseDate;
+     std::string albumType;
+     unsigned int totalTracks;
+     std::string releaseDate;
     std::vector<Artist> artists;
 
     // optional attributes

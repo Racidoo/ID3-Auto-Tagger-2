@@ -2,28 +2,25 @@
 #define TRACKLABEL_H
 
 #include <memory>
-// #include <string>
-// #include <vector>
-// #include <wx-3.0/wx/grid.h>
-// #include <wx/image.h>
-// #include <wx-3.0/wx/sizer.h>
-// #include <wx-3.0/wx/statbmp.h>
-// #include <wx-3.0/wx/wfstream.h>
-// #include <wx-3.0/wx/wx.h>
-
+#include <taglib/fileref.h>
+#include <taglib/mpegfile.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 
-#include "CircleProgressBar.h"
-#include "Spotify/Track.h"
+namespace Spotify {
+class Track;
+}
+
+class CircleProgressBar;
 
 wxDECLARE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
+wxDECLARE_EVENT(EVT_TRACK_VERIFY, wxCommandEvent);
+wxDECLARE_EVENT(EVT_TRACK_DELETE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_TRACKLABEL_CLICKED, wxCommandEvent);
 
 class TrackLabel : public wxPanel {
   private:
-    // TagLib::MPEG::File track;
     bool m_isActive = false;
     std::unique_ptr<Spotify::Track> spotifyTrack;
     std::unique_ptr<TagLib::MPEG::File> localTrack;

@@ -4,6 +4,10 @@ namespace Spotify {
 
 SpotifyAPI::SpotifyAPI() : Query("Spotify") {}
 
+SpotifyAPI::SpotifyAPI(const std::string &_clientId,
+                       const std::string &_clientSecret)
+    : Query("Spotify", _clientId, _clientSecret, "") {}
+
 SpotifyAPI::~SpotifyAPI() {}
 
 json SpotifyAPI::handleRequest(const std::string &_request) {
@@ -71,12 +75,6 @@ Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
                 _jsonAlbum.at("release_date").get<std::string>(),
                 _jsonAlbum.at("images").at(1).at("url").get<std::string>(),
                 createArtists(_jsonAlbum.at("artists")));
-    if (_fullTags) {
-        const std::string id = _jsonAlbum.at("id").get<std::string>();
-        json jsonFullAlbum = handleRequest(urlAPI + "albums/" + id);
-        album.set_copyright(jsonFullAlbum.at("copyrights")[0]["text"]);
-        album.set_label(jsonFullAlbum.at("label"));
-    }
     return album;
 }
 
@@ -267,12 +265,10 @@ std::vector<Playlist> SpotifyAPI::searchPlaylist(const std::string &_query,
 /**
  * @brief
  *
- * @param _query
- * @param _type
+ * @param _filename
  * @return std::string
  */
-std::string SpotifyAPI::searchId(const std::string &_filename,
-                                 const std::string &_type) {
+std::string SpotifyAPI::searchId(const std::string &_filename) {
     TagLib::FileRef file(_filename.c_str());
     if (!file.isNull()) {
         std::cout << "Filename: " << file.file()->name() << std::endl;
@@ -332,11 +328,11 @@ std::string SpotifyAPI::searchId(const std::string &_filename,
     // std::string image = "cover.jpg";
 
     // If only one top match, return it
-    if (topMatches.size() == 1) {
-        std::cout << "Mean deviation: " << bestScore - middle << std::endl;
+    // if (topMatches.size() == 1) {
+    std::cout << "Mean deviation: " << bestScore - middle << std::endl;
 
-        return topMatches[0]->get_id();
-    }
+    return topMatches[0]->get_id();
+    // }
 
     // std::cout << "length" <<
     // file.audioProperties()->lengthInMilliseconds()
@@ -350,6 +346,20 @@ std::string SpotifyAPI::searchId(const std::string &_filename,
     // }
 
     return "";
+}
+
+void SpotifyAPI::loadAdditionalData(Track &_track) {
+    json jsonFullAlbum =
+        handleRequest(urlAPI + "albums/" + _track.get_album().get_id());
+    _track.get_album().set_copyright(jsonFullAlbum.at("copyrights")[0]["text"]);
+    _track.get_album().set_label(jsonFullAlbum.at("label"));
+}
+
+void SpotifyAPI::verifyTags(const std::string &_filename) {
+
+    Track spotifyTrack = getTrack(searchId(_filename));
+
+    spotifyTrack.verifyTags(_filename);
 }
 
 } // namespace Spotify
