@@ -22,7 +22,7 @@ wxDEFINE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "ID3 Auto Tagger 2", wxDefaultPosition,
               wxSize(800, 600)),
-      downloader(new Downloader()) {
+      downloader(std::make_unique<Downloader>()) {
     wxInitAllImageHandlers();
 
     auto toolBar = CreateToolBar(wxVERTICAL, wxID_ANY);
@@ -54,10 +54,10 @@ MainFrame::MainFrame()
     mainPanel->SetSizer(mainSizer);
 
     // Create panels for different screens (Initially hidden)
-    downloadPanel = new TrackWindow(mainPanel, downloader);
-    spotifyPanel = new SpotifyWindow(mainPanel, downloader);
-    youtubePanel = new TrackWindow(mainPanel, downloader);
-    settingsPanel = new SettingsWindow(mainPanel, downloader);
+    downloadPanel = new TrackWindow(mainPanel, downloader.get());
+    spotifyPanel = new SpotifyWindow(mainPanel, downloader.get());
+    youtubePanel = new TrackWindow(mainPanel, downloader.get());
+    settingsPanel = new SettingsWindow(mainPanel, downloader.get());
 
     mainSizer->Add(downloadPanel, 1, wxEXPAND);
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);

@@ -16,6 +16,8 @@ json SpotifyAPI::handleRequest(const std::string &_request) {
     auto curl(curl_easy_init());
     struct curl_slist *headers(nullptr);
 
+    std::cout << "Retrieving data from: " << _request << std::endl;
+
     if (!curl) {
         std::cerr << "cURL not initialized!" << std::endl;
         return {};
@@ -355,11 +357,16 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
     _track.get_album().set_label(jsonFullAlbum.at("label"));
 }
 
-void SpotifyAPI::verifyTags(const std::string &_filename) {
+std::unique_ptr<Spotify::Track>
+SpotifyAPI::verifyTags(const std::string &_filename) {
+    std::string trackUuid = searchId(_filename);
+    if (trackUuid.empty()) {
+        return nullptr;
+    }
+    auto matchingTrack = std::make_unique<Spotify::Track>(getTrack(trackUuid));
 
-    Track spotifyTrack = getTrack(searchId(_filename));
-
-    spotifyTrack.verifyTags(_filename);
+    matchingTrack->verifyTags(_filename);
+    return std::move(matchingTrack);
 }
 
 } // namespace Spotify

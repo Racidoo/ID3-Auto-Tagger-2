@@ -2,6 +2,7 @@
 #define SPOTIFY_API_H
 
 #include <exception>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
@@ -62,7 +63,7 @@ class SpotifyAPI : public Query {
     std::vector<Track> getPlaylistTracks(const std::string &_id);
     std::string searchId(const std::string &_filename);
     void loadAdditionalData(Track &_track);
-    void verifyTags(const std::string &_filename);
+    std::unique_ptr<Spotify::Track> verifyTags(const std::string &_filename);
 
   private:
     inline const static std::string urlAPI = "https://api.spotify.com/v1/";

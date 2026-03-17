@@ -26,7 +26,6 @@ class Downloader {
     bool loadOrCreateBlacklist();
     bool writeBlacklist() const;
 
-    bool isBlocked(const std::string &_id) const;
     void makeBlocked(const Spotify::Track &_track);
 
     void downloadAndTag(Spotify::Track &_track,
@@ -60,6 +59,8 @@ class Downloader {
         std::vector<Spotify::Playlist> playlists;
     };
 
+    bool isBlocked(const std::string &_id) const;
+
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
                                const std::set<SearchCategory> &categories = {},
@@ -69,6 +70,7 @@ class Downloader {
     std::string downloadResource(std::vector<Spotify::Track> &&_tracks,
                                  std::function<void(int)> _onProgress);
     void deleteLocalTrack(const std::filesystem::path &_filepath);
+    void verifyLocalResource(const std::filesystem::path &_filepath);
 };
 
 #endif // DOWNLOADER_H

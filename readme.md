@@ -14,12 +14,34 @@ The following packages are needed:
 - wxWidgets
 - yt-dlp
 - ffmpeg
+- pkg-config
 
 Installation on Ubuntu:
 ```bash
-sudo apt install libcurl4-openssl-dev nlohmann-json3-dev libtag1-dev libwxgtk3.2-dev yt-dlp ffmpeg
+sudo apt install libcurl4-openssl-dev nlohmann-json3-dev libtag1-dev libwxgtk3.2-dev ffmpeg pkg-config
 ```
 
+yt-dlp on 'apt' is often months/years behind. We need to make sure, that always the newest version is used. Otherwise, the download might fail:
+
+Ubuntu:
+```bash
+snap install yt-dlp
+```
+
+Alternatively using python package-manager:
+```bash
+pip install -U yt-dlp
+```
+
+Compile
+```bash
+cmake -B build && cmake --build build
+```
+
+Run
+```bash
+./build/frontend/ID3-Auto-Tagger-2
+```
 
 ## Create and insert OAuth Services
 
@@ -39,6 +61,16 @@ If not already done, the tool will provide an empty credentials file `backend/ap
         }
     }
 }
+```
+
+Personal Spotify credentials can be retrieved from the developer dashboard
+```
+https://developer.spotify.com/dashboard
+```
+
+The auth token from the Google API needs to be set here
+```
+https://console.cloud.google.com/apis/credentials
 ```
 
 Alternatively, if no credentials are provided the tool will start in a restricted mode. In the settings menu the credentials can also be provided.

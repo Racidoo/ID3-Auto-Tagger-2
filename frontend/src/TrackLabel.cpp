@@ -162,7 +162,7 @@ void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     // return;
     // }
     if (!spotifyTrack || spotifyTrack->get_id().empty() || localTrack ||
-        progressBar->get_progress() == 100) {
+        spotifyTrack->isDownloaded() || progressBar->get_progress() == 100) {
         // wxLogDebug(wxT("no data | full progress"));
         return;
     }

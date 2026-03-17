@@ -52,12 +52,10 @@ class SpotifyWindow : public wxScrolledWindow {
     inline AlbumWindow *get_albumWindow() const { return albumWindow; };
 
     void search(const wxString &_searchText);
-    void showSearchResults(const Downloader::SearchResult &result);
+    void showSearchResults(Downloader::SearchResult &result);
     void loadAdditionalSearchResults(const wxString &_type);
     void startDownload(wxCommandEvent &_event);
     void verifyTags(wxCommandEvent &_event);
 }
-
-;
 
 #endif // SPOTIFY_WINDOW_H
