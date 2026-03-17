@@ -4,16 +4,16 @@
 #include "../include/TrackLabel.h"
 #include <wx/event.h>
 
-TrackWindow::TrackWindow(wxWindow *_parent, Downloader* _downloader)
+TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent, wxID_ANY), downloader(_downloader) {
     this->SetScrollRate(15, 15);
     this->SetSizer(new wxBoxSizer(wxVERTICAL));
     Bind(EVT_TRACKLABEL_CLICKED, &TrackWindow::processClickedLabel, this);
-    Bind(EVT_TRACK_DELETE, [this] (wxCommandEvent&_event){
+    Bind(EVT_TRACK_DELETE, [this](wxCommandEvent &_event) {
         downloader->deleteLocalTrack(_event.GetString().ToStdString());
     });
-    Bind(EVT_TRACK_VERIFY, [this] (wxCommandEvent&_event){
-        downloader->get_spotify()->verifyTags(_event.GetString().ToStdString());
+    Bind(EVT_TRACK_VERIFY, [this](wxCommandEvent &_event) {
+        downloader->verifyLocalResource(_event.GetString().ToStdString());
     });
 }
 
@@ -115,5 +115,3 @@ void TrackWindow::processClickedLabel(wxCommandEvent &event) {
         wxPostEvent(GetParent(), notifyEvent);
     }
 }
-
-

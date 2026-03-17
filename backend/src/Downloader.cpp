@@ -65,7 +65,7 @@ bool Downloader::loadOrCreateBlacklist() {
         // Create missing blacklist.json with default object structure
         blacklist = {
             {"blacklist",
-             json::array()} // "blacklist" key maps to an empty array
+             json::object()} // "blacklist" key maps to an empty array
         };
 
         std::ofstream file(path);
@@ -314,4 +314,15 @@ void Downloader::deleteLocalTrack(const std::filesystem::path &_filepath) {
         std::cerr << "Could not remove " << _filepath
                   << ": File does not exist.\n";
     }
+}
+
+void Downloader::verifyLocalResource(const std::filesystem::path &_filepath) {
+    auto track = get_spotify()->verifyTags(_filepath);
+    if (!track) {
+        std::cerr
+            << "Unable to retrieve meta data from SpotifyAPI. Will not add '"
+            << _filepath << "' to blacklist!" << std::endl;
+        return;
+    }
+    makeBlocked(*track);
 }

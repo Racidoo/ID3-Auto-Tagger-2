@@ -44,7 +44,7 @@ class Query {
     const std::string type;
     bool initialized;
 
-    // void ensureExists(const std::filesystem::path &path);
+    void ensureCredentialFile() const;
 
   public:
     Query(const std::string &_type);
@@ -62,6 +62,7 @@ class Query {
 
     std::string getValidToken();
     void saveCredentials();
+    json loadCredentials() const;
 
     // Callback function to capture response data
     size_t static writeCallback(void *contents, size_t size, size_t nmemb,

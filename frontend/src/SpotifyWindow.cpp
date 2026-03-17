@@ -98,7 +98,8 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
         }
 
         std::string url("https://open.spotify.com/intl-de/" + type + "/" + id);
-        showSearchResults(downloader->fetchResource(url));
+        auto searchResults = downloader->fetchResource(url);
+        showSearchResults(searchResults);
     });
     this->Bind(EVT_MEDIA_WINDOW_EXPAND_CLICKED, [this](wxCommandEvent event) {
         wxLogDebug("MediaWindow expand clicked. type: " + event.GetString());
@@ -128,7 +129,7 @@ void SpotifyWindow::search(const wxString &_searchText) {
     showSearchResults(result);
 }
 
-void SpotifyWindow::showSearchResults(const Downloader::SearchResult &result) {
+void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
 
     albumWindow->deleteChildren();
     trackWindow->deleteChildren();
@@ -137,8 +138,12 @@ void SpotifyWindow::showSearchResults(const Downloader::SearchResult &result) {
 
     if (!result.tracks.empty()) {
         trackWindow->Show();
-        for (const auto &track : result.tracks)
+        for (auto &track : result.tracks) {
+            if (downloader->isBlocked(track.get_id())) {
+                track.set_downloaded(true);
+            }
             trackWindow->appendChildren(new TrackLabel(trackWindow, track));
+        }
     } else {
         trackWindow->Hide();
     }

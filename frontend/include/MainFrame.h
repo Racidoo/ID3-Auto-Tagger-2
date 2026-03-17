@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <wx/wx.h>
 
@@ -18,7 +19,7 @@ class MainFrame : public wxFrame {
     ~MainFrame() = default;
 
   private:
-    Downloader *downloader;
+    std::unique_ptr<Downloader> downloader;
     wxBoxSizer *mainSizer;
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;
