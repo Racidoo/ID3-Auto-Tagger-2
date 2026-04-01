@@ -21,60 +21,51 @@ namespace Spotify {
 
 class Track : public SpotifyObject {
   private:
-    const unsigned int discNumber;
-    const unsigned long durationMs;
-    const bool explicitContent;
-    const unsigned int trackNumber;
-    const Album album;
+    unsigned int discNumber;
+    unsigned long durationMs;
+    bool explicitContent;
+    unsigned int trackNumber;
+    Album album;
     std::vector<Artist> artists;
 
     bool downloaded;
 
   public:
     Track(const std::string &_id, const std::string &_name,
-          const unsigned int _discNumber, const unsigned long _durationMs,
-          const bool _explicitContent, const unsigned int _trackNumber,
-          const Album &_album, const std::vector<Artist> &_artists);
+          unsigned int _discNumber, unsigned long _durationMs,
+          bool _explicitContent, unsigned int _trackNumber, const Album &_album,
+          const std::vector<Artist> &_artists);
     ~Track();
-
-    enum tag_type_t {
-        TITLE = 0,
-        ARTIST,
-        ALBUM,
-        ALBUM_ARTIST,
-        GENRE,
-        LABEL,
-        YEAR,
-        TRACK,
-        DISC
-    };
 
     const std::string get_imageUrl() = delete;
     inline std::vector<Artist> get_artists() const { return artists; }
-    inline Album get_album() const { return album; }
+    inline Album &get_album() { return album; }
+    inline const Album &get_album() const { return album; }
     inline const std::string get_stringArtists() const {
         return Artist::vecToStr(artists);
     }
+    inline unsigned int get_trackNumber() const { return trackNumber; }
+    inline unsigned int get_discNumber() const { return discNumber; }
     inline unsigned int get_durationMs() const { return durationMs; }
     inline bool isDownloaded() const { return downloaded; }
 
     inline void set_downloaded(bool _downloaded) { downloaded = _downloaded; }
 
-    bool writeID3V2Tags(TagLib::MPEG::File _file) const;
-    bool setAlbumCover(const std::string &_mp3Path,
-                       const std::string &_imagePath) const;
-    bool setAlbumCover(const std::string &_mp3Path,
-                       const std::vector<char> &_imageData) const;
+    // bool writeID3V2Tags(TagLib::MPEG::File _file) const;
+    // bool setAlbumCover(const std::string &_mp3Path,
+    //                    const std::string &_imagePath) const;
+    // bool setAlbumCover(const std::string &_mp3Path,
+    //  const std::vector<char> &_imageData) const;
     // static void printID3V2Tags(TagLib::MPEG::File _file);
 
-    static bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
-                            const std::string &value);
+    // static bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
+    // const std::string &value);
 
-    void verifyTags(const std::string &_filepath);
+    // void verifyTags(const std::string &_filepath);
 
   private:
-    bool setAPICTag(const std::string &_mp3Path,
-                    const std::vector<char> &_imageData) const;
+    // bool setAPICTag(const std::string &_mp3Path,
+    //                 const std::vector<char> &_imageData) const;
 };
 
 } // namespace Spotify

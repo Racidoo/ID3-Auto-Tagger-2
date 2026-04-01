@@ -2,22 +2,28 @@
 
 wxBEGIN_EVENT_TABLE(ScrollText, wxPanel) EVT_PAINT(ScrollText::onPaint)
     EVT_ENTER_WINDOW(ScrollText::onEnter) EVT_LEAVE_WINDOW(ScrollText::onLeave)
-        EVT_TIMER(wxID_ANY, ScrollText::onTimer) wxEND_EVENT_TABLE()
+        EVT_TIMER(wxID_ANY, ScrollText::onTimer) wxEND_EVENT_TABLE();
 
-            ScrollText::ScrollText(wxWindow *parent, wxWindowID _id,
-                                   const wxString &_text, const wxPoint &_pos,
-                                   const wxSize &_size)
-    : wxPanel(parent, _id, _pos, _size, wxFULL_REPAINT_ON_RESIZE | wxBG_STYLE_TRANSPARENT),
+ScrollText::ScrollText(wxWindow *parent, wxWindowID _id, const wxString &_text,
+                       const wxPoint &_pos, const wxSize &_size)
+    : wxPanel(parent, _id, _pos, _size,
+              wxFULL_REPAINT_ON_RESIZE | wxBG_STYLE_TRANSPARENT),
       fullText(_text), timer(this),
       font(wxFontInfo(10).Family(wxFONTFAMILY_DEFAULT)) {
 
-    // this->SetBackgroundStyle(wxBG_STYLE_TRANSPARENT); // Needed for custom drawing
+    SetLabel(fullText);
+}
+
+void ScrollText::SetLabel(const wxString &_label) {
+    fullText = _label;
     this->SetFont(font);
 
     // Measure text width
     wxClientDC dc(this);
     dc.SetFont(font);
-    dc.GetTextExtent(fullText, &textWidth, nullptr);
+    dc.GetTextExtent(_label, &textWidth, nullptr);
+
+    Refresh();
 }
 
 void ScrollText::onPaint(wxPaintEvent &) {

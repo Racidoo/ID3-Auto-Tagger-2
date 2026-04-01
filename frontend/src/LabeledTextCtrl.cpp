@@ -3,7 +3,7 @@
 wxDEFINE_EVENT(EVT_VALUE_CHANGE, wxCommandEvent);
 
 LabeledTextCtrl::LabeledTextCtrl(wxWindow *_parent, wxWindowID _winid,
-                                 Spotify::Track::tag_type_t _type,
+                                LocalTrack::tag_type_t _type,
                                  const wxString &_labelText)
     : wxPanel(_parent, _winid), type(_type) {
     auto *sizer = new wxBoxSizer(wxVERTICAL);

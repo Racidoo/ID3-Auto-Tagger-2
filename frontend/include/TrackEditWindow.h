@@ -3,10 +3,15 @@
 
 #include <functional> // for std::hash
 #include <string>     // for std::string
-#include <taglib/mpegfile.h>
+#include <unordered_set>
 #include <wx/wx.h>
 
+#include "MediaLabel.h"
+#include "TrackInterface.h"
+#include "TrackLabel.h"
+
 class LabeledTextCtrl;
+// class TrackLabel;
 
 class TrackEditWindow : public wxPanel {
   private:
@@ -20,6 +25,9 @@ class TrackEditWindow : public wxPanel {
     LabeledTextCtrl *yearText;
     LabeledTextCtrl *trackNumberText;
     LabeledTextCtrl *discNumberText;
+    LabeledTextCtrl *copyrightText;
+
+    std::unordered_set<TrackLabel *> activeSongs;
 
   public:
     TrackEditWindow(wxWindow *_parent, wxWindowID _winid = wxID_ANY,
@@ -27,45 +35,53 @@ class TrackEditWindow : public wxPanel {
                     const wxSize &_size = wxDefaultSize);
     ~TrackEditWindow();
 
-    void show(const std::vector<TagLib::MPEG::File *> &_tracks);
+    inline std::unordered_set<TrackLabel *> &get_activeSongs() {
+        return activeSongs;
+    }
+    inline const std::unordered_set<TrackLabel *> &get_activeSongs() const {
+        return activeSongs;
+    }
+
+    void show();
 
     static std::size_t bitmapHash(const wxBitmap &bmp);
     static bool bitmapsEqual(const wxBitmap &a, const wxBitmap &b);
 
   private:
     /**
-     * @brief This function iterates over the container and compares the
-     * attribute extracted by getAttribute() from each file's ID3v2 tag. If all
-     * extracted attributes are equal, it returns that value; otherwise, it
-     * returns an empty string.
+     * @brief Returns the common attribute across all files.
+     *        If any file is missing the attribute or values differ,
+     *        an empty string is returned.
      *
-     * @tparam Container
-     * @tparam Getter
-     * @param files
-     * @param getAttribute
-     * @return std::string
+     * @tparam Container Container of TagLib::MPEG::File*
+     * @tparam Getter Callable: (TagLib::ID3v2::Tag*) -> std::string
      */
-    template <typename Container, typename Getter>
-    std::string getCommonAttribute(const Container &files,
-                                   Getter getAttribute) {
-        if (files.empty())
-            return "";
+    template <typename Getter> wxString getCommonAttribute(Getter getter) {
+        if (activeSongs.empty())
+            return {};
 
-        // Access the first file, and check it has the expected tag
-        auto *firstFile = files.front();
-        if (!firstFile->hasID3v2Tag())
-            return "";
+        std::string commonValue;
+        bool initialized = false;
 
-        // Get the common value from the first file
-        std::string commonValue = getAttribute(firstFile->ID3v2Tag());
+        for (auto activeSong : get_activeSongs()) {
+            if (!activeSong || !activeSong->get_data())
+                continue;
 
-        for (auto *file : files) {
-            if (!file->hasID3v2Tag())
-                return "";
-            if (getAttribute(file->ID3v2Tag()) != commonValue)
-                return "";
+            std::string value = getter(activeSong->get_data()); // call lambda
+
+            // Treat empty string as "not present"
+            if (value.empty())
+                return {};
+
+            if (!initialized) {
+                commonValue = std::move(value);
+                initialized = true;
+            } else if (value != commonValue) {
+                return {}; // mismatch found
+            }
         }
-        return commonValue;
+
+        return wxString::FromUTF8(commonValue);
     }
 
     /**
@@ -78,22 +94,28 @@ class TrackEditWindow : public wxPanel {
      * @param getAttribute
      * @return wxBitmap
      */
-    template <typename Container, typename Getter>
-    wxBitmap getCommonBitmap(const Container &files, const wxSize &_size,
-                             Getter getAttribute) {
-        if (files.empty())
+    template <typename Getter>
+    wxBitmap getCommonBitmap(const wxSize &_size, Getter getAttribute) {
+        if (activeSongs.empty())
             return wxBitmap(_size);
 
         // Access the first file, and check it has the expected tag
-        auto *firstFile = files.front();
-        if (!firstFile->hasID3v2Tag())
+        auto firstLabel = *get_activeSongs().begin();
+
+        if (!firstLabel || !firstLabel->get_data()) {
             return wxBitmap(_size);
+        }
 
         // Get the common value from the first file
-        wxBitmap commonBitmap = getAttribute(firstFile);
+        wxBitmap commonBitmap =
+            MediaLabel::loadImage(getAttribute(firstLabel->get_data()), _size);
 
-        for (auto *file : files) {
-            if (!bitmapsEqual(getAttribute(file), commonBitmap))
+        for (auto activeSong : get_activeSongs()) {
+            if (!activeSong || !activeSong->get_data())
+                continue;
+            if (!bitmapsEqual(MediaLabel::loadImage(
+                                  getAttribute(activeSong->get_data()), _size),
+                              commonBitmap))
                 return wxBitmap(_size);
         }
         return commonBitmap;

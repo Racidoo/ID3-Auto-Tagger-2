@@ -1,7 +1,7 @@
 #if !defined(LABELED_TEXT_CTRL_H)
 #define LABELED_TEXT_CTRL_H
 
-#include "Spotify/Track.h" // tag_type_t
+#include "LocalTrack.h" // tag_type_t
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
@@ -13,7 +13,7 @@ wxDECLARE_EVENT(EVT_VALUE_CHANGE, wxCommandEvent);
 class LabeledTextCtrl : public wxPanel {
   public:
     LabeledTextCtrl(wxWindow *_parent, wxWindowID _winid,
-                    Spotify::Track::tag_type_t _type,
+                    LocalTrack::tag_type_t _type,
                     const wxString &_labelText = wxEmptyString);
 
     inline wxString GetValue() const { return textCtrl->GetValue(); }
@@ -25,7 +25,7 @@ class LabeledTextCtrl : public wxPanel {
   private:
     wxStaticText *label;
     wxTextCtrl *textCtrl;
-    Spotify::Track::tag_type_t type;
+    LocalTrack::tag_type_t type;
     void onValueChange(wxCommandEvent &_event);
 };
 

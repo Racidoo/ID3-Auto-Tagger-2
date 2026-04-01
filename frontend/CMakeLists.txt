@@ -5,8 +5,9 @@ set(SOURCES
     src/App.cpp
     src/ArtistLabel.cpp
     src/CircleProgressBar.cpp
-    src/LabeledTextCtrl.cpp
     src/IconProvider.cpp
+    src/LabeledTextCtrl.cpp
+    src/LocalTrackWindow.cpp
     src/main.cpp
     src/MainFrame.cpp
     src/MediaLabel.cpp
@@ -22,7 +23,6 @@ set(SOURCES
 )
 
 # Find wxWidgets
-# set(CMAKE_PREFIX_PATH /usr/include/wx-3.0/wx/)
 find_package(wxWidgets REQUIRED COMPONENTS core base adv)
 include(${wxWidgets_USE_FILE})
 
@@ -40,8 +40,12 @@ include_directories(${CMAKE_SOURCE_DIR}/backend/include)
 # Link against backend and wxWidgets
 target_link_libraries(ID3-Auto-Tagger-2 PRIVATE backend ${wxWidgets_LIBRARIES})
 
-# set(CMAKE_MODULE_PATH "/usr/lib/cmake/wxWidgets/")
+if (ENABLE_ASAN)
+    target_compile_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=address)
+endif()
 
-# find_package(wxWidgets REQUIRED core base net adv xrc html xml)
-# # include(${wxWidgets_USE_FILE})
-# target_link_libraries(frontend ${wxWidgets_LIBRARIES})
+if (ENABLE_TSAN)
+    target_compile_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
+    target_link_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=thread)
+endif()

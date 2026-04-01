@@ -37,8 +37,8 @@ class Query {
     json exec(const std::string &_cmd) const;
 
   public:
-    std::vector<char> downloadImage(const std::string &_url,
-                                    const std::string &_outputPath = "") const;
+    static std::vector<std::byte>
+    downloadImage(const std::string &_url, const std::string &_outputPath = "");
 
   private:
     const std::string type;
@@ -55,7 +55,7 @@ class Query {
     inline std::string get_clientId() const { return clientId; };
     inline std::string get_clientSecret() const { return clientSecret; };
     inline bool is_initialized() const { return initialized; }
-    
+
     void set_accessToken(const std::string &_accessToken);
     void set_clientId(const std::string &_clientId);
     void set_clientSecret(const std::string &_clientSecret);

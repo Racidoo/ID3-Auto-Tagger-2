@@ -95,54 +95,73 @@ wxBitmap MediaLabel::loadImageFromURL(const wxString &_url,
     return wxBitmap(50, 50); // Return empty bitmap if load fails
 }
 
-wxBitmap MediaLabel::loadImageFromTag(TagLib::MPEG::File *_track,
-                                      const wxSize &_size) {
-    if (!_track->hasID3v2Tag()) {
-        return wxBitmap();
-    }
-    // Get ID3v2 tag
-    auto tag = _track->ID3v2Tag();
-    if (!tag) {
-        // wxLogError("No ID3v2 tag found in: %s", track.name());
-        return wxBitmap();
+// wxBitmap MediaLabel::loadImageFromTag(const wxString &_path,
+//                                       const wxSize &_size) {
+//     TagLib::MPEG::File _track(_path);
+
+//     if (!_track.hasID3v2Tag()) {
+//         return wxBitmap(_size);
+//     }
+//     // Get ID3v2 tag
+//     auto tag = _track.ID3v2Tag();
+//     if (!tag) {
+//         // wxLogError("No ID3v2 tag found in: %s", track.name());
+//         return wxBitmap(_size);
+//     }
+
+//     // Search for an APIC (Attached Picture) frame
+//     TagLib::ID3v2::FrameList frames = tag->frameListMap()["APIC"];
+//     if (frames.isEmpty()) {
+//         // wxLogError("No album cover found in: %s", track.name());
+//         return wxBitmap(_size);
+//     }
+
+//     // Extract image data
+//     auto *apic =
+//         dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frames.front());
+//     if (!apic) {
+//         // wxLogError("Invalid APIC frame in: %s", track.name());
+//         return wxBitmap(_size);
+//     }
+
+//     // Get raw image data
+//     TagLib::ByteVector imageData = apic->picture();
+//     if (imageData.isEmpty()) {
+//         // wxLogError("APIC frame contains no image data in: %s",
+//         track.name()); return wxBitmap(_size);
+//     }
+
+//     // Add missing EOI marker if needed
+//     if (!(imageData.size() >= 2 &&
+//           imageData[imageData.size() - 2] == (char)0xFF &&
+//           imageData[imageData.size() - 1] == (char)0xD9)) {
+//         imageData.append((char)0xFF);
+//         imageData.append((char)0xD9);
+//     }
+
+//     // Convert to wxWidgets image
+//     wxMemoryInputStream imgStream(imageData.data(), imageData.size());
+//     wxImage image;
+//     if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY)) {
+//         wxLogError("Failed to load album cover from: %s", _track.name());
+//         return wxBitmap(_size);
+//     }
+//     return wxBitmap(image.Rescale(_size.GetWidth(), _size.GetHeight()));
+// }
+
+wxBitmap MediaLabel::loadImage(const std::vector<std::byte> &_imageData,
+                               const wxSize &_size) {
+    if (_imageData.empty()) {
+        // wxLogError("loadImage: empty image data");
+        return wxBitmap(_size);
     }
 
-    // Search for an APIC (Attached Picture) frame
-    TagLib::ID3v2::FrameList frames = tag->frameListMap()["APIC"];
-    if (frames.isEmpty()) {
-        // wxLogError("No album cover found in: %s", track.name());
-        return wxBitmap();
-    }
+    wxMemoryInputStream imgStream(_imageData.data(), _imageData.size());
 
-    // Extract image data
-    auto *apic =
-        dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frames.front());
-    if (!apic) {
-        // wxLogError("Invalid APIC frame in: %s", track.name());
-        return wxBitmap();
-    }
-
-    // Get raw image data
-    TagLib::ByteVector imageData = apic->picture();
-    if (imageData.isEmpty()) {
-        // wxLogError("APIC frame contains no image data in: %s", track.name());
-        return wxBitmap();
-    }
-
-    // Add missing EOI marker if needed
-    if (!(imageData.size() >= 2 &&
-          imageData[imageData.size() - 2] == (char)0xFF &&
-          imageData[imageData.size() - 1] == (char)0xD9)) {
-        imageData.append((char)0xFF);
-        imageData.append((char)0xD9);
-    }
-
-    // Convert to wxWidgets image
-    wxMemoryInputStream imgStream(imageData.data(), imageData.size());
     wxImage image;
-    if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY)) {
-        wxLogError("Failed to load album cover from: %s", _track->name());
-        return wxBitmap(64, 64);
+    if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY) || !image.IsOk()) {
+        wxLogError("loadImage: failed to load image");
+        return wxBitmap();
     }
 
     return wxBitmap(image.Rescale(_size.GetWidth(), _size.GetHeight()));

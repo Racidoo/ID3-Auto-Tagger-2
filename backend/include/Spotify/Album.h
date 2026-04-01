@@ -11,9 +11,9 @@ namespace Spotify {
 
 class Album : public SpotifyObject {
   private:
-     std::string albumType;
-     unsigned int totalTracks;
-     std::string releaseDate;
+    std::string albumType;
+    unsigned int totalTracks;
+    std::string releaseDate;
     std::vector<Artist> artists;
 
     // optional attributes
@@ -22,17 +22,18 @@ class Album : public SpotifyObject {
 
   public:
     Album(const std::string &_id, const std::string &_name,
-          const std::string &_albumType, const unsigned int _totalTracks,
+          const std::string &_albumType, unsigned int _totalTracks,
           const std::string &_releaseDate, const std::string &_imageURL,
           const std::vector<Artist> &_artists);
     ~Album();
 
     inline const std::string get_releaseDate() const { return releaseDate; }
-    inline const std::string get_label() const { return label; }
-    inline const std::string get_copyright() const { return copyright; }
-    inline const std::string get_artists() const {
-        return Artist::vecToStr(artists);
+    std::string get_releaseYear() const {
+        return get_releaseDate().substr(0, 4);
     }
+    inline const std::string &get_label() const { return label; }
+    inline const std::string &get_copyright() const { return copyright; }
+    inline std::string get_artists() const { return Artist::vecToStr(artists); }
 
     inline void set_label(const std::string &_label) { label = _label; }
     inline void set_copyright(const std::string &_copyright) {

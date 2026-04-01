@@ -1,10 +1,12 @@
-project(SpotifyAPI_Backend)
+project(ID3-Auto-Tagger_Backend)
 
 # Add source files
 set(SOURCES
     # src/main.cpp
     src/Query.cpp
     src/Downloader.cpp
+    src/LocalTrack.cpp
+    src/LocalTrackService.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp
     src/Spotify/Playlist.cpp
@@ -12,6 +14,7 @@ set(SOURCES
     src/Spotify/SpotifyObject.cpp
     src/Spotify/Track.cpp
     src/Spotify/User.cpp
+    src/TrackInterface.cpp
     src/YouTube.cpp
     lib/base64/base64.cpp
     # Add more source files here
@@ -34,3 +37,13 @@ pkg_check_modules(TAGLIB REQUIRED taglib)
 
 target_include_directories(backend PRIVATE ${TAGLIB_INCLUDE_DIRS})
 target_link_libraries(backend PRIVATE CURL::libcurl nlohmann_json::nlohmann_json ${TAGLIB_LIBRARIES})
+
+if(ENABLE_ASAN)
+    target_compile_options(backend PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(backend PRIVATE -fsanitize=address)
+endif()
+
+if(ENABLE_TSAN)
+    target_compile_options(backend PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
+    target_link_options(backend PRIVATE -fsanitize=thread)
+endif()

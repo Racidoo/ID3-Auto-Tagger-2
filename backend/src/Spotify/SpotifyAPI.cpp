@@ -270,30 +270,42 @@ std::vector<Playlist> SpotifyAPI::searchPlaylist(const std::string &_query,
  * @param _filename
  * @return std::string
  */
-std::string SpotifyAPI::searchId(const std::string &_filename) {
-    TagLib::FileRef file(_filename.c_str());
-    if (!file.isNull()) {
-        std::cout << "Filename: " << file.file()->name() << std::endl;
-    } else {
-        std::cerr << "Error: Invalid file!" << std::endl;
+std::string SpotifyAPI::searchId(
+    std::shared_ptr<TrackInterface::TrackViewData> _localData) {
+    if (!_localData) {
+        return {};
     }
-    std::string title;
-    std::string artist;
+    // TagLib::FileRef file(_filename.c_str());
+    // if (!file.isNull()) {
+    //     std::cout << "Filename: " << file.file()->name() << std::endl;
+    // } else {
+    //     std::cerr << "Error: Invalid file!" << std::endl;
+    // }
+    const auto &title = _localData->get_title();
+    const auto &artist = _localData->get_artist();
+    auto filename = _localData->local->get_filename();
     std::string query;
 
-    if (file.tag()) {
-        title = file.tag()->title().toCString();
-        artist = file.tag()->artist().toCString();
-    }
+    // if (file.tag()) {
+    //     title = file.tag()->title().toCString();
+    //     artist = file.tag()->artist().toCString();
+    // }
 
     if (title.empty()) {
-        query = _filename;
+        query = filename;
     } else if (artist.empty()) {
         query = title;
     } else {
         query = artist + " - " + title;
     }
-    std::vector<Track> tracks = searchTrack(query);
+
+    std::vector<Track> tracks;
+
+    if (SpotifyObject::isValidIdFormat(filename)) {
+        tracks.push_back(getTrack(filename));
+    } else {
+        tracks = searchTrack(query, "", "10");
+    }
 
     double bestScore = 0.0;
     std::vector<Track *> topMatches;
@@ -305,10 +317,10 @@ std::string SpotifyAPI::searchId(const std::string &_filename) {
         if (!title.empty()) {
             score = similarityScore(title, track.get_name());
         } else {
-            score = similarityScore(title, _filename);
+            score = similarityScore(title, filename);
         }
         // Bonus, if tracklength matches
-        score += similarityScore(file.audioProperties()->lengthInSeconds(),
+        score += similarityScore(_localData->get_length(),
                                  track.get_durationMs() / 1000);
         // Bonus, if album is single
         if (track.get_album().get_type() == "single") {
@@ -332,6 +344,10 @@ std::string SpotifyAPI::searchId(const std::string &_filename) {
     // If only one top match, return it
     // if (topMatches.size() == 1) {
     std::cout << "Mean deviation: " << bestScore - middle << std::endl;
+
+    if (bestScore < 1.4) {
+        return "";
+    }
 
     return topMatches[0]->get_id();
     // }
@@ -357,16 +373,15 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
     _track.get_album().set_label(jsonFullAlbum.at("label"));
 }
 
-std::unique_ptr<Spotify::Track>
-SpotifyAPI::verifyTags(const std::string &_filename) {
-    std::string trackUuid = searchId(_filename);
+std::shared_ptr<TrackInterface::TrackViewData> SpotifyAPI::researchTags(
+    std::shared_ptr<TrackInterface::TrackViewData> _localData) {
+    std::string trackUuid = searchId(_localData);
     if (trackUuid.empty()) {
         return nullptr;
     }
-    auto matchingTrack = std::make_unique<Spotify::Track>(getTrack(trackUuid));
-
-    matchingTrack->verifyTags(_filename);
-    return std::move(matchingTrack);
+    auto track = getTrack(trackUuid);
+    loadAdditionalData(track);
+    return TrackInterface::fromSpotify(track);
 }
 
 } // namespace Spotify

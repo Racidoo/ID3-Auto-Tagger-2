@@ -10,43 +10,22 @@ wxDEFINE_EVENT(EVT_TRACK_VERIFY, wxCommandEvent);
 wxDEFINE_EVENT(EVT_TRACK_DELETE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_TRACKLABEL_CLICKED, wxCommandEvent);
 
-TrackLabel::TrackLabel(wxWindow *_parent, const wxString &_songPath)
-    : wxPanel(_parent, wxID_ANY, wxDefaultPosition) {
-
-    localTrack = std::make_unique<TagLib::MPEG::File>(_songPath);
-
-    TagLib::FileRef fr(TagLib::FileName(_songPath), true,
-                       TagLib::AudioProperties::Accurate);
-
-    uint length = fr.audioProperties() ? fr.audioProperties()->length() : 0;
-    create(MediaLabel::loadImageFromTag(
-               localTrack.get(), wxSize(columnWidths[0], columnWidths[0])),
-           localTrack->tag()->title().toCString(),
-           localTrack->tag()->artist().toCString(),
-           localTrack->tag()->album().toCString(),
-           localTrack->tag()->genre().toCString(), length);
-}
-
-TrackLabel::TrackLabel(wxWindow *_parent, const Spotify::Track &_track)
-    : wxPanel(_parent, wxID_ANY, wxDefaultPosition),
-      spotifyTrack(std::make_unique<Spotify::Track>(_track)) {
-
-    create(
-        MediaLabel::loadImageFromURL(spotifyTrack->get_album().get_imageUrl(),
-                                     wxSize(columnWidths[0], columnWidths[0])),
-        spotifyTrack->get_name(), spotifyTrack->get_stringArtists(),
-        spotifyTrack->get_album().get_name(), "Unknown genre",
-        spotifyTrack->get_durationMs() / 1000);
+TrackLabel::TrackLabel(wxWindow *_parent,
+                       std::shared_ptr<TrackInterface::TrackViewData> _data)
+    : wxPanel(_parent, wxID_ANY, wxDefaultPosition), isActive(false),
+      data(_data) {
+    Create();
+    Update();
 }
 
 TrackLabel::~TrackLabel() {}
 
-void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
-                        const wxString &_artist, const wxString &_album,
-                        const wxString &_genre, int _length) {
+std::shared_ptr<TrackInterface::TrackViewData> TrackLabel::get_data() const {
+    return data;
+}
 
-    // wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto *infoSizer = new wxFlexGridSizer(1, 7, 5, 5);
+void TrackLabel::Create() {
+    rootSizer = new wxFlexGridSizer(1, 7, 5, 5);
     auto *textSizer = new wxBoxSizer(wxVERTICAL);
 
     progressBar = new CircleProgressBar(this);
@@ -54,77 +33,56 @@ void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
     progressBar->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onDownloadButtonClick,
                       this);
 
-    // show checkmark on local files
-    if (localTrack || (spotifyTrack && spotifyTrack->isDownloaded())) {
-        progressBar->SetProgress(100);
-    }
-    // Cover Image (Fixed size)
-    auto *coverBitmap =
-        new wxStaticBitmap(this, wxID_ANY, _albumCover, wxDefaultPosition,
+    coverBitmap =
+        new wxStaticBitmap(this, wxID_ANY, wxBitmap(), wxDefaultPosition,
                            wxSize(columnWidths[1], columnWidths[1]));
-    // coverBitmap->SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
 
-    // **Title + Artist in a Vertical BoxSizer**
-    auto *titleText = new ScrollText(this, wxID_ANY, _title, wxDefaultPosition,
-                                     wxSize(columnWidths[2], -1));
-    auto *artistText =
-        new ScrollText(this, wxID_ANY, _artist, wxDefaultPosition,
-                       wxSize(columnWidths[2], -1));
+    titleText = new ScrollText(this, wxID_ANY, "title", wxDefaultPosition,
+                               wxSize(columnWidths[2], -1));
+    artistText = new ScrollText(this, wxID_ANY, "artist", wxDefaultPosition,
+                                wxSize(columnWidths[2], -1));
     artistText->SetForegroundColour(wxColour(150, 150, 150));
 
-    auto *albumText = new ScrollText(this, wxID_ANY, _album, wxDefaultPosition,
-                                     wxSize(columnWidths[3], -1));
-    auto *genreText = new ScrollText(this, wxID_ANY, _genre, wxDefaultPosition,
-                                     wxSize(columnWidths[4], -1));
+    albumText = new ScrollText(this, wxID_ANY, "album", wxDefaultPosition,
+                               wxSize(columnWidths[3], -1));
+    genreText = new ScrollText(this, wxID_ANY, "genre", wxDefaultPosition,
+                               wxSize(columnWidths[4], -1));
 
-    int minutes = _length / 60;
-    int seconds = _length % 60;
-    // int hours = minutes / 60;
-    minutes = minutes % 60;
-
-    auto duration =
-        wxString(std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") +
-                 std::to_string(seconds));
-
-    auto *lengthText =
-        new wxStaticText(this, wxID_ANY, duration, wxDefaultPosition,
-                         wxSize(columnWidths[5], -1));
+    lengthText = new wxStaticText(this, wxID_ANY, "length", wxDefaultPosition,
+                                  wxSize(columnWidths[5], -1));
     lengthText->Enable(false);
 
     textSizer->Add(titleText, 0);
     textSizer->Add(artistText, 0);
 
-    infoSizer->Add(progressBar, 1, wxEXPAND, 5);
-    infoSizer->Add(coverBitmap, 0, wxALL, 5);
-    infoSizer->Add(textSizer, 0, wxALL, 5);
-    infoSizer->Add(albumText, 0, wxALL, 5);
-    infoSizer->Add(genreText, 0, wxALL, 5);
-    infoSizer->Add(lengthText, 0, wxALL, 5);
-    if (localTrack) {
-        auto actionSizer = new wxBoxSizer(wxHORIZONTAL);
-        auto actionVerify = new wxBitmapButton(
-            this, wxID_ANY,
-            wxBitmap(wxArtProvider::GetBitmap(wxART_ASSESSMENT)));
-        auto actionDelete = new wxBitmapButton(
-            this, wxID_ANY,
-            wxBitmap(wxArtProvider::GetBitmap(wxART_TRASH_XMARK)));
-        actionVerify->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &_event) {
-            wxCommandEvent trackEvent(EVT_TRACK_VERIFY);
-            trackEvent.SetString(localTrack->name());
-            wxPostEvent(GetParent(), trackEvent); // Send event to parent
-        });
-        actionDelete->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &_event) {
-            wxCommandEvent trackEvent(EVT_TRACK_DELETE);
-            trackEvent.SetString(localTrack->name());
-            wxPostEvent(GetParent(), trackEvent); // Send event to parent
-        });
-        actionSizer->Add(actionVerify);
-        actionSizer->Add(actionDelete);
-        infoSizer->Add(actionSizer, 0, wxALL, 5);
+    auto actionSizer = new wxBoxSizer(wxHORIZONTAL);
+    actionVerify = new wxBitmapButton(
+        this, wxID_ANY, wxBitmap(wxArtProvider::GetBitmap(wxART_ASSESSMENT)));
+    actionDelete = new wxBitmapButton(
+        this, wxID_ANY, wxBitmap(wxArtProvider::GetBitmap(wxART_TRASH_XMARK)));
+
+    actionSizer->Add(actionVerify);
+    actionSizer->Add(actionDelete);
+
+    actionVerify->Show();
+    actionDelete->Show();
+
+    rootSizer->Add(progressBar, 1, wxEXPAND, 5);
+    rootSizer->Add(coverBitmap, 0, wxALL, 5);
+    rootSizer->Add(textSizer, 0, wxALL, 5);
+    rootSizer->Add(albumText, 0, wxALL, 5);
+    rootSizer->Add(genreText, 0, wxALL, 5);
+    rootSizer->Add(lengthText, 0, wxALL, 5);
+    rootSizer->Add(actionSizer, 0, wxALL, 5);
+
+    if (!data->local) {
+        actionVerify->Hide();
+        actionDelete->Hide();
     }
 
-    this->SetSizerAndFit(infoSizer);
+    this->SetSizerAndFit(rootSizer);
 
+    // Bind clicks once
     this->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     titleText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     artistText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
@@ -133,16 +91,64 @@ void TrackLabel::create(const wxBitmap &_albumCover, const wxString &_title,
     genreText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
 }
 
+void TrackLabel::Update() {
+    coverBitmap->SetBitmap(MediaLabel::loadImage(
+        data->get_cover(), wxSize(columnWidths[1], columnWidths[1])));
+    titleText->SetLabel(wxString::FromUTF8(data->get_title()));
+    artistText->SetLabel(wxString::FromUTF8(data->get_artist()));
+    albumText->SetLabel(wxString::FromUTF8(data->get_album()));
+    genreText->SetLabel(wxString::FromUTF8(data->get_genre()));
+
+    int minutes = (data->get_length() / 60) % 60;
+    int seconds = data->get_length() % 60;
+
+    wxString duration =
+        wxString(std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") +
+                 std::to_string(seconds));
+
+    lengthText->SetLabel(duration);
+
+    // Progress logic
+    if (data->spotify && data->spotify->isDownloaded()) {
+        progressBar->SetProgress(CIRCLE_PROGRESSBAR_FINISH);
+    } else if (data->local) {
+        progressBar->SetProgress(data->inBlocklist ? CIRCLE_PROGRESSBAR_FINISH
+                                                   : CIRCLE_PROGRESSBAR_CANCEL);
+
+        actionVerify->Show();
+        actionDelete->Show();
+        actionVerify->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &_event) {
+            wxCommandEvent trackEvent(EVT_TRACK_VERIFY, wxID_ANY);
+            trackEvent.SetString(wxString::FromUTF8(data->get_id()));
+            wxPostEvent(GetParent(), trackEvent); // Send event to parent
+        });
+        actionDelete->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &_event) {
+            wxCommandEvent trackEvent(EVT_TRACK_DELETE);
+            trackEvent.SetString(wxString::FromUTF8(data->get_id()));
+            wxPostEvent(GetParent(), trackEvent); // Send event to parent
+        });
+    }
+
+    Layout();
+    Refresh();
+}
+
+void TrackLabel::Update(std::shared_ptr<TrackInterface::TrackViewData> _data) {
+    data = _data;
+    Update();
+}
+
 /**
  * @brief
  *
  * @param event
  */
 void TrackLabel::onClick(wxMouseEvent &event) {
-    if (localTrack && GetParent()) {
+    if (data->local && GetParent()) {
         wxCommandEvent notifyEvent(EVT_TRACKLABEL_CLICKED, GetId());
         notifyEvent.SetEventObject(this);
         wxPostEvent(GetParent(), notifyEvent);
+        std::cout << data->local->get_filepath() << std::endl;
     }
     event.Skip();
 }
@@ -161,14 +167,15 @@ void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     //     wxPostEvent(GetParent(), trackEvent); // Send event to parent
     // return;
     // }
-    if (!spotifyTrack || spotifyTrack->get_id().empty() || localTrack ||
-        spotifyTrack->isDownloaded() || progressBar->get_progress() == 100) {
+    if (!data->spotify || data->get_id().empty() || data->local ||
+        data->spotify->isDownloaded() ||
+        progressBar->get_progress() == CIRCLE_PROGRESSBAR_FINISH) {
         // wxLogDebug(wxT("no data | full progress"));
         return;
     }
     // wxLogDebug(wxT("spotifyTrack"));
     wxCommandEvent trackEvent(EVT_TRACK_DOWNLOAD);
-    trackEvent.SetString(spotifyTrack->get_id().c_str());
+    trackEvent.SetString(data->get_id());
     wxPostEvent(GetParent(), trackEvent); // Send event to parent
 }
 

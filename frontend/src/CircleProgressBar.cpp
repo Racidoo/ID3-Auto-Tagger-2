@@ -12,7 +12,9 @@ END_EVENT_TABLE()
  * @param _id
  */
 CircleProgressBar::CircleProgressBar(wxWindow *_parent, wxWindowID _id)
-    : wxWindow(_parent, _id), progress(0) {
+    : wxPanel(_parent, _id, wxDefaultPosition, wxDefaultSize,
+              wxFULL_REPAINT_ON_RESIZE),
+      progress(0) {
     SetSize(64, 64); // Set size for the progress bar
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
@@ -22,12 +24,13 @@ CircleProgressBar::CircleProgressBar(wxWindow *_parent, wxWindowID _id)
  * @param _progress
  */
 void CircleProgressBar::SetProgress(int _progress) {
-    if (_progress > 100)
-        _progress = 100;
-    else if (_progress < -1)
-        _progress = -1;
+    if (_progress > CIRCLE_PROGRESSBAR_FINISH)
+        _progress = CIRCLE_PROGRESSBAR_FINISH;
+    else if (_progress < CIRCLE_PROGRESSBAR_CANCEL)
+        _progress = CIRCLE_PROGRESSBAR_CANCEL;
     progress = _progress;
     Refresh(); // Trigger redraw
+    Update();
 }
 
 /**
@@ -37,7 +40,7 @@ void CircleProgressBar::SetProgress(int _progress) {
  */
 void CircleProgressBar::OnPaint(wxPaintEvent &_event) {
 
-    wxPaintDC dc(this);
+    wxAutoBufferedPaintDC dc(this);
     PrepareDC(dc);
 
     wxSize size = GetSize();
@@ -52,9 +55,9 @@ void CircleProgressBar::OnPaint(wxPaintEvent &_event) {
 
     wxBitmap iconBitmap;
 
-    if (progress == 0) {
+    if (progress == CIRCLE_PROGRESSBAR_START) {
         iconBitmap = wxArtProvider::GetBitmap(wxART_CIRCLE_DOWNLOAD);
-    } else if (progress == 100) {
+    } else if (progress == CIRCLE_PROGRESSBAR_FINISH) {
         iconBitmap = wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK);
     } else if (progress == -1) {
         iconBitmap = wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK);

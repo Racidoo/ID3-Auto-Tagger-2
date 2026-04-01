@@ -10,6 +10,8 @@ class ScrollText : public wxPanel {
                const wxPoint &_pos = wxDefaultPosition,
                const wxSize &_size = wxDefaultSize);
 
+    void SetLabel(const wxString &label) override;
+
   private:
     wxString fullText;
     int scrollOffset = 0;

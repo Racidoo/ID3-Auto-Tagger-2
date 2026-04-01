@@ -64,13 +64,32 @@ SettingsWindow::SettingsWindow(wxWindow *_parent, Downloader *_downloader,
         }
     });
 
+    auto musicPathSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto musicPathText = new wxStaticText(
+        this, wxID_ANY, wxString(downloader->get_trackPath().string()));
+    auto musicPathButton =
+        new wxButton(this, wxID_ANY, wxT("Select save folder"));
+    musicPathButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event) {
+        wxDirDialog dlg(this, "Select folder", "",
+                        wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+
+        if (dlg.ShowModal() == wxID_OK) {
+            auto path = dlg.GetPath();
+            wxLogDebug("Set music folder to " + path);
+            downloader->set_trackPath(path.ToStdString());
+        }
+    });
+
     googleAuthSizer->Add(googleAuthTokenButton, 0, wxALL, 5);
     googleAuthSizer->Add(googleAuthIcon, 0, wxALL, 5);
     spotifyCredentialsSizer->Add(spotifyCredentialsButton, 0, wxALL, 5);
     spotifyCredentialsSizer->Add(spotifyCredentialsIcon, 0, wxALL, 5);
+    musicPathSizer->Add(musicPathButton, 0, wxALL, 5);
+    musicPathSizer->Add(musicPathText, 0, wxALL, 5);
 
     mainSizer->Add(googleAuthSizer, 0, wxALL, 5);
     mainSizer->Add(spotifyCredentialsSizer, 0, wxALL, 5);
+    mainSizer->Add(musicPathSizer, 0, wxALL, 5);
 
     this->SetSizerAndFit(mainSizer);
 }

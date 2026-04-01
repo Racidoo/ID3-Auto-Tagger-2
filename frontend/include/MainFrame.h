@@ -1,7 +1,7 @@
 #if !defined(MAINFRAME_H)
 #define MAINFRAME_H
 
-#include <filesystem>
+// #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -11,6 +11,7 @@ class Downloader;
 class SettingsWindow;
 class SpotifyWindow;
 class TrackWindow;
+class LocalTrackWindow;
 
 // Define a main window class
 class MainFrame : public wxFrame {
@@ -25,7 +26,7 @@ class MainFrame : public wxFrame {
     SettingsWindow *settingsPanel;
     SpotifyWindow *spotifyPanel;
     TrackWindow *youtubePanel;
-    TrackWindow *downloadPanel;
+    LocalTrackWindow *downloadPanel;
 
     void ShowPanel(wxScrolledWindow *panel);
     void OnDownloadClicked(wxCommandEvent &event);

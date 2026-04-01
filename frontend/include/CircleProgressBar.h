@@ -3,10 +3,15 @@
 
 #include <cmath>
 #include <filesystem>
+#include <wx/dcbuffer.h>
 #include <wx/dcclient.h>
 #include <wx/wx.h>
 
-class CircleProgressBar : public wxWindow {
+#define CIRCLE_PROGRESSBAR_START 0
+#define CIRCLE_PROGRESSBAR_FINISH 100
+#define CIRCLE_PROGRESSBAR_CANCEL -1
+
+class CircleProgressBar : public wxPanel {
   public:
     CircleProgressBar(wxWindow *_parent, wxWindowID _id = wxID_ANY);
 

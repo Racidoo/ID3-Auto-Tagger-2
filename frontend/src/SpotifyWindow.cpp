@@ -132,7 +132,7 @@ void SpotifyWindow::search(const wxString &_searchText) {
 void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
 
     albumWindow->deleteChildren();
-    trackWindow->deleteChildren();
+    trackWindow->Clear();
     artistWindow->deleteChildren();
     playlistWindow->deleteChildren();
 
@@ -142,7 +142,7 @@ void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
             if (downloader->isBlocked(track.get_id())) {
                 track.set_downloaded(true);
             }
-            trackWindow->appendChildren(new TrackLabel(trackWindow, track));
+            trackWindow->appendChild(TrackInterface::fromSpotify(track));
         }
     } else {
         trackWindow->Hide();
@@ -195,15 +195,16 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
     }
     TrackLabel *chosenTrackLabel =
         trackWindow->get_trackLabels().at(_event.GetString().ToStdString());
-    Spotify::Track chosenTrack = *chosenTrackLabel->get_spotifyTrack();
+    std::vector<std::shared_ptr<TrackInterface::TrackViewData>> choosenTracks{
+        chosenTrackLabel->get_data()};
     downloader->downloadResource(
-        {chosenTrack}, [chosenTrackLabel](int progress) {
+        choosenTracks, [chosenTrackLabel](int progress) {
             chosenTrackLabel->get_ProgressBar()->SetProgress(progress);
         });
 }
 
-void SpotifyWindow::verifyTags(wxCommandEvent &_event) {
-    wxLogDebug(wxT("verifyTags()"));
-    wxLogDebug(wxT("Verify Tags of " + _event.GetString()));
-    downloader->get_spotify()->verifyTags(_event.GetString().ToStdString());
-}
+// void SpotifyWindow::verifyTags(wxCommandEvent &_event) {
+//     wxLogDebug(wxT("verifyTags()"));
+//     wxLogDebug(wxT("Verify Tags of " + _event.GetString()));
+//     downloader->get_spotify()->verifyTags(_event.GetString().ToStdString());
+// }

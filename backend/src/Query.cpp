@@ -288,9 +288,9 @@ double Query::similarityScoreDate(const std::string &date1,
     return similarityScore(daysSinceEpoch(date1), daysSinceEpoch(date2));
 }
 
-std::vector<char> Query::downloadImage(const std::string &_url,
-                                       const std::string &_outputPath) const {
-    std::vector<char> imageData;
+std::vector<std::byte> Query::downloadImage(const std::string &_url,
+                                            const std::string &_outputPath) {
+    std::vector<std::byte> imageData;
     auto curl(curl_easy_init());
     curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);

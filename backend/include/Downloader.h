@@ -8,7 +8,9 @@
 #include <vector>
 // #include <thread>
 #include <future>
+#include <taglib/mpegfile.h>
 
+#include "TrackInterface.h"
 #include "Spotify/SpotifyAPI.h"
 #include "YouTube.h"
 
@@ -17,18 +19,19 @@ class Downloader {
     Spotify::SpotifyAPI *spotify;
     YouTube *youTube;
 
-    std::string trackPath;
+    std::filesystem::path trackPath;
     // std::string coverPath;
 
     json blacklist;
 
-    // bool readBlacklist();
     bool loadOrCreateBlacklist();
+    bool loadOrCreateConfig();
     bool writeBlacklist() const;
+    bool writeConfig() const;
 
     void makeBlocked(const Spotify::Track &_track);
 
-    void downloadAndTag(Spotify::Track &_track,
+    void downloadAndTag(std::shared_ptr<TrackInterface::TrackViewData> _track,
                         std::function<void(int)> _onProgress);
 
   public:
@@ -37,6 +40,9 @@ class Downloader {
 
     Spotify::SpotifyAPI *get_spotify() { return spotify; }
     YouTube *get_youtube() { return youTube; }
+
+    const std::filesystem::path &get_trackPath() const;
+    void set_trackPath(const std::filesystem::path &_path);
 
     bool is_initialized() const;
     bool initialize();
@@ -60,6 +66,7 @@ class Downloader {
     };
 
     bool isBlocked(const std::string &_id) const;
+    void makeBlocked(std::shared_ptr<TrackInterface::TrackViewData> _data);
 
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
@@ -67,10 +74,12 @@ class Downloader {
                                const std::string &_market = "DE",
                                const std::string &_limit = "5",
                                const std::string &_offset = "0");
-    std::string downloadResource(std::vector<Spotify::Track> &&_tracks,
-                                 std::function<void(int)> _onProgress);
+    void downloadResource(
+        const std::vector<std::shared_ptr<TrackInterface::TrackViewData>>
+            &_tracks,
+        std::function<void(int)> _onProgress);
     void deleteLocalTrack(const std::filesystem::path &_filepath);
-    void verifyLocalResource(const std::filesystem::path &_filepath);
+    // void verifyLocalResource(std::filesystem::path *_filepath);
 };
 
 #endif // DOWNLOADER_H

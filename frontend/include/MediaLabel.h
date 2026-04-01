@@ -25,8 +25,10 @@ class MediaLabel : public wxPanel {
     virtual const Spotify::SpotifyObject *getSpotifyObject() const = 0;
 
     static wxBitmap loadImageFromURL(const wxString &_url, const wxSize &_size);
-    static wxBitmap loadImageFromTag(TagLib::MPEG::File *_track,
-                                     const wxSize &_size);
+    // static wxBitmap loadImageFromTag(const wxString &_path,
+    //                                  const wxSize &_size);
+    static wxBitmap loadImage(const std::vector<std::byte> &_imageData,
+                              const wxSize &_size);
 };
 
 #endif // MEDIA_LABEL_H

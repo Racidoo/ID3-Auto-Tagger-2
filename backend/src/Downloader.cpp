@@ -1,4 +1,5 @@
 #include "../include/Downloader.h"
+#include "../include/LocalTrack.h"
 
 Downloader::Downloader()
     : trackPath(std::filesystem::current_path() / "music/"), spotify(nullptr),
@@ -7,14 +8,24 @@ Downloader::Downloader()
 {
     initialize();
     loadOrCreateBlacklist();
+    loadOrCreateConfig();
 }
 
 Downloader::~Downloader() {
     writeBlacklist();
+    writeConfig();
     if (spotify)
         delete spotify;
     if (youTube)
         delete youTube;
+}
+
+const std::filesystem::path &Downloader::get_trackPath() const {
+    return trackPath;
+}
+
+void Downloader::set_trackPath(const std::filesystem::path &_path) {
+    trackPath = _path;
 }
 
 bool Downloader::is_initialized() const { return (spotify && youTube); }
@@ -83,6 +94,34 @@ bool Downloader::loadOrCreateBlacklist() {
     return true;
 }
 
+bool Downloader::loadOrCreateConfig() {
+    const std::filesystem::path path = "config.json";
+
+    if (!std::filesystem::exists(path)) {
+        json config = {
+            {"trackPath", std::filesystem::current_path() / "music/"}};
+        std::ofstream file(path);
+        file << config.dump(4);
+        return false;
+    }
+
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Could not open config.json!" << std::endl;
+        return false;
+    }
+
+    json config = json::parse(file);
+
+    if (config.contains("trackPath") && config.at("trackPath").is_string()) {
+        trackPath = config.at("trackPath").get<std::string>();
+    } else {
+        std::cerr << "Could not set custom trackPath" << std::endl;
+    }
+
+    return true;
+}
+
 bool Downloader::writeBlacklist() const {
     std::ofstream blacklistFile("blacklist.json");
     if (!blacklistFile.is_open()) {
@@ -90,6 +129,17 @@ bool Downloader::writeBlacklist() const {
         return false;
     }
     blacklistFile << blacklist.dump(4);
+    return true;
+}
+
+bool Downloader::writeConfig() const {
+    std::ofstream configFile("config.json");
+    if (!configFile.is_open()) {
+        std::cerr << "Could not write config.json!" << std::endl;
+        return false;
+    }
+    json config = {{"trackPath", trackPath.string()}};
+    configFile << config.dump(4);
     return true;
 }
 
@@ -189,13 +239,13 @@ Downloader::fetchResource(const std::string &_query,
     return result;
 }
 
-std::string Downloader::downloadResource(std::vector<Spotify::Track> &&_tracks,
-                                         std::function<void(int)> _onProgress) {
-    std::string result;
+void Downloader::downloadResource(
+    const std::vector<std::shared_ptr<TrackInterface::TrackViewData>> &_tracks,
+    std::function<void(int)> _onProgress) {
+
     for (auto &&track : _tracks) {
         downloadAndTag(track, _onProgress);
     }
-    return result;
 }
 
 bool Downloader::isBlocked(const std::string &_id) const {
@@ -208,26 +258,47 @@ void Downloader::makeBlocked(const Spotify::Track &_track) {
         _track.get_stringArtists();
 }
 
-void Downloader::downloadAndTag(Spotify::Track &_track,
-                                std::function<void(int)> _onProgress) {
+void Downloader::makeBlocked(
+    std::shared_ptr<TrackInterface::TrackViewData> _data) {
+    if (!_data || !_data->local)
+        return;
+    const auto &filename = _data->local->get_filename();
+    if (!Spotify::SpotifyObject::isValidIdFormat(filename)) {
+        return;
+    }
+
+    blacklist["blacklist"][filename]["title"] = _data->get_title();
+    blacklist["blacklist"][filename]["artist"] = _data->get_artist();
+}
+
+void Downloader::downloadAndTag(
+    std::shared_ptr<TrackInterface::TrackViewData> _track,
+    std::function<void(int)> _onProgress) {
+
+    if (!_track || _track->spotify) {
+        std::cerr << "Cannot download with missing spotify information!"
+                  << std::endl;
+    }
 
     std::thread([this, _onProgress, _track]() mutable {
         _onProgress(0);
-        auto bestMatch = youTube->findBestMatch(_track, _onProgress);
+        auto bestMatch = youTube->findBestMatch(*_track->spotify, _onProgress);
         if (bestMatch.empty()) {
             _onProgress(-1);
             return;
         }
         _onProgress(10);
 
-        auto trackName = trackPath + _track.get_id() + ".mp3";
+        std::filesystem::path trackName =
+            trackPath / (_track->spotify->get_id() + ".mp3");
 
         // download resource
         std::string command =
-            "yt-dlp -f bestaudio --extract-audio --audio-format mp3 "
+            "yt-dlp -f bestaudio --extract-audio --audio-format "
+            "mp3 "
             "--audio-quality 0 -o '" +
-            trackName + "' https://www.youtube.com/watch?v=" + bestMatch +
-            " 2>&1";
+            trackName.string() +
+            "' https://www.youtube.com/watch?v=" + bestMatch + " 2>&1";
 
         FILE *pipe = popen(command.c_str(), "r");
         if (!pipe) {
@@ -235,7 +306,8 @@ void Downloader::downloadAndTag(Spotify::Track &_track,
             return;
         }
 
-        // Read output one character at a time to catch lines ending in '\n' or
+        // Read output one character at a time to catch lines ending
+        // in '\n' or
         // '\r'
         std::string lineBuffer;
         char ch;
@@ -243,16 +315,17 @@ void Downloader::downloadAndTag(Spotify::Track &_track,
         while (fread(&ch, 1, 1, pipe) == 1) {
             if (ch == '\n' || ch == '\r') {
                 if (!lineBuffer.empty()) {
-                    // Process the full line (either full message or progress
-                    // line)
-                    // std::cout << lineBuffer << std::endl;
+                    // Process the full line (either full message or
+                    // progress line) std::cout << lineBuffer <<
+                    // std::endl;
                     std::smatch match;
                     std::regex preparationRegex(R"(\[youtube\]\s+(\w*):.*)");
                     std::regex percentRegex(R"(\[download\]\s+(\d+\.\d+)%.*)");
                     if (std::regex_search(lineBuffer, match,
                                           preparationRegex)) {
                         preparationpercent++;
-                        _onProgress(preparationpercent); // Progress percentage
+                        _onProgress(preparationpercent); // Progress
+                                                         // percentage
                     } else if (std::regex_search(lineBuffer, match,
                                                  percentRegex)) {
                         int percent =
@@ -274,22 +347,11 @@ void Downloader::downloadAndTag(Spotify::Track &_track,
             return;
         }
 
-        spotify->loadAdditionalData(_track);
+        auto localTrack(TrackInterface::fromLocal(LocalTrack(trackName)));
+        localTrack->verifyTags(_track);
 
-        if (!_track.writeID3V2Tags(trackName.c_str())) {
-            _onProgress(-1);
-            return;
-        }
-        _onProgress(95);
-
-        if (!_track.setAlbumCover(
-                trackName,
-                spotify->downloadImage(_track.get_album().get_imageUrl()))) {
-            _onProgress(-1);
-            return;
-        }
         _onProgress(99);
-        makeBlocked(_track);
+        makeBlocked(localTrack);
         _onProgress(100);
     }).detach();
 }
@@ -314,15 +376,4 @@ void Downloader::deleteLocalTrack(const std::filesystem::path &_filepath) {
         std::cerr << "Could not remove " << _filepath
                   << ": File does not exist.\n";
     }
-}
-
-void Downloader::verifyLocalResource(const std::filesystem::path &_filepath) {
-    auto track = get_spotify()->verifyTags(_filepath);
-    if (!track) {
-        std::cerr
-            << "Unable to retrieve meta data from SpotifyAPI. Will not add '"
-            << _filepath << "' to blacklist!" << std::endl;
-        return;
-    }
-    makeBlocked(*track);
 }

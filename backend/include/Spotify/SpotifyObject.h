@@ -1,6 +1,7 @@
 #if !defined(SPOTIFY_SPOTIFY_OBJECT_H)
 #define SPOTIFY_SPOTIFY_OBJECT_H
 
+#include <regex>
 #include <string>
 
 namespace Spotify {
@@ -21,6 +22,9 @@ class SpotifyObject {
     inline const std::string &get_name() const { return name; }
     inline const std::string &get_type() const { return type; }
     inline const std::string get_imageUrl() const { return imageURL; }
+    std::vector<std::byte> get_image() const;
+
+    static bool isValidIdFormat(const std::string &_id);
 };
 
 } // namespace Spotify

@@ -1,6 +1,7 @@
 #include "../include/TrackEditWindow.h"
-#include "../include/MediaLabel.h"
 #include "../include/LabeledTextCtrl.h"
+#include "../include/MediaLabel.h"
+#include "../include/TrackLabel.h"
 
 TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                                  const wxPoint &_pos, const wxSize &_size)
@@ -11,24 +12,26 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
 
     auto attributesSizer(new wxBoxSizer(wxVERTICAL));
 
-    titleText =
-        new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::TITLE, "Trackname");
-    artistText = new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::ARTIST,
-                                     "Trackartist");
-    albumText =
-        new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::ALBUM, "Album");
+    titleText = new LabeledTextCtrl(this, wxID_ANY,
+                                    LocalTrack::tag_type_t::TITLE, "Trackname");
+    artistText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::ARTIST, "Trackartist");
+    albumText = new LabeledTextCtrl(this, wxID_ANY,
+                                    LocalTrack::tag_type_t::ALBUM, "Album");
     albumArtistsText = new LabeledTextCtrl(
-        this, wxID_ANY, Spotify::Track::ALBUM_ARTIST, "Albumartist");
-    genreText =
-        new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::GENRE, "Genre");
-    labelText = new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::LABEL,
-                                    "Label/Producer");
-    yearText =
-        new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::YEAR, "Year");
-    trackNumberText =
-        new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::TRACK, "Track-Nr.");
-    discNumberText =
-        new LabeledTextCtrl(this, wxID_ANY, Spotify::Track::DISC, "Disc-Nr.");
+        this, wxID_ANY, LocalTrack::tag_type_t::ALBUM_ARTIST, "Albumartist");
+    genreText = new LabeledTextCtrl(this, wxID_ANY,
+                                    LocalTrack::tag_type_t::GENRE, "Genre");
+    labelText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::LABEL, "Label/Producer");
+    yearText = new LabeledTextCtrl(this, wxID_ANY, LocalTrack::tag_type_t::YEAR,
+                                   "Year");
+    trackNumberText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::TRACK, "Track-Nr.");
+    discNumberText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::DISC, "Disc-Nr.");
+    copyrightText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::COPYRIGHT, "Copyright");
 
     attributesSizer->Add(titleText, 1, wxEXPAND, 5);
     auto artistSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -45,41 +48,134 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
     attributesSizer->Add(albumArtistSizer, 1, wxEXPAND, 5);
     attributesSizer->Add(genreText, 1, wxEXPAND, 5);
     attributesSizer->Add(labelText, 1, wxEXPAND, 5);
+    attributesSizer->Add(copyrightText, 1, wxEXPAND, 5);
 
     mainSizer->Add(albumCover, 1, wxSHRINK, 5);
     mainSizer->Add(attributesSizer, 1, wxEXPAND, 5);
     this->SetSizerAndFit(mainSizer);
+
+    this->Bind(EVT_TRACKLABEL_CLICKED, [this](wxCommandEvent &event) {
+        TrackLabel *clickedLabel =
+            dynamic_cast<TrackLabel *>(event.GetEventObject());
+        if (!clickedLabel) {
+            wxLogMessage("Could not derive TrackLabel from %s",
+                         event.GetEventObject());
+            return;
+        }
+        if (activeSongs.contains(clickedLabel)) {
+             wxLogMessage("erase");
+            clickedLabel->SetBackgroundColour(wxNullColour);
+            activeSongs.erase(clickedLabel);
+        } else {
+             wxLogMessage("insert");
+            clickedLabel->SetBackgroundColour(*wxLIGHT_GREY);
+            activeSongs.insert(clickedLabel);
+        }
+        // if (GetParent()) {
+        //     wxCommandEvent notifyEvent(EVT_SHOW_TRACK_DETAILS, GetId());
+        //     notifyEvent.SetEventObject(this);
+        //     wxPostEvent(GetParent(), notifyEvent);
+        // }
+
+        if (get_activeSongs().empty()) {
+             wxLogMessage("hide");
+            this->Hide();
+            this->GetParent()->Layout();
+            return;
+        }
+             wxLogMessage("show");
+        this->Show();
+        this->GetParent()->Layout();
+        this->show();
+    });
+
+    // void TrackWindow::processClickedLabel(wxCommandEvent & event) {
+    //     // wxLogDebug(wxT("processClickedLabel()"));
+    // }
+
+    this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
+        std::string value = event.GetString().ToStdString();
+        LocalTrack::tag_type_t type =
+            static_cast<LocalTrack::tag_type_t>(event.GetInt());
+        std::cout << "Caught event: " << value << " type: " << type
+                  << std::endl;
+        for (auto activeSong : get_activeSongs()) {
+            auto track = activeSong->get_data();
+            if (!track)
+                return;
+            switch (type) {
+            case LocalTrack::tag_type_t::TITLE: {
+                track->set_title(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::ARTIST: {
+                track->set_artist(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::ALBUM: {
+                track->set_album(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::ALBUM_ARTIST: {
+                track->set_albumArtist(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::COPYRIGHT: {
+                track->set_copyright(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::GENRE: {
+                track->set_genre(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::LABEL: {
+                track->set_label(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::YEAR: {
+                track->set_year(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::TRACK: {
+                track->set_track(value);
+                break;
+            }
+            case LocalTrack::tag_type_t::DISC: {
+                track->set_disc(value);
+                break;
+            }
+            }
+            activeSong->Update();
+        }
+    });
 }
 
 TrackEditWindow::~TrackEditWindow() {}
 
-void TrackEditWindow::show(const std::vector<TagLib::MPEG::File *> &_tracks) {
+void TrackEditWindow::show() {
 
-    albumCover->SetBitmap(
-        getCommonBitmap(_tracks, albumCover->GetSize(), [this](auto *track) {
-            return MediaLabel::loadImageFromTag(track, albumCover->GetSize());
-        }));
-    titleText->SetValue(getCommonAttribute(
-        _tracks, [](auto *tag) { return tag->title().toCString(); }));
-    artistText->SetValue(getCommonAttribute(
-        _tracks, [](auto *tag) { return tag->artist().toCString(); }));
-    albumText->SetValue(getCommonAttribute(
-        _tracks, [](auto *tag) { return tag->album().toCString(); }));
-    albumArtistsText->SetValue(getCommonAttribute(_tracks, [](auto *tag) {
-        return tag->frameListMap()["TPE2"][0]->toString().toCString();
-    }));
-    genreText->SetValue(getCommonAttribute(
-        _tracks, [](auto *tag) { return tag->genre().toCString(); }));
-    labelText->SetValue(getCommonAttribute(_tracks, [](auto *tag) {
-        return tag->frameListMap()["TPUB"][0]->toString().toCString();
-    }));
-    yearText->SetValue(getCommonAttribute(
-        _tracks, [](auto *tag) { return std::to_string(tag->year()); }));
-    trackNumberText->SetValue(getCommonAttribute(
-        _tracks, [](auto *tag) { return std::to_string(tag->track()); }));
-    discNumberText->SetValue(getCommonAttribute(_tracks, [](auto *tag) {
-        return tag->frameListMap()["TPOS"][0]->toString().toCString();
-    }));
+    albumCover->SetBitmap(getCommonBitmap(
+        albumCover->GetSize(), [](auto t) { return t->get_cover(); }));
+    titleText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_title(); }));
+    artistText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_artist(); }));
+    albumText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_album(); }));
+    yearText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_year(); }));
+    trackNumberText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_track(); }));
+    genreText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_genre(); }));
+    albumArtistsText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_albumArtist(); }));
+    discNumberText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_disc(); }));
+    labelText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_label(); }));
+    copyrightText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_copyright(); }));
 
     this->GetSizer()->Layout();
 }

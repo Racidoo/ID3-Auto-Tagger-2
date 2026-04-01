@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 
+#include "TrackInterface.h"
 #include "Album.h"
 #include "Artist.h"
 #include "Playlist.h"
@@ -61,9 +62,11 @@ class SpotifyAPI : public Query {
     Track getTrack(const std::string &_id);
     std::vector<Track> getAlbumTracks(const std::string &_id);
     std::vector<Track> getPlaylistTracks(const std::string &_id);
-    std::string searchId(const std::string &_filename);
+    std::string
+    searchId(std::shared_ptr<TrackInterface::TrackViewData> _localData);
     void loadAdditionalData(Track &_track);
-    std::unique_ptr<Spotify::Track> verifyTags(const std::string &_filename);
+    std::shared_ptr<TrackInterface::TrackViewData>
+    researchTags(std::shared_ptr<TrackInterface::TrackViewData> _localData);
 
   private:
     inline const static std::string urlAPI = "https://api.spotify.com/v1/";
