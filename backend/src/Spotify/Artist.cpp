@@ -3,7 +3,7 @@
 namespace Spotify {
 
 Artist::Artist(const std::string &_id, const std::string &_name,const std::string &_imageURL)
-    : SpotifyObject(_id, _name, "artist", _imageURL) {}
+    : QueryObject(_id, _name, "artist", _imageURL) {}
 
 Artist::~Artist() {}
 

@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "Artist.h"
-#include "SpotifyObject.h"
+#include "QueryObject.h"
 
 namespace Spotify {
 
-class Album : public SpotifyObject {
+class Album : public QueryObject {
   private:
      std::string albumType;
      unsigned int totalTracks;

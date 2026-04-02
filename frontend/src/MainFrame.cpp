@@ -7,6 +7,7 @@
 #include "../include/TrackEditWindow.h"
 #include "../include/TrackLabel.h"
 #include "../include/TrackWindow.h"
+#include "../include/YouTubeWindow.h"
 #include <taglib/mpegfile.h>
 
 enum {
@@ -38,10 +39,11 @@ MainFrame::MainFrame()
         wxArtProvider::GetBitmap(wxART_BRAND_SPOTIFY, wxART_TOOLBAR),
         wxNullBitmap, wxITEM_NORMAL, wxT("Spotify"),
         wxT("Open Spotify Screen"));
-    // toolBar->AddTool(IDM_TOOLBAR_YOUTUBE, wxEmptyString,
-    //  wxArtProvider::GetBitmap(wxART_BRAND_YOUTUBE,wxART_TOOLBAR ),
-    //                  wxNullBitmap, wxITEM_NORMAL, wxT("YouTube"),
-    //                  wxT("Open YouTube Screen"));
+    toolBar->AddTool(
+        IDM_TOOLBAR_YOUTUBE, wxEmptyString,
+        wxArtProvider::GetBitmap(wxART_BRAND_YOUTUBE, wxART_TOOLBAR),
+        wxNullBitmap, wxITEM_NORMAL, wxT("YouTube"),
+        wxT("Open YouTube Screen"));
     toolBar->AddTool(IDM_TOOLBAR_SETTINGS, wxEmptyString,
                      wxArtProvider::GetBitmap(wxART_CUSTOMIZE, wxART_TOOLBAR),
                      wxNullBitmap, wxITEM_NORMAL, wxT("Settings"),
@@ -56,18 +58,13 @@ MainFrame::MainFrame()
     // Create panels for different screens (Initially hidden)
     downloadPanel = new TrackWindow(mainPanel, downloader);
     spotifyPanel = new SpotifyWindow(mainPanel, downloader);
-    youtubePanel = new TrackWindow(mainPanel, downloader);
+    youtubePanel = new YouTubeWindow(mainPanel, downloader);
     settingsPanel = new SettingsWindow(mainPanel, downloader);
 
     mainSizer->Add(downloadPanel, 1, wxEXPAND);
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);
     mainSizer->Add(youtubePanel, 1, wxEXPAND);
     mainSizer->Add(settingsPanel, 1, wxEXPAND);
-
-    spotifyPanel->Hide();
-    youtubePanel->Hide();
-    downloadPanel->Hide();
-    settingsPanel->Hide();
 
     auto trackEditWindow = new TrackEditWindow(this);
     trackEditWindow->Hide();
@@ -190,6 +187,11 @@ void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnYouTubeClicked(wxCommandEvent &event) {
+    if (!downloader->is_initialized()) {
+        wxLogError(wxT(
+            "Provide credentials in the Settings, before using API-Services!"));
+        return;
+    }
     ShowPanel(youtubePanel);
 }
 

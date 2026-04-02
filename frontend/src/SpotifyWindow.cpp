@@ -83,7 +83,7 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
         auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
         if (!label)
             return;
-        const Spotify::SpotifyObject *obj = label->getSpotifyObject();
+        const QueryObject *obj = label->getObject();
         if (!obj)
             return;
 

@@ -10,12 +10,12 @@
 #include <future>
 
 #include "Spotify/SpotifyAPI.h"
-#include "YouTube.h"
+#include "YouTube/YouTubeAPI.h"
 
 class Downloader {
   private:
     Spotify::SpotifyAPI *spotify;
-    YouTube *youTube;
+    YouTube::YouTubeAPI *youTube;
 
     std::string trackPath;
     // std::string coverPath;
@@ -32,17 +32,21 @@ class Downloader {
     void downloadAndTag(Spotify::Track &_track,
                         std::function<void(int)> _onProgress);
 
+    void downloadAndTag(YouTube::Video &_video,
+                        std::function<void(int)> _onProgress);
+
   public:
     Downloader(/* args */);
     ~Downloader();
 
-    Spotify::SpotifyAPI *get_spotify() { return spotify; }
-    YouTube *get_youtube() { return youTube; }
+    inline Spotify::SpotifyAPI *get_spotify() const { return spotify; }
+    inline YouTube::YouTubeAPI *get_youtube() const { return youTube; }
+    inline YouTube::YouTubeAPI *get_beatport() const { return youTube; }
 
     bool is_initialized() const;
     bool initialize();
-    bool initializeSpotify(const std::string &_spotifyclientId = "",
-                           const std::string &_spotifyClientSecret = "");
+    bool initializeSpotify(const std::string &_clientId = "",
+                           const std::string &_clientSecret = "");
     bool initializeYouTube(const std::string &_googleAuthToken = "");
 
     enum class SearchCategory {
@@ -50,6 +54,7 @@ class Downloader {
         Album,
         Artist,
         Playlist,
+        Video
         // Add more categories here if needed
     };
 
@@ -58,15 +63,18 @@ class Downloader {
         std::vector<Spotify::Album> albums;
         std::vector<Spotify::Artist> artists;
         std::vector<Spotify::Playlist> playlists;
+        std::vector<std::unique_ptr<YouTube::Video>> videos;
     };
 
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
                                const std::set<SearchCategory> &categories = {},
                                const std::string &_market = "DE",
-                               const std::string &_limit = "5",
+                               unsigned int _limit = 0,
                                const std::string &_offset = "0");
     std::string downloadResource(std::vector<Spotify::Track> &&_tracks,
+                                 std::function<void(int)> _onProgress);
+    std::string downloadResource(std::vector<YouTube::Video> &&_videos,
                                  std::function<void(int)> _onProgress);
     void deleteLocalTrack(const std::filesystem::path &_filepath);
 };

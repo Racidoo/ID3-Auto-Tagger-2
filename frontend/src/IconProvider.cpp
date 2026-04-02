@@ -23,6 +23,12 @@ wxBitmap IconProvider::CreateBitmap(const wxArtID &_id,
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
                                     wxIMAGE_QUALITY_HIGH));
     }
+    if (_id == wxART_BRAND_SOUNDCLOUD) {
+        wxImage img(wxT("img/soundcloud_256.png"), wxBITMAP_TYPE_PNG);
+        return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
+                                    wxIMAGE_QUALITY_HIGH));
+    }
+
     if (_id == wxART_CIRCLE_CHECKMARK) {
         wxImage img(wxT("img/check-circle_256.png"), wxBITMAP_TYPE_PNG);
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),

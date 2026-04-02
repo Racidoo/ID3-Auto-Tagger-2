@@ -3,17 +3,18 @@ project(SpotifyAPI_Backend)
 # Add source files
 set(SOURCES
     # src/main.cpp
-    src/Query.cpp
+    lib/base64/base64.cpp
     src/Downloader.cpp
+    src/Query.cpp
+    src/QueryObject.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp
     src/Spotify/Playlist.cpp
     src/Spotify/SpotifyAPI.cpp
-    src/Spotify/SpotifyObject.cpp
     src/Spotify/Track.cpp
     src/Spotify/User.cpp
-    src/YouTube.cpp
-    lib/base64/base64.cpp
+    src/YouTube/Video.cpp
+    src/YouTube/YouTubeAPI.cpp
     # Add more source files here
 )
 

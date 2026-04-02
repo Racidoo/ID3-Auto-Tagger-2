@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "SpotifyObject.h"
+#include "QueryObject.h"
 
 namespace Spotify {
 
-class Artist : public SpotifyObject {
+class Artist : public QueryObject {
   private:
   public:
     Artist(const std::string &_id, const std::string &_name,

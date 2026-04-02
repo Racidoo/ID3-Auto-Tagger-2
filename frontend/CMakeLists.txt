@@ -19,6 +19,8 @@ set(SOURCES
     src/TrackEditWindow.cpp
     src/TrackLabel.cpp
     src/TrackWindow.cpp
+    src/VideoLabel.cpp
+    src/YouTubeWindow.cpp
 )
 
 # Find wxWidgets

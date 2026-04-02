@@ -15,11 +15,11 @@
 #include <vector>
 
 #include "Album.h"
-#include "SpotifyObject.h"
+#include "QueryObject.h"
 
 namespace Spotify {
 
-class Track : public SpotifyObject {
+class Track : public QueryObject {
   private:
     const unsigned int discNumber;
     const unsigned long durationMs;

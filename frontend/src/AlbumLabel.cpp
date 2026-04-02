@@ -1,5 +1,4 @@
 #include "../include/AlbumLabel.h"
-#include "../include/TrackLabel.h"
 
 AlbumLabel::AlbumLabel(wxWindow *_parent, const Spotify::Album &_album)
     : MediaLabel(_parent,

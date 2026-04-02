@@ -18,7 +18,8 @@ class Query {
     std::string clientId;
     std::string clientSecret;
     std::chrono::steady_clock::time_point tokenExpirationTime;
-
+    const std::string type;
+    bool initialized;
     inline const static std::filesystem::path pathCredentials =
         std::filesystem::current_path() / "backend" / "api" /
         "credentials.json";
@@ -26,6 +27,8 @@ class Query {
   protected:
     bool isTokenValid() const;
     std::string generateAccessToken();
+    json headerRequest(const std::string &_request);
+
     static std::string toLower(const std::string &str);
     static double similarityScore(const std::string &s1, const std::string &s2);
     static double similarityScore(int duration1, int duration2);
@@ -40,10 +43,6 @@ class Query {
     std::vector<char> downloadImage(const std::string &_url,
                                     const std::string &_outputPath = "") const;
 
-  private:
-    const std::string type;
-    bool initialized;
-
     // void ensureExists(const std::filesystem::path &path);
 
   public:
@@ -55,7 +54,7 @@ class Query {
     inline std::string get_clientId() const { return clientId; };
     inline std::string get_clientSecret() const { return clientSecret; };
     inline bool is_initialized() const { return initialized; }
-    
+
     void set_accessToken(const std::string &_accessToken);
     void set_clientId(const std::string &_clientId);
     void set_clientSecret(const std::string &_clientSecret);

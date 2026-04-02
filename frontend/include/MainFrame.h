@@ -10,6 +10,7 @@ class Downloader;
 class SettingsWindow;
 class SpotifyWindow;
 class TrackWindow;
+class YouTubeWindow;
 
 // Define a main window class
 class MainFrame : public wxFrame {
@@ -23,7 +24,7 @@ class MainFrame : public wxFrame {
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;
     SpotifyWindow *spotifyPanel;
-    TrackWindow *youtubePanel;
+    YouTubeWindow *youtubePanel;
     TrackWindow *downloadPanel;
 
     void ShowPanel(wxScrolledWindow *panel);

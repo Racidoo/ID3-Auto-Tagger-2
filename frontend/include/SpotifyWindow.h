@@ -2,19 +2,12 @@
 #define SPOTIFY_WINDOW_H
 
 #include <vector>
-#include <wx/mdi.h>
+// #include <wx/mdi.h>
 #include <wx/tglbtn.h>
 #include <wx/wx.h>
 
-// #include "AlbumLabel.h"
-// #include "ArtistLabel.h"
 #include "Downloader.h"
 #include "MediaWindow.hpp"
-// #include "PlaylistLabel.h"
-// #include "Spotify/Album.h"
-// #include "Spotify/Artist.h"
-// #include "Spotify/Playlist.h"
-// #include "Spotify/Track.h"
 #include "TrackWindow.h"
 
 // class Downloader;
