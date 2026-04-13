@@ -10,64 +10,64 @@ SpotifyAPI::SpotifyAPI(const std::string &_clientId,
 
 SpotifyAPI::~SpotifyAPI() {}
 
-json SpotifyAPI::handleRequest(const std::string &_request) {
+// json SpotifyAPI::handleRequest(const std::string &_request) {
 
-    std::string response_data;
-    auto curl(curl_easy_init());
-    struct curl_slist *headers(nullptr);
+//     std::string response_data;
+//     auto curl(curl_easy_init());
+//     struct curl_slist *headers(nullptr);
 
-    std::cout << "Retrieving data from: " << _request << std::endl;
+//     std::cout << "Retrieving data from: " << _request << std::endl;
 
-    if (!curl) {
-        std::cerr << "cURL not initialized!" << std::endl;
-        return {};
-    }
+//     if (!curl) {
+//         std::cerr << "cURL not initialized!" << std::endl;
+//         return {};
+//     }
 
-    headers = curl_slist_append(
-        headers, ("Authorization: Bearer " + getValidToken()).c_str());
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+//     headers = curl_slist_append(
+//         headers, ("Authorization: Bearer " + getValidToken()).c_str());
+//     headers = curl_slist_append(headers, "Content-Type: application/json");
+//     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-    // Ensure headers are set
-    if (headers) {
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    } else {
-        std::cerr << "Error: Headers not initialized!" << std::endl;
-    }
+//     // Ensure headers are set
+//     if (headers) {
+//         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+//     } else {
+//         std::cerr << "Error: Headers not initialized!" << std::endl;
+//     }
 
-    // Set the request URL
-    curl_easy_setopt(curl, CURLOPT_URL, _request.c_str());
-    // Set response handling
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
+//     // Set the request URL
+//     curl_easy_setopt(curl, CURLOPT_URL, _request.c_str());
+//     // Set response handling
+//     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+//     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
 
-    // Execute the request
-    CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        std::cerr << "cURL request failed: " << curl_easy_strerror(res)
-                  << std::endl;
-        return {};
-    }
-    if (curl)
-        curl_easy_cleanup(curl);
+//     // Execute the request
+//     CURLcode res = curl_easy_perform(curl);
+//     if (res != CURLE_OK) {
+//         std::cerr << "cURL request failed: " << curl_easy_strerror(res)
+//                   << std::endl;
+//         return {};
+//     }
+//     if (curl)
+//         curl_easy_cleanup(curl);
 
-    if (response_data.empty()) {
-        std::cerr << "Error: Received empty response!" << std::endl;
-        return {};
-    }
+//     if (response_data.empty()) {
+//         std::cerr << "Error: Received empty response!" << std::endl;
+//         return {};
+//     }
 
-    // Parse JSON response
-    json response = json::parse(response_data, nullptr, false);
-    if (response.is_discarded()) {
-        std::cerr << "Error: Failed to parse JSON response!" << std::endl;
-        return {};
-    }
-    if (response.contains("error")) {
-        std::cerr << response.dump(4) << std::endl;
-    }
-    std::ofstream("response.json") << response.dump(4);
-    return response;
-}
+//     // Parse JSON response
+//     json response = json::parse(response_data, nullptr, false);
+//     if (response.is_discarded()) {
+//         std::cerr << "Error: Failed to parse JSON response!" << std::endl;
+//         return {};
+//     }
+//     if (response.contains("error")) {
+//         std::cerr << response.dump(4) << std::endl;
+//     }
+//     std::ofstream("response.json") << response.dump(4);
+//     return response;
+// }
 
 Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
     Album album(_jsonAlbum.at("id").get<std::string>(),
@@ -124,19 +124,19 @@ User SpotifyAPI::createUser(const json &_jsonUser) const {
 }
 
 Album SpotifyAPI::getAlbum(const std::string &_id) {
-    return createAlbum(handleRequest(urlAPI + "albums/" + _id));
+    return createAlbum(headerRequest(urlAPI + "albums/" + _id));
 }
 
 Artist SpotifyAPI::getArtist(const std::string &_id) {
-    return createArtist(handleRequest(urlAPI + "artists/" + _id));
+    return createArtist(headerRequest(urlAPI + "artists/" + _id));
 }
 
 Playlist SpotifyAPI::getPlaylist(const std::string &_id) {
-    return createPlaylist(handleRequest(urlAPI + "playlists/" + _id));
+    return createPlaylist(headerRequest(urlAPI + "playlists/" + _id));
 }
 
 Track SpotifyAPI::getTrack(const std::string &_id) {
-    json jsonTrack = handleRequest(urlAPI + "tracks/" + _id);
+    json jsonTrack = headerRequest(urlAPI + "tracks/" + _id);
     json jsonArtist = jsonTrack.at("artists");
     json jsonAlbum = jsonTrack.at("album");
 
@@ -144,7 +144,7 @@ Track SpotifyAPI::getTrack(const std::string &_id) {
 }
 
 std::vector<Track> SpotifyAPI::getAlbumTracks(const std::string &_id) {
-    json jsonAlbum = handleRequest(urlAPI + "albums/" + _id);
+    json jsonAlbum = headerRequest(urlAPI + "albums/" + _id);
     json jsonTracks = jsonAlbum.at("tracks");
     Album album = createAlbum(jsonAlbum);
     std::vector<Track> tracks;
@@ -156,7 +156,7 @@ std::vector<Track> SpotifyAPI::getAlbumTracks(const std::string &_id) {
 }
 
 std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
-    json jsonPlaylist = handleRequest(urlAPI + "playlists/" + _id);
+    json jsonPlaylist = headerRequest(urlAPI + "playlists/" + _id);
     json jsonTracks = jsonPlaylist.at("tracks");
     std::vector<Track> tracks;
 
@@ -180,7 +180,7 @@ std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
  * @return json
  */
 json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
-                        const std::string &_market, const std::string &_limit,
+                        const std::string &_market, unsigned int _limit,
                         const std::string &_offset) {
     std::string typeStr;
     switch (_type) {
@@ -204,12 +204,12 @@ json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
 
     if (!_market.empty())
         url << "&market=" << _market;
-    if (!_limit.empty())
+    if (!_limit == 0)
         url << "&limit=" << _limit;
     if (!_offset.empty())
         url << "&offset=" << _offset;
 
-    json result = handleRequest(url.str());
+    json result = headerRequest(url.str());
     if (result.contains("error")) {
         throw std::runtime_error(result.dump());
     }
@@ -218,7 +218,7 @@ json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
 
 std::vector<Track> SpotifyAPI::searchTrack(const std::string &_query,
                                            const std::string &_market,
-                                           const std::string &_limit,
+                                           unsigned int _limit,
                                            const std::string &_offset) {
     std::vector<Track> tracks;
     for (auto &&jsonTrack : search(TRACK, _query, _market, _limit, _offset)) {
@@ -230,7 +230,7 @@ std::vector<Track> SpotifyAPI::searchTrack(const std::string &_query,
 
 std::vector<Album> SpotifyAPI::searchAlbum(const std::string &_query,
                                            const std::string &_market,
-                                           const std::string &_limit,
+                                           unsigned int _limit,
                                            const std::string &_offset) {
     std::vector<Album> albums;
     for (auto &&jsonAlbum : search(ALBUM, _query, _market, _limit, _offset)) {
@@ -241,7 +241,7 @@ std::vector<Album> SpotifyAPI::searchAlbum(const std::string &_query,
 
 std::vector<Artist> SpotifyAPI::searchArtist(const std::string &_query,
                                              const std::string &_market,
-                                             const std::string &_limit,
+                                             unsigned int _limit,
                                              const std::string &_offset) {
     std::vector<Artist> artists;
     for (auto &&jsonArtist : search(ARTIST, _query, _market, _limit, _offset)) {
@@ -252,7 +252,7 @@ std::vector<Artist> SpotifyAPI::searchArtist(const std::string &_query,
 
 std::vector<Playlist> SpotifyAPI::searchPlaylist(const std::string &_query,
                                                  const std::string &_market,
-                                                 const std::string &_limit,
+                                                 unsigned int _limit,
                                                  const std::string &_offset) {
     std::vector<Playlist> playlists;
     for (auto &&jsonPlaylist :
@@ -301,10 +301,10 @@ std::string SpotifyAPI::searchId(
 
     std::vector<Track> tracks;
 
-    if (SpotifyObject::isValidIdFormat(filename)) {
+    if (isValidIdFormat(filename)) {
         tracks.push_back(getTrack(filename));
     } else {
-        tracks = searchTrack(query, "", "10");
+        tracks = searchTrack(query, "", 10);
     }
 
     double bestScore = 0.0;
@@ -368,7 +368,7 @@ std::string SpotifyAPI::searchId(
 
 void SpotifyAPI::loadAdditionalData(Track &_track) {
     json jsonFullAlbum =
-        handleRequest(urlAPI + "albums/" + _track.get_album().get_id());
+        headerRequest(urlAPI + "albums/" + _track.get_album().get_id());
     _track.get_album().set_copyright(jsonFullAlbum.at("copyrights")[0]["text"]);
     _track.get_album().set_label(jsonFullAlbum.at("label"));
 }
@@ -382,6 +382,11 @@ std::shared_ptr<TrackInterface::TrackViewData> SpotifyAPI::researchTags(
     auto track = getTrack(trackUuid);
     loadAdditionalData(track);
     return TrackInterface::fromSpotify(track);
+}
+
+bool SpotifyAPI::isValidIdFormat(const std::string &_id) {
+    static const std::regex pattern("^[A-Za-z0-9]{22}$");
+    return std::regex_match(_id, pattern);
 }
 
 } // namespace Spotify

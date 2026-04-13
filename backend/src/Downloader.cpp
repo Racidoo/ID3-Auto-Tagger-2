@@ -33,19 +33,22 @@ bool Downloader::is_initialized() const { return (spotify && youTube); }
 bool Downloader::initialize() {
 
     return initializeSpotify() && initializeYouTube();
+    //  && initializeSoundcloud();
 }
 
-bool Downloader::initializeSpotify(const std::string &_spotifyclientId,
-                                   const std::string &_spotifyClientSecret) {
+bool Downloader::initializeSpotify(const std::string &_clientId,
+                                   const std::string &_clientSecret) {
     if (!spotify) {
+        std::cout << "Initializing Spotify...";
         Spotify::SpotifyAPI *temp =
-            (_spotifyclientId.empty() && _spotifyClientSecret.empty()
+            (_clientId.empty() && _clientSecret.empty()
                  ? new Spotify::SpotifyAPI()
-                 : new Spotify::SpotifyAPI(_spotifyclientId,
-                                           _spotifyClientSecret));
+                 : new Spotify::SpotifyAPI(_clientId, _clientSecret));
         if (temp->is_initialized()) {
+            std::cout << " success!" << std::endl;
             spotify = temp;
         } else {
+            std::cout << " failed!" << std::endl;
             delete temp;
         }
     }
@@ -55,9 +58,10 @@ bool Downloader::initializeSpotify(const std::string &_spotifyclientId,
 bool Downloader::initializeYouTube(const std::string &_googleAuthToken) {
     if (!youTube) {
         std::cout << "Initializing YouTube...";
-        YouTube *temp =
-            (_googleAuthToken.empty() ? new YouTube()
-                                      : new YouTube(_googleAuthToken));
+        YouTube::YouTubeAPI *temp =
+            (_googleAuthToken.empty()
+                 ? new YouTube::YouTubeAPI()
+                 : new YouTube::YouTubeAPI(_googleAuthToken));
         if (temp->is_initialized()) {
             std::cout << " success!" << std::endl;
             youTube = temp;
@@ -153,31 +157,31 @@ bool Downloader::writeConfig() const {
 Downloader::SearchResult
 Downloader::fetchResource(const std::string &_query,
                           const std::set<SearchCategory> &categories,
-                          const std::string &_market, const std::string &_limit,
+                          const std::string &_market, unsigned int _limit,
                           const std::string &_offset) {
 
     std::regex spotifyUrlPattern(
         R"(https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(playlist|album|track)\/([\w]+))");
-    // std::regex youTubeUrlPattern(
-    //     R"(https:\/\/www\.youtube\.com\/watch\?v=(\w*))");
+    std::regex youTubeUrlPattern(
+        R"(youtu(?:\.be\/|be\.com\/watch\?v=)([A-Za-z0-9_-]{11}))");
 
-    std::string urlType;
+    // std::string urlType;
     SearchResult result;
     std::smatch matches;
     std::string type, id;
     if (std::regex_search(_query, matches, spotifyUrlPattern)) {
         if (matches[1].matched && matches[2].matched) {
-            urlType = "Spotify";
+            // urlType = "Spotify";
             type = matches[1].str();
             id = matches[2].str();
         }
+    } else if (std::regex_search(_query, matches, youTubeUrlPattern)) {
+        if (matches[1].matched) {
+            // urlType = "YouTube";
+            id = matches[1].str();
+            type = "video";
+        }
     }
-    //  else if (std::regex_search(_query, matches, youTubeUrlPattern)) {
-    //     if (matches[1].matched && matches[2].matched) {
-    //         urlType = "YouTube";
-    //         id = matches[1].str();
-    //     }
-    // }
 
     if (type == "track") {
         auto track = spotify->getTrack(id);
@@ -195,7 +199,10 @@ Downloader::fetchResource(const std::string &_query,
             track.set_downloaded(isBlocked(track.get_id()));
             result.tracks.push_back(track);
         }
-        // } else if (urlType == "YouTube") {
+    } else if (type == "video") {
+        auto video = youTube->getVideo(id);
+        result.videos.push_back(std::move(video));
+
     } else {
 
         for (auto &&cat : categories) {
@@ -233,8 +240,24 @@ Downloader::fetchResource(const std::string &_query,
                 }
                 break;
             }
+            case SearchCategory::Video: {
+                auto videos = youTube->searchVideo(_query, nullptr, _limit);
+                for (auto &&v : videos) {
+                    result.videos.push_back(std::move(v));
+                }
+                break;
+            }
             }
         }
+    }
+    return std::move(result);
+}
+
+std::string Downloader::downloadResource(std::vector<YouTube::Video> &&_videos,
+                                         std::function<void(int)> _onProgress) {
+    std::string result;
+    for (auto &&video : _videos) {
+        downloadAndTag(video, _onProgress);
     }
     return result;
 }
@@ -263,7 +286,7 @@ void Downloader::makeBlocked(
     if (!_data || !_data->local)
         return;
     const auto &filename = _data->local->get_filename();
-    if (!Spotify::SpotifyObject::isValidIdFormat(filename)) {
+    if (!Spotify::SpotifyAPI::isValidIdFormat(filename)) {
         return;
     }
 
@@ -352,6 +375,93 @@ void Downloader::downloadAndTag(
 
         _onProgress(99);
         makeBlocked(localTrack);
+        _onProgress(100);
+    }).detach();
+}
+
+void Downloader::downloadAndTag(YouTube::Video &_video,
+                                std::function<void(int)> _onProgress) {
+
+    std::thread([this, _onProgress, _video]() mutable {
+        _onProgress(0);
+        // auto bestMatch = youTube->findBestMatch(_track, _onProgress);
+        // if (bestMatch.empty()) {
+        //     _onProgress(-1);
+        //     return;
+        // }
+        _onProgress(10);
+
+        std::filesystem::path trackName =
+            trackPath / (_video.get_id() + ".mp3");
+
+        // download resource
+        std::string command =
+            "yt-dlp -f bestaudio --extract-audio --audio-format mp3 "
+            "--audio-quality 0 -o '" +
+            trackName.string() +
+            "' https://www.youtube.com/watch?v=" + _video.get_id() + " 2>&1";
+
+        FILE *pipe = popen(command.c_str(), "r");
+        if (!pipe) {
+            _onProgress(-1);
+            return;
+        }
+
+        // Read output one character at a time to catch lines ending in '\n' or
+        // '\r'
+        std::string lineBuffer;
+        char ch;
+        int preparationpercent(10);
+        while (fread(&ch, 1, 1, pipe) == 1) {
+            if (ch == '\n' || ch == '\r') {
+                if (!lineBuffer.empty()) {
+                    // Process the full line (either full message or progress
+                    // line)
+                    // std::cout << lineBuffer << std::endl;
+                    std::smatch match;
+                    std::regex preparationRegex(R"(\[youtube\]\s+(\w*):.*)");
+                    std::regex percentRegex(R"(\[download\]\s+(\d+\.\d+)%.*)");
+                    if (std::regex_search(lineBuffer, match,
+                                          preparationRegex)) {
+                        preparationpercent++;
+                        _onProgress(preparationpercent); // Progress percentage
+                    } else if (std::regex_search(lineBuffer, match,
+                                                 percentRegex)) {
+                        int percent =
+                            preparationpercent +
+                            (std::stof(match[1].str()) / 100.0f) * 80.0f;
+                        _onProgress(percent); // Progress percentage
+                    }
+
+                    lineBuffer.clear();
+                }
+            } else {
+                lineBuffer += ch;
+            }
+        }
+
+        int status = pclose(pipe);
+        if (status != 0) {
+            _onProgress(-2);
+            return;
+        }
+
+        // spotify->loadAdditionalData(_track);
+
+        // if (!_track.writeID3V2Tags(trackName.c_str())) {
+        //     _onProgress(-1);
+        //     return;
+        // }
+        _onProgress(95);
+
+        // if (!_track.setAlbumCover(
+        //         trackName,
+        //         spotify->downloadImage(_track.get_album().get_imageUrl()))) {
+        //     _onProgress(-1);
+        //     return;
+        // }
+        _onProgress(99);
+        // makeBlocked(_track);
         _onProgress(100);
     }).detach();
 }

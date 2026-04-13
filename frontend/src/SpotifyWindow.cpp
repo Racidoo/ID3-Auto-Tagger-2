@@ -83,7 +83,7 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
         auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
         if (!label)
             return;
-        const Spotify::SpotifyObject *obj = label->getSpotifyObject();
+        const QueryObject *obj = label->getObject();
         if (!obj)
             return;
 
@@ -202,9 +202,3 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
             chosenTrackLabel->get_ProgressBar()->SetProgress(progress);
         });
 }
-
-// void SpotifyWindow::verifyTags(wxCommandEvent &_event) {
-//     wxLogDebug(wxT("verifyTags()"));
-//     wxLogDebug(wxT("Verify Tags of " + _event.GetString()));
-//     downloader->get_spotify()->verifyTags(_event.GetString().ToStdString());
-// }

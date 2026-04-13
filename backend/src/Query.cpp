@@ -177,6 +177,63 @@ std::string Query::generateAccessToken() {
     return "";
 }
 
+json Query::headerRequest(const std::string &_request) {
+
+    std::string response_data;
+    auto curl(curl_easy_init());
+    struct curl_slist *headers(nullptr);
+
+    if (!curl) {
+        std::cerr << "cURL not initialized!" << std::endl;
+        return {};
+    }
+
+    headers = curl_slist_append(
+        headers, ("Authorization: Bearer " + getValidToken()).c_str());
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    // Ensure headers are set
+    if (headers) {
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    } else {
+        std::cerr << "Error: Headers not initialized!" << std::endl;
+    }
+
+    // Set the request URL
+    curl_easy_setopt(curl, CURLOPT_URL, _request.c_str());
+    // Set response handling
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
+
+    // Execute the request
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        std::cerr << "cURL request failed: " << curl_easy_strerror(res)
+                  << std::endl;
+        return {};
+    }
+    if (curl)
+        curl_easy_cleanup(curl);
+
+    if (response_data.empty()) {
+        std::cerr << "Error: Received empty response!" << std::endl;
+        return {};
+    }
+
+    // Parse JSON response
+    json response = json::parse(response_data, nullptr, false);
+    if (response.is_discarded()) {
+        std::cerr << "Error: Failed to parse JSON response!" << std::endl;
+        return {};
+    }
+    if (response.contains("error")) {
+        std::cerr << response.dump(4) << std::endl;
+    }
+    std::ofstream(type + "response.json") << response.dump(4);
+    return response;
+}
+
 // void Query::ensureExists(const std::filesystem::path& path) {
 //     if (std::filesystem::exists(path)) return;
 //     if (path.has_extension()) {

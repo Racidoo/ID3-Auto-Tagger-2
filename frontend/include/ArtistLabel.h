@@ -17,7 +17,7 @@ class ArtistLabel : public MediaLabel {
     inline const Spotify::Artist *get_spotifyArtist() const {
         return spotifyArtist.get();
     }
-    inline const Spotify::Artist *getSpotifyObject() const override {
+    inline const QueryObject *getObject() const override {
         return spotifyArtist.get();
     }
 };

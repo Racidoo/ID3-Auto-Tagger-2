@@ -7,12 +7,12 @@
 #include <sstream>
 #include <string>
 
-#include "TrackInterface.h"
 #include "Album.h"
 #include "Artist.h"
 #include "Playlist.h"
 #include "Query.h"
 #include "Track.h"
+#include "TrackInterface.h"
 #include "User.h"
 
 using json = nlohmann::json;
@@ -41,19 +41,19 @@ class SpotifyAPI : public Query {
 
     std::vector<Track> searchTrack(const std::string &_query,
                                    const std::string &_market = "",
-                                   const std::string &_limit = "",
+                                   unsigned int _limit = 0,
                                    const std::string &_offset = "");
     std::vector<Album> searchAlbum(const std::string &_query,
                                    const std::string &_market = "",
-                                   const std::string &_limit = "",
+                                   unsigned int _limit = 0,
                                    const std::string &_offset = "");
     std::vector<Artist> searchArtist(const std::string &_query,
                                      const std::string &_market = "",
-                                     const std::string &_limit = "",
+                                     unsigned int _limit = 0,
                                      const std::string &_offset = "");
     std::vector<Playlist> searchPlaylist(const std::string &_query,
                                          const std::string &_market = "",
-                                         const std::string &_limit = "",
+                                         unsigned int _limit = 0,
                                          const std::string &_offset = "");
 
     Album getAlbum(const std::string &_id);
@@ -68,15 +68,15 @@ class SpotifyAPI : public Query {
     std::shared_ptr<TrackInterface::TrackViewData>
     researchTags(std::shared_ptr<TrackInterface::TrackViewData> _localData);
 
+    static bool isValidIdFormat(const std::string &_id);
+
   private:
     inline const static std::string urlAPI = "https://api.spotify.com/v1/";
     // inline const static std::string urlToken =
     //     "https://accounts.spotify.com/api/token";
 
-    json handleRequest(const std::string &_request);
-
     json search(searchItem_type _type, const std::string &_query,
-                const std::string &_market = "", const std::string &_limit = "",
+                const std::string &_market = "", unsigned int _limit = 0,
                 const std::string &_offset = "");
 
     Album createAlbum(const json &_jsonAlbum, bool _fullTags = false);

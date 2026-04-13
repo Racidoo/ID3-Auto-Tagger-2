@@ -1,12 +1,10 @@
-#if !defined(SPOTIFY_SPOTIFY_OBJECT_H)
-#define SPOTIFY_SPOTIFY_OBJECT_H
+#if !defined(QUERY_OBJECT_H)
+#define QUERY_OBJECT_H
 
 #include <regex>
 #include <string>
 
-namespace Spotify {
-
-class SpotifyObject {
+class QueryObject {
   protected:
     const std::string id;
     const std::string name;
@@ -14,9 +12,9 @@ class SpotifyObject {
     const std::string imageURL;
 
   public:
-    SpotifyObject(const std::string &_id, const std::string &_name,
-                  const std::string &_type, const std::string &_imageURL);
-    ~SpotifyObject();
+    QueryObject(const std::string &_id, const std::string &_name,
+                const std::string &_type, const std::string &_imageURL);
+    ~QueryObject();
 
     inline const std::string &get_id() const { return id; }
     inline const std::string &get_name() const { return name; }
@@ -27,6 +25,4 @@ class SpotifyObject {
     static bool isValidIdFormat(const std::string &_id);
 };
 
-} // namespace Spotify
-
-#endif // SPOTIFY_SPOTIFY_OBJECT_H
+#endif // QUERY_OBJECT_H

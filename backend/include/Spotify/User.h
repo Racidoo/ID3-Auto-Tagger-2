@@ -1,10 +1,10 @@
 #if !defined(SPOTIFY_USER_H)
 #define SPOTIFY_USER_H
 
-#include "SpotifyObject.h"
+#include "QueryObject.h"
 
 namespace Spotify {
-class User : public SpotifyObject {
+class User : public QueryObject {
   private:
     /* data */
   public:

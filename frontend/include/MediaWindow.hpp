@@ -2,7 +2,7 @@
 #define MEDIA_WINDOW_H
 
 #include "IconProvider.h"
-#include "Spotify/SpotifyObject.h"
+#include "QueryObject.h"
 #include <unordered_map>
 #include <wx/wx.h>
 
@@ -33,15 +33,15 @@ template <typename LabelT> class MediaWindow : public wxPanel {
                 wxCommandEvent notifyEvent(EVT_MEDIA_WINDOW_EXPAND_CLICKED,
                                            GetId());
                 notifyEvent.SetEventObject(this);
-                notifyEvent.SetString(_label->getSpotifyObject()->get_type());
+                notifyEvent.SetString(_label->getObject()->get_type());
                 wxPostEvent(GetParent(), notifyEvent);
             });
             contentSizer->Add(loadMore, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM,
                               5);
-            header->SetLabel(_label->getSpotifyObject()->get_type() + 's');
+            header->SetLabel(_label->getObject()->get_type() + 's');
         }
         contentSizer->Prepend(_label, 0, wxSHRINK, 5);
-        const Spotify::SpotifyObject *obj = _label->getSpotifyObject();
+        const QueryObject *obj = _label->getObject();
         labelMap[obj->get_id()] = _label;
     }
 
@@ -52,7 +52,6 @@ template <typename LabelT> class MediaWindow : public wxPanel {
 
   private:
     std::unordered_map<std::string, LabelT *> labelMap;
-    // Spotify::SpotifyObject SpotifyObject;
     wxBoxSizer *mainSizer;
     wxBoxSizer *contentSizer;
     wxStaticText *header;

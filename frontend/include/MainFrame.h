@@ -12,6 +12,7 @@ class SettingsWindow;
 class SpotifyWindow;
 class TrackWindow;
 class LocalTrackWindow;
+class YouTubeWindow;
 
 // Define a main window class
 class MainFrame : public wxFrame {
@@ -25,8 +26,8 @@ class MainFrame : public wxFrame {
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;
     SpotifyWindow *spotifyPanel;
-    TrackWindow *youtubePanel;
     LocalTrackWindow *downloadPanel;
+    YouTubeWindow *youtubePanel;
 
     void ShowPanel(wxScrolledWindow *panel);
     void OnDownloadClicked(wxCommandEvent &event);

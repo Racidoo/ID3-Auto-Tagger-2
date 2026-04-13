@@ -89,10 +89,6 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
         this->show();
     });
 
-    // void TrackWindow::processClickedLabel(wxCommandEvent & event) {
-    //     // wxLogDebug(wxT("processClickedLabel()"));
-    // }
-
     this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
         std::string value = event.GetString().ToStdString();
         LocalTrack::tag_type_t type =

@@ -8,10 +8,9 @@
 #include <taglib/mpegfile.h>
 #include <taglib/textidentificationframe.h>
 #include <wx/mstream.h>
-#include <wx/url.h>
 #include <wx/wx.h>
 
-#include "Spotify/SpotifyObject.h"
+#include "QueryObject.h"
 
 wxDECLARE_EVENT(EVT_MEDIA_LABEL_CLICKED, wxCommandEvent);
 
@@ -22,11 +21,8 @@ class MediaLabel : public wxPanel {
 
     void onClick(wxMouseEvent &_event);
 
-    virtual const Spotify::SpotifyObject *getSpotifyObject() const = 0;
+    virtual const QueryObject *getObject() const = 0;
 
-    static wxBitmap loadImageFromURL(const wxString &_url, const wxSize &_size);
-    // static wxBitmap loadImageFromTag(const wxString &_path,
-    //                                  const wxSize &_size);
     static wxBitmap loadImage(const std::vector<std::byte> &_imageData,
                               const wxSize &_size);
 };
