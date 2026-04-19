@@ -31,7 +31,7 @@ class Downloader {
 
     void makeBlocked(const Spotify::Track &_track);
 
-    void downloadAndTag(std::shared_ptr<TrackInterface::TrackViewData> _track,
+    void downloadAndTag(std::shared_ptr<TrackInterface> _track,
                         std::function<void(int)> _onProgress);
 
     void downloadAndTag(YouTube::Video &_video,
@@ -72,7 +72,7 @@ class Downloader {
     };
 
     bool isBlocked(const std::string &_id) const;
-    void makeBlocked(std::shared_ptr<TrackInterface::TrackViewData> _data);
+    void makeBlocked(std::shared_ptr<TrackInterface> _data);
 
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
@@ -81,8 +81,7 @@ class Downloader {
                                unsigned int _limit = 0,
                                const std::string &_offset = "0");
     void downloadResource(
-        const std::vector<std::shared_ptr<TrackInterface::TrackViewData>>
-            &_tracks,
+        const std::vector<std::shared_ptr<TrackInterface>> &_tracks,
         std::function<void(int)> _onProgress);
     std::string downloadResource(std::vector<YouTube::Video> &&_videos,
                                  std::function<void(int)> _onProgress);

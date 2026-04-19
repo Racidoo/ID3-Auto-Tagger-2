@@ -195,7 +195,7 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
     }
     TrackLabel *chosenTrackLabel =
         trackWindow->get_trackLabels().at(_event.GetString().ToStdString());
-    std::vector<std::shared_ptr<TrackInterface::TrackViewData>> choosenTracks{
+    std::vector<std::shared_ptr<TrackInterface>> choosenTracks{
         chosenTrackLabel->get_data()};
     downloader->downloadResource(
         choosenTracks, [chosenTrackLabel](int progress) {

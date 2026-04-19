@@ -7,8 +7,7 @@ LocalTrackService::~LocalTrackService() {
         worker.join();
 }
 
-std::shared_ptr<TrackInterface::TrackViewData>
-LocalTrackService::getTrack(size_t idx) {
+std::shared_ptr<TrackInterface> LocalTrackService::getTrack(size_t idx) {
     std::lock_guard<std::mutex> lock(tracksMutex);
     return allTracks[idx];
 }
@@ -81,7 +80,7 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
             auto track = TrackInterface::fromLocal(LocalTrack(file));
 
             bool blocked = _downloader->isBlocked(track->get_id());
-            track->inBlocklist = blocked;
+            track->set_inBlocklist(blocked);
 
             if (!includeBlocked && blocked)
                 continue;
@@ -128,9 +127,8 @@ std::string LocalTrackService::toLower(std::string _s) {
     return _s;
 };
 
-bool LocalTrackService::matchesSearch(
-    std::shared_ptr<TrackInterface::TrackViewData> _track,
-    const std::string &_query) {
+bool LocalTrackService::matchesSearch(std::shared_ptr<TrackInterface> _track,
+                                      const std::string &_query) {
 
     if (_query.empty())
         return true;

@@ -263,7 +263,7 @@ std::string Downloader::downloadResource(std::vector<YouTube::Video> &&_videos,
 }
 
 void Downloader::downloadResource(
-    const std::vector<std::shared_ptr<TrackInterface::TrackViewData>> &_tracks,
+    const std::vector<std::shared_ptr<TrackInterface>> &_tracks,
     std::function<void(int)> _onProgress) {
 
     for (auto &&track : _tracks) {
@@ -281,11 +281,10 @@ void Downloader::makeBlocked(const Spotify::Track &_track) {
         _track.get_stringArtists();
 }
 
-void Downloader::makeBlocked(
-    std::shared_ptr<TrackInterface::TrackViewData> _data) {
-    if (!_data || !_data->local)
+void Downloader::makeBlocked(std::shared_ptr<TrackInterface> _data) {
+    if (!_data || !_data->is_localTrack())
         return;
-    const auto &filename = _data->local->get_filename();
+    const auto &filename = _data->get_id();
     if (!Spotify::SpotifyAPI::isValidIdFormat(filename)) {
         return;
     }
@@ -294,18 +293,18 @@ void Downloader::makeBlocked(
     blacklist["blacklist"][filename]["artist"] = _data->get_artist();
 }
 
-void Downloader::downloadAndTag(
-    std::shared_ptr<TrackInterface::TrackViewData> _track,
-    std::function<void(int)> _onProgress) {
+void Downloader::downloadAndTag(std::shared_ptr<TrackInterface> _track,
+                                std::function<void(int)> _onProgress) {
 
-    if (!_track || _track->spotify) {
+    if (!_track || _track->is_spotifyTrack()) {
         std::cerr << "Cannot download with missing spotify information!"
                   << std::endl;
     }
 
     std::thread([this, _onProgress, _track]() mutable {
         _onProgress(0);
-        auto bestMatch = youTube->findBestMatch(*_track->spotify, _onProgress);
+        auto bestMatch =
+            youTube->findBestMatch(*_track->get_spotifyTrack(), _onProgress);
         if (bestMatch.empty()) {
             _onProgress(-1);
             return;
@@ -313,7 +312,7 @@ void Downloader::downloadAndTag(
         _onProgress(10);
 
         std::filesystem::path trackName =
-            trackPath / (_track->spotify->get_id() + ".mp3");
+            trackPath / (_track->get_id() + ".mp3");
 
         // download resource
         std::string command =
@@ -371,6 +370,8 @@ void Downloader::downloadAndTag(
         }
 
         auto localTrack(TrackInterface::fromLocal(LocalTrack(trackName)));
+        // get additianl tags that are not relevant in normal search
+        spotify->loadAdditionalData(_track);
         localTrack->verifyTags(_track);
 
         _onProgress(99);

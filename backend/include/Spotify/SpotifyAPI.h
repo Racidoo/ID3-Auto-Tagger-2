@@ -62,11 +62,12 @@ class SpotifyAPI : public Query {
     Track getTrack(const std::string &_id);
     std::vector<Track> getAlbumTracks(const std::string &_id);
     std::vector<Track> getPlaylistTracks(const std::string &_id);
-    std::string
-    searchId(std::shared_ptr<TrackInterface::TrackViewData> _localData);
+    std::string searchId(std::shared_ptr<TrackInterface> _trackInterface);
     void loadAdditionalData(Track &_track);
-    std::shared_ptr<TrackInterface::TrackViewData>
-    researchTags(std::shared_ptr<TrackInterface::TrackViewData> _localData);
+    void
+    loadAdditionalData(std::shared_ptr<TrackInterface> _spotifyTrackInterface);
+    std::shared_ptr<TrackInterface>
+    researchTags(std::shared_ptr<TrackInterface> _localData);
 
     static bool isValidIdFormat(const std::string &_id);
 

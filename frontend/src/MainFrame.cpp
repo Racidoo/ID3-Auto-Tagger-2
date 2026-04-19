@@ -66,8 +66,6 @@ MainFrame::MainFrame()
     mainSizer->Add(youtubePanel, 1, wxEXPAND);
     mainSizer->Add(settingsPanel, 1, wxEXPAND);
 
-    auto trackEditWindow = new TrackEditWindow(this);
-    trackEditWindow->Hide();
 
     // Bind toolbar events
     Bind(wxEVT_TOOL, &MainFrame::OnDownloadClicked, this, IDM_TOOLBAR_DOWNLOAD);
@@ -79,7 +77,6 @@ MainFrame::MainFrame()
     auto sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(toolBar, 0, wxSHRINK, 0);
     sizer->Add(mainPanel, 1, wxEXPAND);
-    sizer->Add(trackEditWindow, 0, wxSHRINK, 5);
     SetSizer(sizer);
 
     // Set default screen

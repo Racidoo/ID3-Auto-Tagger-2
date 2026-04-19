@@ -62,31 +62,20 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                          event.GetEventObject());
             return;
         }
-        if (activeSongs.contains(clickedLabel)) {
-             wxLogMessage("erase");
-            clickedLabel->SetBackgroundColour(wxNullColour);
-            activeSongs.erase(clickedLabel);
-        } else {
-             wxLogMessage("insert");
-            clickedLabel->SetBackgroundColour(*wxLIGHT_GREY);
-            activeSongs.insert(clickedLabel);
-        }
+        // if (activeSongs.contains(clickedLabel)) {
+        //     wxLogMessage("erase");
+        //     clickedLabel->SetBackgroundColour(wxNullColour);
+        //     activeSongs.erase(clickedLabel);
+        // } else {
+        //     wxLogMessage("insert");
+        //     clickedLabel->SetBackgroundColour(*wxLIGHT_GREY);
+        //     activeSongs.insert(clickedLabel);
+        // }
         // if (GetParent()) {
         //     wxCommandEvent notifyEvent(EVT_SHOW_TRACK_DETAILS, GetId());
         //     notifyEvent.SetEventObject(this);
         //     wxPostEvent(GetParent(), notifyEvent);
         // }
-
-        if (get_activeSongs().empty()) {
-             wxLogMessage("hide");
-            this->Hide();
-            this->GetParent()->Layout();
-            return;
-        }
-             wxLogMessage("show");
-        this->Show();
-        this->GetParent()->Layout();
-        this->show();
     });
 
     this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
@@ -174,6 +163,29 @@ void TrackEditWindow::show() {
         getCommonAttribute([](auto t) { return t->get_copyright(); }));
 
     this->GetSizer()->Layout();
+}
+
+void TrackEditWindow::toggleSelectionOfTrackabel(TrackLabel *_trackLabel) {
+    if (activeSongs.contains(_trackLabel)) {
+        wxLogDebug("erase");
+        _trackLabel->SetBackgroundColour(wxNullColour);
+        activeSongs.erase(_trackLabel);
+    } else {
+        wxLogDebug("insert");
+        _trackLabel->SetBackgroundColour(*wxLIGHT_GREY);
+        activeSongs.insert(_trackLabel);
+    }
+
+    if (get_activeSongs().empty()) {
+        wxLogDebug("hide");
+        this->Hide();
+        this->GetParent()->Layout();
+        return;
+    }
+    wxLogDebug("show");
+    this->Show();
+    this->GetParent()->Layout();
+    this->show();
 }
 
 std::size_t TrackEditWindow::bitmapHash(const wxBitmap &bmp) {

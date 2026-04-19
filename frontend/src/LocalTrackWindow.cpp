@@ -1,5 +1,6 @@
 #include "../include/LocalTrackWindow.h"
 #include "../include/Downloader.h"
+#include "../include/TrackEditWindow.h"
 #include "../include/TrackLabel.h"
 #include "../include/TrackWindow.h"
 
@@ -30,13 +31,30 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     toolbarSizer->Add(searchBar, 1, wxALL, 5);
 
     trackWindow = new TrackWindow(this, _downloader);
+    trackEditWindow = new TrackEditWindow(this);
+    trackEditWindow->Hide();
+
+    auto trackSizer = new wxBoxSizer(wxHORIZONTAL);
+    trackSizer->Add(trackWindow, 1, wxEXPAND | wxALL, 5);
+    trackSizer->Add(trackEditWindow, 0, wxSHRINK | wxALL, 5);
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
-    mainSizer->Add(trackWindow, 1, wxEXPAND | wxALL, 5);
+    mainSizer->Add(trackSizer, 1, wxEXPAND | wxALL, 5);
 
     Bind(EVT_TRACKWINDOW_SCROLL_BOTTOM, &LocalTrackWindow::OnScrollEnd, this);
     // Bind(EVT_TRACKS_UPDATED, &LocalTrackWindow::OnTracksUpdated, this);
+    Bind(EVT_TRACKLABEL_CLICKED, [this](wxCommandEvent &_event) {
+        TrackLabel *clickedLabel =
+            dynamic_cast<TrackLabel *>(_event.GetEventObject());
+        _event.Skip();
+        if (!clickedLabel) {
+            wxLogMessage("Could not derive TrackLabel from %s",
+                         _event.GetEventObject());
+            return;
+        }
+        trackEditWindow->toggleSelectionOfTrackabel(clickedLabel);
+    });
     trackService.setCallback(
         [this]() { CallAfter([this]() { OnTracksUpdated(); }); });
 
@@ -68,6 +86,7 @@ void LocalTrackWindow::refresh() {
     }
 
     CallAfter([this]() {
+        trackWindow->Clear();
         loadedCount = 0;
         LoadMoreItems(LOAD_CHUNK);
         trackWindow->Show();

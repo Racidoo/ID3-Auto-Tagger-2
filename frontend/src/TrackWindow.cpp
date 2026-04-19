@@ -22,16 +22,17 @@ TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
     outerSizer->Add(content, 1, wxEXPAND);
     SetSizer(outerSizer);
 
-    // Bind(EVT_TRACKLABEL_CLICKED, &TrackWindow::processClickedLabel, this);
     Bind(EVT_TRACK_DELETE, [this](wxCommandEvent &_event) {
         auto id = _event.GetString().ToStdString();
         auto label = getLabel(id);
         if (!label) {
             return;
         }
-        downloader->deleteLocalTrack(label->get_data()->local->get_filepath());
+        downloader->deleteLocalTrack(
+            label->get_data()->get_localTrack()->get_filepath());
         deleteChild(label);
     });
+
     Bind(EVT_TRACK_VERIFY, [this](wxCommandEvent &_event) {
         std::string id = _event.GetString().utf8_string();
         auto label = getLabel(id);
@@ -93,8 +94,7 @@ void TrackWindow::createHeader() {
 
 void TrackWindow::sortByHeader() {}
 
-void TrackWindow::appendChild(
-    std::shared_ptr<TrackInterface::TrackViewData> data) {
+void TrackWindow::appendChild(std::shared_ptr<TrackInterface> data) {
     // Construct label with correct parent
     auto *trackLabel = new TrackLabel(content, data);
 

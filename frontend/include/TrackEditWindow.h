@@ -44,6 +44,8 @@ class TrackEditWindow : public wxPanel {
 
     void show();
 
+    void toggleSelectionOfTrackabel(TrackLabel* _trackLabel);
+
     static std::size_t bitmapHash(const wxBitmap &bmp);
     static bool bitmapsEqual(const wxBitmap &a, const wxBitmap &b);
 

@@ -9,11 +9,13 @@
 #include "TrackInterface.h"
 
 class TrackWindow;
+class TrackEditWindow;
 class Downloader;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:
     TrackWindow *trackWindow;
+    TrackEditWindow * trackEditWindow;
     wxStaticText *itemCount;
     wxCheckBox *unverifiedCheckBox;
     wxCheckBox *verifiedCheckBox;

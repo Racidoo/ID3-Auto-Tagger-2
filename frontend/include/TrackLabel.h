@@ -24,7 +24,7 @@ class TrackLabel : public wxPanel {
   private:
     bool isActive;
 
-    std::shared_ptr<TrackInterface::TrackViewData> data;
+    std::shared_ptr<TrackInterface> data;
 
     CircleProgressBar *progressBar;
     wxStaticBitmap *coverBitmap;
@@ -43,19 +43,18 @@ class TrackLabel : public wxPanel {
     void onDownloadButtonClick(wxMouseEvent &event);
 
   public:
-    TrackLabel(wxWindow *_parent,
-               std::shared_ptr<TrackInterface::TrackViewData> _data);
+    TrackLabel(wxWindow *_parent, std::shared_ptr<TrackInterface> _data);
     ~TrackLabel();
 
     // Progress, Cover, Title + Artist, Album, Genre, Length
     static constexpr inline int columnWidths[] = {64, 64, 200, 200, 150, 50};
 
-    std::shared_ptr<TrackInterface::TrackViewData> get_data() const;
+    std::shared_ptr<TrackInterface> get_data() const;
 
     CircleProgressBar *get_ProgressBar() const { return progressBar; }
 
     void Update();
-    void Update(std::shared_ptr<TrackInterface::TrackViewData> _data);
+    void Update(std::shared_ptr<TrackInterface> _data);
 
     wxSize DoGetBestSize() const override;
 };

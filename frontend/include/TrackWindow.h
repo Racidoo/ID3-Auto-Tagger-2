@@ -31,7 +31,7 @@ class TrackWindow : public wxScrolledWindow {
     inline wxPanel *GetContentPanel() { return content; }
 
     // Add a new TrackLabel safely
-    void appendChild(std::shared_ptr<TrackInterface::TrackViewData> data);
+    void appendChild(std::shared_ptr<TrackInterface> data);
 
     // Filter existing labels by query
     void filterTracks(const std::string &query);
@@ -55,7 +55,7 @@ class TrackWindow : public wxScrolledWindow {
 
     void deleteChild(TrackLabel *_trackLabel);
     void OnScroll(wxScrollWinEvent &event);
-    // void processClickedLabel(wxCommandEvent &event);
+    void processClickedLabel(wxCommandEvent &event);
 };
 
 #endif // TRACK_WINDOW_H

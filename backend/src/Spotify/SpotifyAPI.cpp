@@ -270,8 +270,7 @@ std::vector<Playlist> SpotifyAPI::searchPlaylist(const std::string &_query,
  * @param _filename
  * @return std::string
  */
-std::string SpotifyAPI::searchId(
-    std::shared_ptr<TrackInterface::TrackViewData> _localData) {
+std::string SpotifyAPI::searchId(std::shared_ptr<TrackInterface> _localData) {
     if (!_localData) {
         return {};
     }
@@ -281,9 +280,10 @@ std::string SpotifyAPI::searchId(
     // } else {
     //     std::cerr << "Error: Invalid file!" << std::endl;
     // }
-    const auto &title = _localData->get_title();
-    const auto &artist = _localData->get_artist();
-    auto filename = _localData->local->get_filename();
+    auto title = _localData->get_title();
+    auto artist = _localData->get_artist();
+    auto album = _localData->get_album();
+    auto filename = _localData->get_id();
     std::string query;
 
     // if (file.tag()) {
@@ -297,6 +297,10 @@ std::string SpotifyAPI::searchId(
         query = title;
     } else {
         query = artist + " - " + title;
+    }
+
+    if (!album.empty()) {
+        query += " - " + album;
     }
 
     std::vector<Track> tracks;
@@ -373,8 +377,21 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
     _track.get_album().set_label(jsonFullAlbum.at("label"));
 }
 
-std::shared_ptr<TrackInterface::TrackViewData> SpotifyAPI::researchTags(
-    std::shared_ptr<TrackInterface::TrackViewData> _localData) {
+void SpotifyAPI::loadAdditionalData(
+    std::shared_ptr<TrackInterface> _spotifyTrackInterface) {
+    assert(!_spotifyTrackInterface->is_spotifyTrack() &&
+           "loadAdditionalData() only support Spotify::Track");
+
+    json jsonFullAlbum = headerRequest(
+        urlAPI + "albums/" +
+        _spotifyTrackInterface->get_spotifyTrack()->get_album().get_id());
+    _spotifyTrackInterface->set_copyright(
+        jsonFullAlbum.at("copyrights")[0]["text"]);
+    _spotifyTrackInterface->set_label(jsonFullAlbum.at("label"));
+}
+
+std::shared_ptr<TrackInterface>
+SpotifyAPI::researchTags(std::shared_ptr<TrackInterface> _localData) {
     std::string trackUuid = searchId(_localData);
     if (trackUuid.empty()) {
         return nullptr;

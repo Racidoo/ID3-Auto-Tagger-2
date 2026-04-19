@@ -22,22 +22,21 @@ class LocalTrackService {
                     bool recursiveSearch = false, bool includeBlocked = true,
                     bool includeNonBlocked = false);
     std::vector<size_t> getNextChunk(size_t count);
-    std::shared_ptr<TrackInterface::TrackViewData> getTrack(size_t idx);
+    std::shared_ptr<TrackInterface> getTrack(size_t idx);
 
     void setCallback(Callback cb) { onUpdate = std::move(cb); }
     void setSearchQuery(const std::string &_query);
-    static bool
-    matchesSearch(std::shared_ptr<TrackInterface::TrackViewData> _track,
-                  const std::string &_query);
+    static bool matchesSearch(std::shared_ptr<TrackInterface> _track,
+                              const std::string &_query);
     std::size_t getFilteredCount();
 
   private:
-    std::vector<std::shared_ptr<TrackInterface::TrackViewData>> allTracks;
+    std::vector<std::shared_ptr<TrackInterface>> allTracks;
     std::vector<size_t> filteredIndices;
-    
+
     std::mutex tracksMutex;
     std::mutex filterMutex;
-    
+
     std::thread worker;
     std::atomic<bool> stopRequested{false};
     std::atomic<size_t> generation{0};
