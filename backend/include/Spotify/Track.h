@@ -50,22 +50,6 @@ class Track : public QueryObject {
     inline bool isDownloaded() const { return downloaded; }
 
     inline void set_downloaded(bool _downloaded) { downloaded = _downloaded; }
-
-    // bool writeID3V2Tags(TagLib::MPEG::File _file) const;
-    // bool setAlbumCover(const std::string &_mp3Path,
-    //                    const std::string &_imagePath) const;
-    // bool setAlbumCover(const std::string &_mp3Path,
-    //  const std::vector<char> &_imageData) const;
-    // static void printID3V2Tags(TagLib::MPEG::File _file);
-
-    // static bool setTagValue(TagLib::MPEG::File &file, const char *frameID,
-    // const std::string &value);
-
-    // void verifyTags(const std::string &_filepath);
-
-  private:
-    // bool setAPICTag(const std::string &_mp3Path,
-    //                 const std::vector<char> &_imageData) const;
 };
 
 } // namespace Spotify

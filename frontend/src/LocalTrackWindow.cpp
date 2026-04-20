@@ -87,6 +87,7 @@ void LocalTrackWindow::refresh() {
 
     CallAfter([this]() {
         trackWindow->Clear();
+        trackEditWindow->Hide();
         loadedCount = 0;
         LoadMoreItems(LOAD_CHUNK);
         trackWindow->Show();

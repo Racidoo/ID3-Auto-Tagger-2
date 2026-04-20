@@ -72,7 +72,7 @@ void TrackLabel::Create() {
     rootSizer->Add(lengthText, 0, wxALL, 5);
     rootSizer->Add(actionSizer, 0, wxALL, 5);
 
-    if (!data->is_localTrack()) {
+    if (!data->get_localTrack()) {
         actionVerify->Hide();
         actionDelete->Hide();
     }
@@ -106,9 +106,9 @@ void TrackLabel::Update() {
     lengthText->SetLabel(duration);
 
     // Progress logic
-    if (data->is_spotifyTrack() && data->is_downloaded()) {
+    if (data->get_spotifyTrack() && data->is_downloaded()) {
         progressBar->SetProgress(CIRCLE_PROGRESSBAR_FINISH);
-    } else if (data->is_localTrack()) {
+    } else if (data->get_localTrack()) {
         progressBar->SetProgress(data->is_inBlocklist()
                                      ? CIRCLE_PROGRESSBAR_FINISH
                                      : CIRCLE_PROGRESSBAR_CANCEL);
@@ -142,7 +142,7 @@ void TrackLabel::Update(std::shared_ptr<TrackInterface> _data) {
  * @param event
  */
 void TrackLabel::onClick(wxMouseEvent &event) {
-    if (data->is_localTrack() && GetParent()) {
+    if (data->get_localTrack() && GetParent()) {
         wxCommandEvent notifyEvent(EVT_TRACKLABEL_CLICKED, GetId());
         notifyEvent.SetEventObject(this);
         wxPostEvent(GetParent(), notifyEvent);
@@ -165,8 +165,8 @@ void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     //     wxPostEvent(GetParent(), trackEvent); // Send event to parent
     // return;
     // }
-    if (!data->is_spotifyTrack() || data->get_id().empty() ||
-        data->is_localTrack() || data->is_downloaded() ||
+    if (!data->get_spotifyTrack() || data->get_id().empty() ||
+        data->get_localTrack() || data->is_downloaded() ||
         progressBar->get_progress() == CIRCLE_PROGRESSBAR_FINISH) {
         // wxLogDebug(wxT("no data | full progress"));
         return;

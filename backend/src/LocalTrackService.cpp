@@ -77,7 +77,8 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
             if (!file.is_regular_file() || file.path().extension() != ".mp3")
                 continue;
 
-            auto track = TrackInterface::fromLocal(LocalTrack(file));
+            auto track =
+                TrackInterface::fromLocal(std::make_shared<LocalTrack>(file));
 
             bool blocked = _downloader->isBlocked(track->get_id());
             track->set_inBlocklist(blocked);

@@ -122,11 +122,11 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                 break;
             }
             case LocalTrack::tag_type_t::TRACK: {
-                track->set_track(value);
+                track->set_trackNumber(value);
                 break;
             }
             case LocalTrack::tag_type_t::DISC: {
-                track->set_disc(value);
+                track->set_discNumber(value);
                 break;
             }
             }
@@ -150,13 +150,13 @@ void TrackEditWindow::show() {
     yearText->SetValue(
         getCommonAttribute([](auto t) { return t->get_year(); }));
     trackNumberText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_track(); }));
+        getCommonAttribute([](auto t) { return t->get_trackNumber(); }));
     genreText->SetValue(
         getCommonAttribute([](auto t) { return t->get_genre(); }));
     albumArtistsText->SetValue(
         getCommonAttribute([](auto t) { return t->get_albumArtist(); }));
     discNumberText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_disc(); }));
+        getCommonAttribute([](auto t) { return t->get_discNumber(); }));
     labelText->SetValue(
         getCommonAttribute([](auto t) { return t->get_label(); }));
     copyrightText->SetValue(

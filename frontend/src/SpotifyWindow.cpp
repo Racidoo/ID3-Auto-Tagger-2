@@ -139,8 +139,8 @@ void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
     if (!result.tracks.empty()) {
         trackWindow->Show();
         for (auto &track : result.tracks) {
-            if (downloader->isBlocked(track.get_id())) {
-                track.set_downloaded(true);
+            if (downloader->isBlocked(track->get_id())) {
+                track->set_downloaded(true);
             }
             trackWindow->appendChild(TrackInterface::fromSpotify(track));
         }

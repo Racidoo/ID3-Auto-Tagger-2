@@ -37,13 +37,13 @@ std::string LocalTrack::get_label() {
     ensureTagsLoaded();
     return label;
 }
-std::string LocalTrack::get_track() {
+std::string LocalTrack::get_trackNumber() {
     ensureTagsLoaded();
-    return track;
+    return trackNumber;
 }
-std::string LocalTrack::get_disc() {
+std::string LocalTrack::get_discNumber() {
     ensureTagsLoaded();
-    return disc;
+    return discNumber;
 }
 std::size_t LocalTrack::get_length() {
     ensureTagsLoaded();
@@ -169,20 +169,20 @@ void LocalTrack::set_label(const std::string &_label) {
     label = _label;
 }
 
-void LocalTrack::set_track(const std::string &_track) {
+void LocalTrack::set_trackNumber(const std::string &_trackNumber) {
     TagLib::MPEG::File file(filepath.c_str());
 
     if (file.tag()) {
-        file.tag()->setTrack(std::stoi(_track));
+        file.tag()->setTrack(std::stoi(_trackNumber));
         file.save();
     }
-    track = _track;
+    trackNumber = _trackNumber;
 }
 
-void LocalTrack::set_disc(const std::string &_disc) {
+void LocalTrack::set_discNumber(const std::string &_discNumber) {
     TagLib::MPEG::File file(filepath.c_str());
-    setTagValue(filepath, "TPOS", _disc);
-    disc = _disc;
+    setTagValue(filepath, "TPOS", _discNumber);
+    discNumber = _discNumber;
 }
 
 void LocalTrack::set_cover(const std::vector<std::byte> &_imageData) {
@@ -276,10 +276,10 @@ void LocalTrack::ensureTagsLoaded() {
     album = tag->album().to8Bit(true);
     genre = tag->genre().to8Bit(true);
     year = tag->year() == 0 ? "" : std::to_string(tag->year());
-    track = tag->track() == 0 ? "" : std::to_string(tag->track());
+    trackNumber = tag->track() == 0 ? "" : std::to_string(tag->track());
     albumArtist = getFrameText(id3Tag, "TPE2");
     label = getFrameText(id3Tag, "TPUB");
-    disc = getFrameText(id3Tag, "TPOS");
+    discNumber = getFrameText(id3Tag, "TPOS");
     copyright = getFrameText(id3Tag, "TCOP");
     length = fr.audioProperties() ? fr.audioProperties()->length() : 0;
     tagsLoaded = true;

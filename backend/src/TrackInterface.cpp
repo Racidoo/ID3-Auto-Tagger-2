@@ -1,209 +1,96 @@
 #include "../include/TrackInterface.h"
 #include "../include/Downloader.h"
 #include "../include/Query.h"
+#include "TrackSource/LocalTrackSource.h"
+#include "TrackSource/SpotifyTrackSource.h"
 
 std::string TrackInterface::get_id() const {
-    if (local)
-        return local->get_filename();
-    if (spotify)
-        return spotify->get_id();
-    assert(!local && !spotify && "Can not generate a valid id");
-    return {};
+    return source ? source->get_id() : "";
 }
-
 std::string TrackInterface::get_title() {
-    if (local)
-        return local->get_title();
-    if (spotify)
-        return spotify->get_name();
-    return {};
+    return source ? source->get_title() : "";
 }
 std::string TrackInterface::get_artist() {
-    if (local)
-        return local->get_artist();
-    if (spotify)
-        return spotify->get_stringArtists();
-    return {};
+    return source ? source->get_artist() : "";
 }
 std::string TrackInterface::get_album() {
-    if (local)
-        return local->get_album();
-    if (spotify)
-        return spotify->get_album().get_name();
-    return {};
+    return source ? source->get_album() : "";
 }
 std::string TrackInterface::get_albumArtist() {
-    if (local)
-        return local->get_albumArtist();
-    if (spotify)
-        return spotify->get_album().get_artists();
-    return {};
+    return source ? source->get_albumArtist() : "";
 }
 std::string TrackInterface::get_copyright() {
-    if (local)
-        return local->get_copyright();
-    if (spotify)
-        return spotify->get_album().get_copyright();
-    return {};
+    return source ? source->get_copyright() : "";
 }
 std::string TrackInterface::get_genre() {
-    if (local)
-        return local->get_genre();
-    // if (spotify)
-    //     return spotify->get_genre();
-    return {};
+    return source ? source->get_genre() : "";
 }
 std::string TrackInterface::get_year() {
-    if (local)
-        return local->get_year();
-    if (spotify)
-        return spotify->get_album().get_releaseYear();
-    return {};
+    return source ? source->get_year() : "";
 }
 std::string TrackInterface::get_label() {
-    if (local)
-        return local->get_label();
-    if (spotify)
-        return spotify->get_album().get_label();
-    return {};
+    return source ? source->get_label() : "";
 }
-std::string TrackInterface::get_track() {
-    if (local)
-        return local->get_track();
-    if (spotify)
-        return std::to_string(spotify->get_trackNumber());
-    return {};
+std::string TrackInterface::get_trackNumber() {
+    return source ? source->get_trackNumber() : "";
 }
-std::string TrackInterface::get_disc() {
-    if (local)
-        return local->get_disc();
-    if (spotify)
-        return std::to_string(spotify->get_discNumber());
-    return {};
+std::string TrackInterface::get_discNumber() {
+    return source ? source->get_discNumber() : "";
 }
 std::size_t TrackInterface::get_length() {
-    if (local)
-        return local->get_length();
-    if (spotify)
-        return spotify->get_durationMs() / 1000;
-    return {};
+    return source ? source->get_length() : 0;
 }
-
 std::vector<std::byte> TrackInterface::get_cover() {
-    if (local)
-        return local->get_cover();
-    if (spotify)
-        return spotify->get_album().get_image();
-    return {};
-}
-
-const std::shared_ptr<LocalTrack> TrackInterface::get_localTrack() const {
-    return local;
-}
-const std::shared_ptr<Spotify::Track> TrackInterface::get_spotifyTrack() const {
-    return spotify;
+    return source ? source->get_cover() : std::vector<std::byte>{};
 }
 
 bool TrackInterface::is_inBlocklist() const { return inBlocklist; }
 bool TrackInterface::is_verified() const { return verified; }
 bool TrackInterface::is_downloaded() const { return downloaded; }
-bool TrackInterface::is_localTrack() const { return local != nullptr; }
-bool TrackInterface::is_spotifyTrack() const { return spotify != nullptr; }
 
 void TrackInterface::set_title(const std::string &_title) {
-    if (local) {
-        local->set_title(_title);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_title(_title);
 }
-
 void TrackInterface::set_artist(const std::string &_artist) {
-    if (local) {
-        local->set_artist(_artist);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_artist(_artist);
 }
-
 void TrackInterface::set_album(const std::string &_album) {
-    if (local) {
-        local->set_album(_album);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_album(_album);
 }
-
 void TrackInterface::set_albumArtist(const std::string &_albumArtist) {
-    if (local) {
-        local->set_albumArtist(_albumArtist);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_albumArtist(_albumArtist);
 }
-
 void TrackInterface::set_copyright(const std::string &_copyright) {
-    if (local) {
-        local->set_copyright(_copyright);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_copyright(_copyright);
 }
-
 void TrackInterface::set_genre(const std::string &_genre) {
-    if (local) {
-        local->set_genre(_genre);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_genre(_genre);
 }
-
 void TrackInterface::set_year(const std::string &_year) {
-    if (local) {
-        local->set_year(_year);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_year(_year);
 }
-
 void TrackInterface::set_label(const std::string &_label) {
-    if (local) {
-        local->set_label(_label);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+    if (source)
+        source->set_label(_label);
 }
-
-void TrackInterface::set_track(const std::string &_track) {
-    if (local) {
-        local->set_track(_track);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+void TrackInterface::set_trackNumber(const std::string &_track) {
+    if (source)
+        source->set_trackNumber(_track);
 }
-
-void TrackInterface::set_disc(const std::string &_disc) {
-    if (local) {
-        local->set_disc(_disc);
-        return;
-    }
-    std::cerr << "Warning: No local file provided for " << get_id()
-              << std::endl;
+void TrackInterface::set_discNumber(const std::string &_disc) {
+    if (source)
+        source->set_discNumber(_disc);
 }
-
 void TrackInterface::set_cover(const std::vector<std::byte> &_imageData) {
-    if (local) {
-        local->set_cover(_imageData);
-    }
+    if (source)
+        source->set_cover(_imageData);
 }
 
 void TrackInterface::set_inBlocklist(bool _inBlocklist) {
@@ -214,42 +101,51 @@ void TrackInterface::set_downloaded(bool _downloaded) {
     downloaded = _downloaded;
 }
 
-std::shared_ptr<TrackInterface>
-TrackInterface::fromLocal(const LocalTrack &_track) {
-    TrackInterface v;
-    v.local = std::make_shared<LocalTrack>(_track);
-    v.downloaded = true;
+std::shared_ptr<Spotify::Track> TrackInterface::get_spotifyTrack() const {
+    auto src = std::dynamic_pointer_cast<SpotifyTrackSource>(source);
+    return src ? src->get_track() : nullptr;
+}
 
-    return std::make_shared<TrackInterface>(v);
+std::shared_ptr<LocalTrack> TrackInterface::get_localTrack() const {
+    auto src = std::dynamic_pointer_cast<LocalTrackSource>(source);
+    return src ? src->get_track() : nullptr;
 }
 
 std::shared_ptr<TrackInterface>
-TrackInterface::fromSpotify(const Spotify::Track &_track) {
-    TrackInterface v;
-    v.verified = true;
-    v.downloaded = _track.isDownloaded();
-    v.spotify = std::make_shared<Spotify::Track>(_track);
-    return std::make_shared<TrackInterface>(v);
+TrackInterface::fromLocal(std::shared_ptr<LocalTrack> _track) {
+    auto trackInterface = std::make_shared<TrackInterface>(
+        std::make_shared<LocalTrackSource>(_track));
+    trackInterface->set_downloaded(true);
+    return trackInterface;
+}
+
+std::shared_ptr<TrackInterface>
+TrackInterface::fromSpotify(std::shared_ptr<Spotify::Track> _track) {
+    auto trackInterface = std::make_shared<TrackInterface>(
+        std::make_shared<SpotifyTrackSource>(_track));
+    trackInterface->set_verified(true);
+    trackInterface->set_downloaded(_track->isDownloaded());
+    return trackInterface;
 }
 
 void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
                             Downloader *_downloader) {
 
-    if (!_data || !_downloader) {
+    if (!_data || !_downloader || !_data->get_localTrack()) {
         return;
     }
 
-    const auto &filepath = _data->local->get_filepath();
+    const auto &filepath = _data->get_localTrack()->get_filepath();
 
     auto spotifyTrackData = _downloader->get_spotify()->researchTags(_data);
-    if (!spotifyTrackData || !spotifyTrackData->spotify) {
+    if (!spotifyTrackData || !spotifyTrackData->get_spotifyTrack()) {
         std::cerr
             << "Unable to retrieve meta data from SpotifyAPI. Will not add '"
             << filepath << "' to blacklist!" << std::endl;
         return;
     }
     _data->verifyTags(spotifyTrackData);
-    const auto &id = spotifyTrackData->spotify->get_id();
+    const auto &id = spotifyTrackData->get_id();
     if (filepath.stem() != id) {
         std::filesystem::path newPath =
             filepath.parent_path() / (id + filepath.extension().string());
@@ -259,7 +155,7 @@ void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
             std::cerr << "Rename failed: " << e.what() << std::endl;
             return;
         }
-        _data->local->set_filepath(newPath);
+        _data->get_localTrack()->set_filepath(newPath);
     }
     _downloader->makeBlocked(_data);
     _data->inBlocklist = true;
@@ -267,7 +163,8 @@ void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
 
 void TrackInterface::verifyTags(std::shared_ptr<TrackInterface> _template) {
 
-    assert(_template->spotify && this->local && "Invalid verify assignment");
+    assert(_template->get_spotifyTrack() && this->get_localTrack() &&
+           "Invalid verify assignment");
 
     if (_template->get_title() != get_title()) {
         std::cout << "Changed title from '" << get_title() << "' to '"
@@ -310,14 +207,14 @@ void TrackInterface::verifyTags(std::shared_ptr<TrackInterface> _template) {
                   << _template->get_label() << "'" << std::endl;
         set_label(_template->get_label());
     }
-    if (_template->get_track() != get_track()) {
-        std::cout << "Changed trackNumber from '" << get_track() << "' to '"
-                  << _template->get_track() << "'" << std::endl;
-        set_track(_template->get_track());
+    if (_template->get_trackNumber() != get_trackNumber()) {
+        std::cout << "Changed trackNumber from '" << get_trackNumber() << "' to '"
+                  << _template->get_trackNumber() << "'" << std::endl;
+        set_trackNumber(_template->get_trackNumber());
     }
-    if (_template->get_disc() != get_disc()) {
-        std::cout << "Changed discNumber from '" << get_disc() << "' to '"
-                  << _template->get_disc() << "'" << std::endl;
-        set_disc(_template->get_disc());
+    if (_template->get_discNumber() != get_discNumber()) {
+        std::cout << "Changed discNumber from '" << get_discNumber() << "' to '"
+                  << _template->get_discNumber() << "'" << std::endl;
+        set_discNumber(_template->get_discNumber());
     }
 }

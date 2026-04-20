@@ -379,7 +379,7 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
 
 void SpotifyAPI::loadAdditionalData(
     std::shared_ptr<TrackInterface> _spotifyTrackInterface) {
-    assert(!_spotifyTrackInterface->is_spotifyTrack() &&
+    assert(!_spotifyTrackInterface->get_spotifyTrack() &&
            "loadAdditionalData() only support Spotify::Track");
 
     json jsonFullAlbum = headerRequest(
@@ -398,7 +398,7 @@ SpotifyAPI::researchTags(std::shared_ptr<TrackInterface> _localData) {
     }
     auto track = getTrack(trackUuid);
     loadAdditionalData(track);
-    return TrackInterface::fromSpotify(track);
+    return TrackInterface::fromSpotify(std::make_shared<Spotify::Track>(track));
 }
 
 bool SpotifyAPI::isValidIdFormat(const std::string &_id) {

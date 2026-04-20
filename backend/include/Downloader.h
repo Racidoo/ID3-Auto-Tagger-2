@@ -64,7 +64,7 @@ class Downloader {
     };
 
     struct SearchResult {
-        std::vector<Spotify::Track> tracks;
+        std::vector<std::shared_ptr<Spotify::Track>> tracks;
         std::vector<Spotify::Album> albums;
         std::vector<Spotify::Artist> artists;
         std::vector<Spotify::Playlist> playlists;

@@ -16,6 +16,9 @@ set(SOURCES
     src/Spotify/Track.cpp
     src/Spotify/User.cpp
     src/TrackInterface.cpp
+    include/TrackSource/ITrackSource.hpp
+    src/TrackSource/LocalTrackSource.cpp
+    src/TrackSource/SpotifyTrackSource.cpp
     src/YouTube/Video.cpp
     src/YouTube/YouTubeAPI.cpp
     # Add more source files here
