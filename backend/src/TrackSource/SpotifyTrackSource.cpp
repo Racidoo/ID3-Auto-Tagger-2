@@ -50,7 +50,7 @@ void SpotifyTrackSource::set_albumArtist(const std::string &_albumArtist) {
     throw std::logic_error("Spotify Object is not mutable!");
 }
 void SpotifyTrackSource::set_copyright(const std::string &_copyright) {
-    throw std::logic_error("Spotify Object is not mutable!");
+    track->get_album().set_copyright(_copyright);
 }
 void SpotifyTrackSource::set_genre(const std::string &_genre) {
     throw std::logic_error("Spotify Object is not mutable!");
@@ -59,7 +59,7 @@ void SpotifyTrackSource::set_year(const std::string &_year) {
     throw std::logic_error("Spotify Object is not mutable!");
 }
 void SpotifyTrackSource::set_label(const std::string &_label) {
-    throw std::logic_error("Spotify Object is not mutable!");
+    track->get_album().set_label(_label);
 }
 void SpotifyTrackSource::set_trackNumber(const std::string &_track) {
     throw std::logic_error("Spotify Object is not mutable!");

@@ -43,7 +43,8 @@ class LocalTrack {
         COPYRIGHT,
         YEAR,
         TRACK,
-        DISC
+        DISC,
+        FILENAME
     };
 
     std::string get_title();
@@ -82,6 +83,9 @@ class LocalTrack {
     static std::string getFrameText(TagLib::ID3v2::Tag *_tag, const char *_id);
     static bool setTagValue(const std::filesystem::path &_filepath,
                             const char *frameID, const std::string &value);
+
+    bool renameLocalTrack(const std::string &_filename);
+    bool deleteLocalTrack();
 };
 
 #endif // LOCAL_TRACK_H

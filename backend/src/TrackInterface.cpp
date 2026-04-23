@@ -147,15 +147,8 @@ void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
     _data->verifyTags(spotifyTrackData);
     const auto &id = spotifyTrackData->get_id();
     if (filepath.stem() != id) {
-        std::filesystem::path newPath =
-            filepath.parent_path() / (id + filepath.extension().string());
-        try {
-            std::filesystem::rename(filepath, newPath);
-        } catch (const std::filesystem::filesystem_error &e) {
-            std::cerr << "Rename failed: " << e.what() << std::endl;
-            return;
-        }
-        _data->get_localTrack()->set_filepath(newPath);
+        _downloader->removeBlocked(_data);
+        _data->get_localTrack()->renameLocalTrack(id);
     }
     _downloader->makeBlocked(_data);
     _data->inBlocklist = true;
@@ -180,6 +173,7 @@ void TrackInterface::verifyTags(std::shared_ptr<TrackInterface> _template) {
         std::cout << "Changed album from '" << get_album() << "' to '"
                   << _template->get_album() << "'" << std::endl;
         set_album(_template->get_album());
+        // replace any old cover, if album changes
         set_cover(_template->get_cover());
     }
     if (_template->get_albumArtist() != get_albumArtist()) {
@@ -208,13 +202,18 @@ void TrackInterface::verifyTags(std::shared_ptr<TrackInterface> _template) {
         set_label(_template->get_label());
     }
     if (_template->get_trackNumber() != get_trackNumber()) {
-        std::cout << "Changed trackNumber from '" << get_trackNumber() << "' to '"
-                  << _template->get_trackNumber() << "'" << std::endl;
+        std::cout << "Changed trackNumber from '" << get_trackNumber()
+                  << "' to '" << _template->get_trackNumber() << "'"
+                  << std::endl;
         set_trackNumber(_template->get_trackNumber());
     }
     if (_template->get_discNumber() != get_discNumber()) {
         std::cout << "Changed discNumber from '" << get_discNumber() << "' to '"
                   << _template->get_discNumber() << "'" << std::endl;
         set_discNumber(_template->get_discNumber());
+    }
+    if (get_cover().empty()) {
+        std::cout << "Applied album cover" << std::endl;
+        set_cover(_template->get_cover());
     }
 }

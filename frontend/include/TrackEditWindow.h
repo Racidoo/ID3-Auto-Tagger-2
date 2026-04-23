@@ -26,6 +26,7 @@ class TrackEditWindow : public wxPanel {
     LabeledTextCtrl *trackNumberText;
     LabeledTextCtrl *discNumberText;
     LabeledTextCtrl *copyrightText;
+    LabeledTextCtrl *filenameText;
 
     std::unordered_set<TrackLabel *> activeSongs;
 
@@ -44,12 +45,15 @@ class TrackEditWindow : public wxPanel {
 
     void show();
 
-    void toggleSelectionOfTrackabel(TrackLabel* _trackLabel);
+    void toggleSelection(TrackLabel *_trackLabel, bool _multiple);
+    void updateVisibility();
 
     static std::size_t bitmapHash(const wxBitmap &bmp);
     static bool bitmapsEqual(const wxBitmap &a, const wxBitmap &b);
 
   private:
+    void OnShow(wxShowEvent &_event);
+
     /**
      * @brief Returns the common attribute across all files.
      *        If any file is missing the attribute or values differ,

@@ -1,4 +1,5 @@
 #include "../include/MediaLabel.h"
+#include "../include/ScrollText.h"
 
 wxDEFINE_EVENT(EVT_MEDIA_LABEL_CLICKED, wxCommandEvent);
 
@@ -7,18 +8,19 @@ MediaLabel::MediaLabel(wxWindow *_parent, const wxBitmap &_cover,
                        const std::vector<wxString> &_infoLines)
     : wxPanel(_parent, wxID_ANY, wxDefaultPosition) {
     auto coverBitmap = new wxStaticBitmap(this, wxID_ANY, _cover);
-    auto titleText = new wxStaticText(this, wxID_ANY, _title, wxDefaultPosition,
-                                      wxSize(150, -1));
-    titleText->Wrap(150);
+    auto titleText = new ScrollText(this, wxID_ANY, _title, wxDefaultPosition,
+                                    wxSize(150, -1));
+    // titleText->Wrap(150);
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(coverBitmap, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 5);
     mainSizer->Add(titleText, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
     for (auto &line : _infoLines) {
-        auto infoText = new wxStaticText(this, wxID_ANY, line);
+        auto infoText = new ScrollText(this, wxID_ANY, line, wxDefaultPosition,
+                                       wxSize(150, -1));
         infoText->SetForegroundColour(wxColour(150, 150, 150));
-        infoText->Wrap(150);
+        // infoText->Wrap(150);
         mainSizer->Add(infoText, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     }
 

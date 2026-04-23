@@ -32,6 +32,8 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
         this, wxID_ANY, LocalTrack::tag_type_t::DISC, "Disc-Nr.");
     copyrightText = new LabeledTextCtrl(
         this, wxID_ANY, LocalTrack::tag_type_t::COPYRIGHT, "Copyright");
+    filenameText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::FILENAME, "Filename");
 
     attributesSizer->Add(titleText, 1, wxEXPAND, 5);
     auto artistSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -49,34 +51,11 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
     attributesSizer->Add(genreText, 1, wxEXPAND, 5);
     attributesSizer->Add(labelText, 1, wxEXPAND, 5);
     attributesSizer->Add(copyrightText, 1, wxEXPAND, 5);
+    attributesSizer->Add(filenameText, 1, wxEXPAND, 5);
 
     mainSizer->Add(albumCover, 1, wxSHRINK, 5);
     mainSizer->Add(attributesSizer, 1, wxEXPAND, 5);
     this->SetSizerAndFit(mainSizer);
-
-    this->Bind(EVT_TRACKLABEL_CLICKED, [this](wxCommandEvent &event) {
-        TrackLabel *clickedLabel =
-            dynamic_cast<TrackLabel *>(event.GetEventObject());
-        if (!clickedLabel) {
-            wxLogMessage("Could not derive TrackLabel from %s",
-                         event.GetEventObject());
-            return;
-        }
-        // if (activeSongs.contains(clickedLabel)) {
-        //     wxLogMessage("erase");
-        //     clickedLabel->SetBackgroundColour(wxNullColour);
-        //     activeSongs.erase(clickedLabel);
-        // } else {
-        //     wxLogMessage("insert");
-        //     clickedLabel->SetBackgroundColour(*wxLIGHT_GREY);
-        //     activeSongs.insert(clickedLabel);
-        // }
-        // if (GetParent()) {
-        //     wxCommandEvent notifyEvent(EVT_SHOW_TRACK_DETAILS, GetId());
-        //     notifyEvent.SetEventObject(this);
-        //     wxPostEvent(GetParent(), notifyEvent);
-        // }
-    });
 
     this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
         std::string value = event.GetString().ToStdString();
@@ -129,10 +108,17 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                 track->set_discNumber(value);
                 break;
             }
+            case LocalTrack::tag_type_t::FILENAME: {
+                track->get_localTrack()->renameLocalTrack(value);
+                break;
+            }
             }
             activeSong->Update();
         }
+        Update();
     });
+
+    Bind(wxEVT_SHOW, &TrackEditWindow::OnShow, this);
 }
 
 TrackEditWindow::~TrackEditWindow() {}
@@ -161,31 +147,53 @@ void TrackEditWindow::show() {
         getCommonAttribute([](auto t) { return t->get_label(); }));
     copyrightText->SetValue(
         getCommonAttribute([](auto t) { return t->get_copyright(); }));
+    filenameText->SetValue(
+        getCommonAttribute([](auto t) { return t->get_id(); }));
 
     this->GetSizer()->Layout();
 }
 
-void TrackEditWindow::toggleSelectionOfTrackabel(TrackLabel *_trackLabel) {
+void TrackEditWindow::toggleSelection(TrackLabel *_trackLabel, bool _multi) {
+    if (!_multi) {
+        // Single selection mode → clear everything first
+        for (auto *active : activeSongs) {
+            if (!active)
+                continue;
+
+            active->SetBackgroundColour(wxNullColour);
+        }
+        activeSongs.clear();
+    }
+
     if (activeSongs.contains(_trackLabel)) {
-        wxLogDebug("erase");
         _trackLabel->SetBackgroundColour(wxNullColour);
         activeSongs.erase(_trackLabel);
     } else {
-        wxLogDebug("insert");
-        _trackLabel->SetBackgroundColour(*wxLIGHT_GREY);
         activeSongs.insert(_trackLabel);
+        _trackLabel->SetBackgroundColour(*wxLIGHT_GREY);
     }
 
-    if (get_activeSongs().empty()) {
-        wxLogDebug("hide");
-        this->Hide();
-        this->GetParent()->Layout();
-        return;
+    updateVisibility();
+}
+
+void TrackEditWindow::updateVisibility() {
+    if (activeSongs.empty()) {
+        Hide();
+    } else {
+        Show();
     }
-    wxLogDebug("show");
-    this->Show();
-    this->GetParent()->Layout();
-    this->show();
+
+    if (auto *parent = GetParent()) {
+        parent->Layout();
+    }
+    show();
+}
+
+void TrackEditWindow::OnShow(wxShowEvent &_event) {
+    if (!_event.IsShown()) {
+        activeSongs.clear();
+    }
+    _event.Skip();
 }
 
 std::size_t TrackEditWindow::bitmapHash(const wxBitmap &bmp) {

@@ -8,10 +8,10 @@
 
 wxDEFINE_EVENT(EVT_MEDIA_WINDOW_EXPAND_CLICKED, wxCommandEvent);
 
-template <typename LabelT> class MediaWindow : public wxPanel {
+template <typename LabelT> class MediaWindow : public wxScrolledWindow {
   public:
-    MediaWindow(wxWindow *_parent) : wxPanel(_parent, wxID_ANY) {
-        // SetScrollRate(15, 15);
+    MediaWindow(wxWindow *_parent) : wxScrolledWindow(_parent, wxID_ANY) {
+        SetScrollRate(15, 15);
         mainSizer = new wxBoxSizer(wxVERTICAL);
         contentSizer = new wxBoxSizer(wxHORIZONTAL);
         header = new wxStaticText(this, wxID_ANY, wxT("Header"));

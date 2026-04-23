@@ -12,7 +12,7 @@ class SettingsWindow : public wxScrolledWindow {
                    wxWindowID _winid = wxID_ANY,
                    const wxPoint &_pos = wxDefaultPosition,
                    const wxSize &_size = wxDefaultSize);
-    ~SettingsWindow();
+    ~SettingsWindow() = default;
 
   private:
     Downloader *downloader;

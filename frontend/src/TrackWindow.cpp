@@ -11,7 +11,7 @@ wxDEFINE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
 TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent, wxID_ANY), downloader(_downloader) {
 
-    SetScrollRate(15, 15);
+    SetScrollRate(60, 60);
 
     content = new wxPanel(this);
     contentSizer = new wxBoxSizer(wxVERTICAL);
@@ -26,10 +26,10 @@ TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
         auto id = _event.GetString().ToStdString();
         auto label = getLabel(id);
         if (!label) {
+            wxLogError(wxT("failed to locate " + id));
             return;
         }
-        downloader->deleteLocalTrack(
-            label->get_data()->get_localTrack()->get_filepath());
+        downloader->deleteLocalTrack(label->get_data());
         deleteChild(label);
     });
 
@@ -37,9 +37,23 @@ TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
         std::string id = _event.GetString().utf8_string();
         auto label = getLabel(id);
         if (!label) {
-            std::cerr << __FILE__ << ":" << __LINE__ << " Could not locate '"
-                      << id << "'" << std::endl;
-            return;
+            auto it = std::find_if(
+                trackLabels.begin(), trackLabels.end(), [id](const auto &_obj) {
+                    return (_obj.second->get_data()
+                                ? _obj.second->get_data()->get_id() == id
+                                : false);
+                });
+            if (it == trackLabels.end()) {
+                std::cerr << __FILE__ << ":" << __LINE__
+                          << " Could not locate '" << id << "'" << std::endl;
+                return;
+            }
+            std::cout << "Detected renaming of TrackLabel '" << id << "'"
+                      << std::endl;
+            label = it->second;
+            auto node = trackLabels.extract(it);
+            node.key() = id;
+            auto it_newLabel = trackLabels.insert(std::move(node));
         }
         TrackInterface::verify(label->get_data(), downloader);
 
@@ -95,41 +109,10 @@ void TrackWindow::createHeader() {
 void TrackWindow::sortByHeader() {}
 
 void TrackWindow::appendChild(std::shared_ptr<TrackInterface> data) {
-    // Construct label with correct parent
     auto *trackLabel = new TrackLabel(content, data);
 
-    // Defer addition until content panel is realized to avoid GTK crash
-    wxTheApp->CallAfter([this, trackLabel, data]() {
-        if (!contentSizer)
-            return;
-
-        contentSizer->Add(trackLabel, 0, wxALL | wxEXPAND, 5);
-
-        trackLabels[data->get_id()] = trackLabel;
-
-        contentSizer->Layout();
-        FitInside();
-    });
-}
-
-void TrackWindow::filterTracks(const std::string &query) {
-    if (!contentSizer)
-        return;
-
-    // Only update visibility if needed
-    for (auto &[id, label] : trackLabels) {
-        const bool visible = query.empty() || LocalTrackService::matchesSearch(
-                                                  label->get_data(), query);
-
-        // Only update if visibility changed
-        if (label->IsShown() != visible) {
-            label->Show(visible);
-        }
-    }
-
-    // Re-layout once after all visibility updates
-    contentSizer->Layout();
-    FitInside();
+    contentSizer->Add(trackLabel, 0, wxALL | wxEXPAND, 5);
+    trackLabels[data->get_id()] = trackLabel;
 }
 
 void TrackWindow::Clear() {

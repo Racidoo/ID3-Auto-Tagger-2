@@ -379,8 +379,8 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
 
 void SpotifyAPI::loadAdditionalData(
     std::shared_ptr<TrackInterface> _spotifyTrackInterface) {
-    assert(!_spotifyTrackInterface->get_spotifyTrack() &&
-           "loadAdditionalData() only support Spotify::Track");
+    // assert(!_spotifyTrackInterface->get_spotifyTrack() &&
+    //        "loadAdditionalData() only support Spotify::Track");
 
     json jsonFullAlbum = headerRequest(
         urlAPI + "albums/" +

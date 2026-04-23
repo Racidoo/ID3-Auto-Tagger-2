@@ -38,10 +38,11 @@ class Track : public QueryObject {
     ~Track();
 
     const std::string get_imageUrl() = delete;
-    inline std::vector<Artist> get_artists() const { return artists; }
+    inline const std::vector<Artist> &get_artists() const { return artists; }
+    inline std::vector<Artist> &get_artists() { return artists; }
     inline Album &get_album() { return album; }
     inline const Album &get_album() const { return album; }
-    inline const std::string get_stringArtists() const {
+    inline std::string get_stringArtists() const {
         return Artist::vecToStr(artists);
     }
     inline unsigned int get_trackNumber() const { return trackNumber; }

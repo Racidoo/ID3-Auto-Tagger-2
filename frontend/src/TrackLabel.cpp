@@ -141,14 +141,19 @@ void TrackLabel::Update(std::shared_ptr<TrackInterface> _data) {
  *
  * @param event
  */
-void TrackLabel::onClick(wxMouseEvent &event) {
-    if (data->get_localTrack() && GetParent()) {
-        wxCommandEvent notifyEvent(EVT_TRACKLABEL_CLICKED, GetId());
-        notifyEvent.SetEventObject(this);
-        wxPostEvent(GetParent(), notifyEvent);
-        // std::cout << data->local->get_filepath() << std::endl;
+void TrackLabel::onClick(wxMouseEvent &_event) {
+    if (!data->get_localTrack() || !GetParent()) {
+        _event.Skip();
+        return;
     }
-    event.Skip();
+
+    wxCommandEvent evt(EVT_TRACKLABEL_CLICKED, GetId());
+    evt.SetEventObject(this);
+    evt.SetInt(_event.ShiftDown()); // 0 = single, 1 = multi
+
+    wxPostEvent(GetParent(), evt);
+
+    _event.Skip();
 }
 
 /**
@@ -156,15 +161,7 @@ void TrackLabel::onClick(wxMouseEvent &event) {
  *
  * @param event
  */
-void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
-    // wxLogDebug(wxT("Download clicked"));
-    // if (localTrack) {
-    //     wxLogDebug(wxT("localTrack"));
-    //     wxCommandEvent trackEvent(EVT_TRACK_VERIFY);
-    //     trackEvent.SetString(localTrack->name());
-    //     wxPostEvent(GetParent(), trackEvent); // Send event to parent
-    // return;
-    // }
+void TrackLabel::onDownloadButtonClick(wxMouseEvent &_event) {
     if (!data->get_spotifyTrack() || data->get_id().empty() ||
         data->get_localTrack() || data->is_downloaded() ||
         progressBar->get_progress() == CIRCLE_PROGRESSBAR_FINISH) {
@@ -175,6 +172,7 @@ void TrackLabel::onDownloadButtonClick(wxMouseEvent &event) {
     wxCommandEvent trackEvent(EVT_TRACK_DOWNLOAD);
     trackEvent.SetString(data->get_id());
     wxPostEvent(GetParent(), trackEvent); // Send event to parent
+    _event.Skip();
 }
 
 wxSize TrackLabel::DoGetBestSize() const {

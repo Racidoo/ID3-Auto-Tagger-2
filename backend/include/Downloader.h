@@ -73,6 +73,7 @@ class Downloader {
 
     bool isBlocked(const std::string &_id) const;
     void makeBlocked(std::shared_ptr<TrackInterface> _data);
+    void removeBlocked(std::shared_ptr<TrackInterface> _data);
 
     // void verifyTags();
     SearchResult fetchResource(const std::string &_query,
@@ -85,8 +86,7 @@ class Downloader {
         std::function<void(int)> _onProgress);
     std::string downloadResource(std::vector<YouTube::Video> &&_videos,
                                  std::function<void(int)> _onProgress);
-    void deleteLocalTrack(const std::filesystem::path &_filepath);
-    // void verifyLocalResource(std::filesystem::path *_filepath);
+    void deleteLocalTrack(std::shared_ptr<TrackInterface> _data);
 };
 
 #endif // DOWNLOADER_H

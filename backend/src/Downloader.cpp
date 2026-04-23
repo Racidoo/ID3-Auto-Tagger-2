@@ -294,12 +294,26 @@ void Downloader::makeBlocked(std::shared_ptr<TrackInterface> _data) {
     blacklist["blacklist"][filename]["artist"] = _data->get_artist();
 }
 
+void Downloader::removeBlocked(std::shared_ptr<TrackInterface> _data) {
+
+    if (!_data || !_data->get_localTrack())
+        return;
+    const auto &filename = _data->get_id();
+
+    if (isBlocked(filename)) {
+        blacklist["blacklist"].erase(filename);
+        std::cout << "removed '" << filename << "' from blocklist" << std::endl;
+    }
+}
+
 void Downloader::downloadAndTag(std::shared_ptr<TrackInterface> _track,
                                 std::function<void(int)> _onProgress) {
 
-    if (!_track || _track->get_spotifyTrack()) {
+    if (!_track || !_track->get_spotifyTrack()) {
         std::cerr << "Cannot download with missing spotify information!"
                   << std::endl;
+        _onProgress(-1);
+        return;
     }
 
     std::thread([this, _onProgress, _track]() mutable {
@@ -469,24 +483,18 @@ void Downloader::downloadAndTag(YouTube::Video &_video,
     }).detach();
 }
 
-void Downloader::deleteLocalTrack(const std::filesystem::path &_filepath) {
-    std::string possibleId(_filepath.stem().string());
+void Downloader::deleteLocalTrack(std::shared_ptr<TrackInterface> _data) {
+    if (!_data || !_data->get_localTrack()) {
+        std::cerr << "invalid reference to localTrack!" << std::endl;
+        return;
+    }
 
-    if (isBlocked(possibleId)) {
-        blacklist["blacklist"].erase(possibleId);
-    } else {
-        std::cout << possibleId << " is not included in blacklist!"
-                  << std::endl;
+    const auto &filepath = _data->get_localTrack()->get_filepath();
+    std::string possibleId(filepath.stem().string());
+
+    if (!_data->get_localTrack()->deleteLocalTrack()) {
+        return;
     }
-    if (std::filesystem::exists(_filepath)) {
-        if (std::filesystem::remove(_filepath)) {
-            std::cout << "File deleted successfully.\n";
-        } else {
-            std::cerr << "Could not remove " << _filepath
-                      << ":Failed to delete the file.\n";
-        }
-    } else {
-        std::cerr << "Could not remove " << _filepath
-                  << ": File does not exist.\n";
-    }
+
+    removeBlocked(_data);
 }

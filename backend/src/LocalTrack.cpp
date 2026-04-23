@@ -332,3 +332,38 @@ bool LocalTrack::setTagValue(const std::filesystem::path &_filepath,
 
     return true;
 }
+
+bool LocalTrack::renameLocalTrack(const std::string &_filename) {
+    std::filesystem::path newPath =
+        filepath.parent_path() / (_filename + filepath.extension().string());
+    try {
+        std::filesystem::rename(filepath, newPath);
+    } catch (const std::filesystem::filesystem_error &e) {
+        std::cerr << "Rename failed: " << e.what() << std::endl;
+        return false;
+    }
+    filepath = newPath;
+    return true;
+}
+
+/**
+ * @brief only deletes the file on disc. Deleting `this` is the user's
+ * responsibility!
+ *
+ * @return true
+ * @return false
+ */
+bool LocalTrack::deleteLocalTrack() {
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "Could not remove " << filepath
+                  << ": File does not exist.\n";
+        return false;
+    }
+    if (!std::filesystem::remove(filepath)) {
+        std::cerr << "Could not remove " << filepath
+                  << ":Failed to delete the file.\n";
+        return false;
+    }
+    std::cout << "File deleted successfully.\n";
+    return true;
+}

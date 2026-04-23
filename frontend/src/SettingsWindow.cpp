@@ -127,5 +127,3 @@ SettingsWindow::SettingsWindow(wxWindow *_parent, Downloader *_downloader,
 
     this->SetSizerAndFit(mainSizer);
 }
-
-SettingsWindow::~SettingsWindow() {}

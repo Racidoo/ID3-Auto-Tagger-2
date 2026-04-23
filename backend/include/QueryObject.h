@@ -19,10 +19,11 @@ class QueryObject {
     inline const std::string &get_id() const { return id; }
     inline const std::string &get_name() const { return name; }
     inline const std::string &get_type() const { return type; }
-    inline const std::string get_imageUrl() const { return imageURL; }
+    inline const std::string &get_imageUrl() const { return imageURL; }
     std::vector<std::byte> get_image() const;
 
-    static bool isValidIdFormat(const std::string &_id);
+    // static bool isValidIdFormat(const std::string &_id);
+
 };
 
 #endif // QUERY_OBJECT_H

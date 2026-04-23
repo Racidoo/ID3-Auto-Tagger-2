@@ -39,8 +39,8 @@ class TrackLabel : public wxPanel {
 
     void Create();
 
-    void onClick(wxMouseEvent &event);
-    void onDownloadButtonClick(wxMouseEvent &event);
+    void onClick(wxMouseEvent &_event);
+    void onDownloadButtonClick(wxMouseEvent &_event);
 
   public:
     TrackLabel(wxWindow *_parent, std::shared_ptr<TrackInterface> _data);

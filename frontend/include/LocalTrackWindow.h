@@ -15,7 +15,7 @@ class Downloader;
 class LocalTrackWindow : public wxScrolledWindow {
   private:
     TrackWindow *trackWindow;
-    TrackEditWindow * trackEditWindow;
+    TrackEditWindow *trackEditWindow;
     wxStaticText *itemCount;
     wxCheckBox *unverifiedCheckBox;
     wxCheckBox *verifiedCheckBox;
@@ -24,12 +24,27 @@ class LocalTrackWindow : public wxScrolledWindow {
     wxTextCtrl *searchBar;
 
     LocalTrackService trackService;
+    std::deque<std::shared_ptr<TrackInterface>> pendingTracks;
+
+    std::vector<std::shared_ptr<TrackInterface>> allTracks;
+    std::vector<size_t> filteredIndices;
 
     std::size_t loadedCount;
     constexpr static std::size_t LOAD_CHUNK = 32;
 
+    std::string currentQuery;
+    size_t searchGeneration = 0;
+
+    wxTimer searchDebounceTimer;
+
     void search();
     void OnTracksUpdated();
+
+    void applyFilterIncremental(
+        const std::vector<std::shared_ptr<TrackInterface>> &batch);
+    static std::string toLower(std::string _s);
+    static bool matchesSearch(std::shared_ptr<TrackInterface> _track,
+                              const std::string &_query);
 
   public:
     LocalTrackWindow(wxWindow *_parent, Downloader *_downloader);
