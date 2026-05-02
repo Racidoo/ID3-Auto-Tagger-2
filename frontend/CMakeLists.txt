@@ -19,6 +19,8 @@ set(SOURCES
     src/SpotifyWindow.cpp
     src/TrackEditWindow.cpp
     src/TrackLabel.cpp
+    src/TrackModel.cpp
+    src/TrackPanel.cpp
     src/TrackWindow.cpp
     src/VideoLabel.cpp
     src/YouTubeWindow.cpp
@@ -42,12 +44,12 @@ include_directories(${CMAKE_SOURCE_DIR}/backend/include)
 # Link against backend and wxWidgets
 target_link_libraries(ID3-Auto-Tagger-2 PRIVATE backend ${wxWidgets_LIBRARIES})
 
-if (ENABLE_ASAN)
+if(ENABLE_ASAN)
     target_compile_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=address -fno-omit-frame-pointer)
     target_link_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=address)
 endif()
 
-if (ENABLE_TSAN)
+if(ENABLE_TSAN)
     target_compile_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
     target_link_options(ID3-Auto-Tagger-2 PRIVATE -fsanitize=thread)
 endif()

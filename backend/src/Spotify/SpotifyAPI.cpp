@@ -379,14 +379,15 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
 
 void SpotifyAPI::loadAdditionalData(
     std::shared_ptr<TrackInterface> _spotifyTrackInterface) {
-    // assert(!_spotifyTrackInterface->get_spotifyTrack() &&
-    //        "loadAdditionalData() only support Spotify::Track");
-
+   
     json jsonFullAlbum = headerRequest(
         urlAPI + "albums/" +
         _spotifyTrackInterface->get_spotifyTrack()->get_album().get_id());
-    _spotifyTrackInterface->set_copyright(
-        jsonFullAlbum.at("copyrights")[0]["text"]);
+    if (!jsonFullAlbum.at("copyrights").empty()) {
+        _spotifyTrackInterface->set_copyright(
+            jsonFullAlbum.at("copyrights")[0]["text"]);
+    }
+
     _spotifyTrackInterface->set_label(jsonFullAlbum.at("label"));
 }
 

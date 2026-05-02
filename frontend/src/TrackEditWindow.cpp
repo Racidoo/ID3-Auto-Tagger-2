@@ -155,14 +155,22 @@ void TrackEditWindow::show() {
 
 void TrackEditWindow::toggleSelection(TrackLabel *_trackLabel, bool _multi) {
     if (!_multi) {
+        bool clickedSingleActiveLabel(false);
         // Single selection mode → clear everything first
         for (auto *active : activeSongs) {
             if (!active)
                 continue;
-
+            if (active == _trackLabel) {
+                clickedSingleActiveLabel = true;
+                // other trackLabels still need to be 'de-selected'
+                continue;
+            }
             active->SetBackgroundColour(wxNullColour);
         }
         activeSongs.clear();
+        if (clickedSingleActiveLabel) {
+            activeSongs.insert(_trackLabel);
+        }
     }
 
     if (activeSongs.contains(_trackLabel)) {

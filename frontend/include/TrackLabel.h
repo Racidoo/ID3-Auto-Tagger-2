@@ -47,7 +47,8 @@ class TrackLabel : public wxPanel {
     ~TrackLabel();
 
     // Progress, Cover, Title + Artist, Album, Genre, Length
-    static constexpr inline int columnWidths[] = {64, 64, 200, 200, 150, 50};
+    static constexpr inline int columnWidths[] = {32, 32, 64, 64,
+                                                  64, 64, 64, 64};
 
     std::shared_ptr<TrackInterface> get_data() const;
 

@@ -22,55 +22,55 @@ TrackLabel::~TrackLabel() {}
 std::shared_ptr<TrackInterface> TrackLabel::get_data() const { return data; }
 
 void TrackLabel::Create() {
-    rootSizer = new wxFlexGridSizer(1, 7, 5, 5);
+    rootSizer = new wxFlexGridSizer(1, 8, 0, 0);
     auto *textSizer = new wxBoxSizer(wxVERTICAL);
 
     progressBar = new CircleProgressBar(this);
-    progressBar->SetMinSize(wxSize(columnWidths[0], columnWidths[0]));
-    progressBar->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onDownloadButtonClick,
-                      this);
-
-    coverBitmap =
-        new wxStaticBitmap(this, wxID_ANY, wxBitmap(), wxDefaultPosition,
-                           wxSize(columnWidths[1], columnWidths[1]));
-
-    titleText = new ScrollText(this, wxID_ANY, "title", wxDefaultPosition,
-                               wxSize(columnWidths[2], -1));
-    artistText = new ScrollText(this, wxID_ANY, "artist", wxDefaultPosition,
-                                wxSize(columnWidths[2], -1));
+    coverBitmap = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
+    titleText = new ScrollText(this, wxID_ANY, "title");
+    artistText = new ScrollText(this, wxID_ANY, "artist");
     artistText->SetForegroundColour(wxColour(150, 150, 150));
-
-    albumText = new ScrollText(this, wxID_ANY, "album", wxDefaultPosition,
-                               wxSize(columnWidths[3], -1));
-    genreText = new ScrollText(this, wxID_ANY, "genre", wxDefaultPosition,
-                               wxSize(columnWidths[4], -1));
-
-    lengthText = new wxStaticText(this, wxID_ANY, "length", wxDefaultPosition,
-                                  wxSize(columnWidths[5], -1));
+    albumText = new ScrollText(this, wxID_ANY, "album");
+    genreText = new ScrollText(this, wxID_ANY, "genre");
+    lengthText = new wxStaticText(this, wxID_ANY, "length");
     lengthText->Enable(false);
 
-    textSizer->Add(titleText, 0);
-    textSizer->Add(artistText, 0);
+    textSizer->Add(titleText, 0, wxEXPAND);
+    textSizer->Add(artistText, 0, wxEXPAND);
 
-    auto actionSizer = new wxBoxSizer(wxHORIZONTAL);
     actionVerify = new wxBitmapButton(
-        this, wxID_ANY, wxBitmap(wxArtProvider::GetBitmap(wxART_ASSESSMENT)));
+        this, wxID_ANY,
+        wxBitmap(wxArtProvider::GetBitmap(wxART_ASSESSMENT, wxART_BUTTON)));
     actionDelete = new wxBitmapButton(
-        this, wxID_ANY, wxBitmap(wxArtProvider::GetBitmap(wxART_TRASH_XMARK)));
-
-    actionSizer->Add(actionVerify);
-    actionSizer->Add(actionDelete);
+        this, wxID_ANY,
+        wxBitmap(wxArtProvider::GetBitmap(wxART_TRASH_XMARK, wxART_BUTTON)));
 
     actionVerify->Show();
     actionDelete->Show();
 
+    progressBar->SetMinSize(wxSize(columnWidths[0], columnWidths[0]));
+    // progressBar->SetMaxSize(wxSize(columnWidths[0], -1));
+    coverBitmap->SetMinSize(wxSize(columnWidths[1],columnWidths[1]));
+    titleText->SetMinSize(wxSize(columnWidths[2], -1));
+    artistText->SetMinSize(wxSize(columnWidths[2], -1));
+    albumText->SetMinSize(wxSize(columnWidths[3], -1));
+    genreText->SetMinSize(wxSize(columnWidths[4], -1));
+    lengthText->SetMinSize(wxSize(columnWidths[5], -1));
+    actionVerify->SetMinSize(wxSize(columnWidths[6], -1));
+    actionDelete->SetMinSize(wxSize(columnWidths[7], -1));
+
     rootSizer->Add(progressBar, 1, wxEXPAND, 5);
     rootSizer->Add(coverBitmap, 0, wxALL, 5);
-    rootSizer->Add(textSizer, 0, wxALL, 5);
-    rootSizer->Add(albumText, 0, wxALL, 5);
-    rootSizer->Add(genreText, 0, wxALL, 5);
-    rootSizer->Add(lengthText, 0, wxALL, 5);
-    rootSizer->Add(actionSizer, 0, wxALL, 5);
+    rootSizer->Add(textSizer, 0, wxEXPAND | wxALL, 5);
+    rootSizer->Add(albumText, 0, wxEXPAND | wxALL, 5);
+    rootSizer->Add(genreText, 0, wxEXPAND | wxALL, 5);
+    rootSizer->Add(lengthText, 0, wxEXPAND | wxALL, 5);
+    rootSizer->Add(actionVerify, 0, wxEXPAND | wxALL, 5);
+    rootSizer->Add(actionDelete, 0, wxEXPAND | wxALL, 5);
+
+    rootSizer->AddGrowableCol(2); // Title
+    rootSizer->AddGrowableCol(3); // Album
+    rootSizer->AddGrowableCol(4); // Genre
 
     if (!data->get_localTrack()) {
         actionVerify->Hide();
@@ -79,6 +79,8 @@ void TrackLabel::Create() {
 
     this->SetSizerAndFit(rootSizer);
 
+    progressBar->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onDownloadButtonClick,
+                      this);
     // Bind clicks once
     this->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);
     titleText->Bind(wxEVT_LEFT_DOWN, &TrackLabel::onClick, this);

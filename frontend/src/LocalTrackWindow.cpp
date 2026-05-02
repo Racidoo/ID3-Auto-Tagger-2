@@ -2,7 +2,6 @@
 #include "../include/Downloader.h"
 #include "../include/TrackEditWindow.h"
 #include "../include/TrackLabel.h"
-#include "../include/TrackWindow.h"
 
 LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent, wxID_ANY) {
@@ -22,11 +21,12 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
 
     searchBar = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
                                wxDefaultSize, wxTE_PROCESS_ENTER);
-    searchBar->Bind(wxEVT_TEXT_ENTER, &LocalTrackWindow::OnSearch, this);
-    searchBar->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
-        searchDebounceTimer.StartOnce(500); // 200ms debounce
-    });
-    searchDebounceTimer.Bind(wxEVT_TIMER, [this](wxTimerEvent &) { search(); });
+    // searchBar->Bind(wxEVT_TEXT_ENTER, &LocalTrackWindow::OnSearch, this);
+    // searchBar->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
+    //     searchDebounceTimer.StartOnce(500); // 200ms debounce
+    // });
+    // searchDebounceTimer.Bind(wxEVT_TIMER, [this](wxTimerEvent &) { search();
+    // });
 
     toolbarSizer->Add(unverifiedCheckBox, 0, wxALL, 5);
     toolbarSizer->Add(verifiedCheckBox, 0, wxALL, 5);
@@ -34,29 +34,20 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     toolbarSizer->Add(itemCount, 0, wxALL, 5);
     toolbarSizer->Add(searchBar, 1, wxALL, 5);
 
+    trackPanel = new TrackPanel(this);
     trackWindow = new TrackWindow(this, _downloader);
+    trackWindow->Hide();
     trackEditWindow = new TrackEditWindow(this);
     trackEditWindow->Hide();
 
     auto trackSizer = new wxBoxSizer(wxHORIZONTAL);
-    trackSizer->Add(trackWindow, 1, wxEXPAND | wxALL, 5);
+    trackSizer->Add(trackPanel, 1, wxEXPAND | wxALL, 5);
+    // trackSizer->Add(trackWindow, 1, wxEXPAND | wxALL, 5);
     trackSizer->Add(trackEditWindow, 0, wxSHRINK | wxALL, 5);
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
     mainSizer->Add(trackSizer, 1, wxEXPAND | wxALL, 5);
-
-    Bind(EVT_TRACKWINDOW_SCROLL_BOTTOM, &LocalTrackWindow::OnScrollEnd, this);
-    Bind(EVT_TRACKLABEL_CLICKED, [this](wxCommandEvent &_event) {
-        auto *label = static_cast<TrackLabel *>(_event.GetEventObject());
-
-        if (!label) {
-            wxLogMessage("Invalid TrackLabel event source");
-            return;
-        }
-        const bool multi = _event.GetInt();
-        trackEditWindow->toggleSelection(label, multi);
-    });
 
     unverifiedCheckBox->Bind(
         wxEVT_CHECKBOX, [this](wxCommandEvent &event) { this->refresh(); });
@@ -69,28 +60,17 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     trackService.onBatch =
         [this, currentGen](std::vector<std::shared_ptr<TrackInterface>> _batch,
                            size_t _gen) {
-            wxTheApp->CallAfter(
-                [this, batch = std::move(_batch), _gen]() mutable {
-                    if (_gen != trackService.getGeneration()) {
-                        wxLogError(wxT("Outdated generation!"));
-                        return; // stale batch
-                    }
+            wxTheApp->CallAfter([this, batch = std::move(_batch),
+                                 _gen]() mutable {
+                if (_gen != trackService.getGeneration()) {
+                    wxLogError(wxT("Outdated generation!"));
+                    return; // stale batch
+                }
 
-                    for (auto &track : batch) {
-                        allTracks.push_back(track);
-                    }
+                std::cout << "onBatch(), size: " << batch.size() << std::endl;
 
-                    // Re-apply current filter incrementally
-                    applyFilterIncremental(batch);
-
-                    // Optional: initial fill
-                    if (loadedCount == 0) {
-                        LoadMoreItems(LOAD_CHUNK);
-                    }
-
-                    OnTracksUpdated();
-                    Layout();
-                });
+                trackPanel->AddTracks(batch);
+            });
         };
 
     refresh();
@@ -103,11 +83,12 @@ LocalTrackWindow::~LocalTrackWindow() {}
 void LocalTrackWindow::refresh() {
 
     searchBar->Clear();
-    loadedCount = 0;
-    allTracks.clear();
-    filteredIndices.clear();
+    // trackPanel->Clear();
+    // loadedCount = 0;
+    // allTracks.clear();
+    // filteredIndices.clear();
 
-    trackWindow->Clear();
+    // trackWindow->Clear();
     trackEditWindow->Hide();
 
     std::filesystem::path musicPath =
@@ -123,88 +104,91 @@ void LocalTrackWindow::refresh() {
     }
 }
 
-void LocalTrackWindow::LoadMoreItems(std::size_t _count) {
-    size_t added = 0;
+// void LocalTrackWindow::LoadMoreItems(std::size_t _count) {
+//     size_t added = 0;
+//     ensureSorted();
 
-    while (added < _count && loadedCount < filteredIndices.size()) {
-        size_t idx = filteredIndices[loadedCount];
+//     while (added < _count && loadedCount < filteredIndices.size()) {
+//         size_t idx = filteredIndices[loadedCount];
 
-        auto &track = allTracks[idx];
-        trackWindow->appendChild(track);
+//         auto &track = allTracks[idx];
+//         trackWindow->appendChild(track);
 
-        ++loadedCount;
-        ++added;
-    }
+//         ++loadedCount;
+//         ++added;
+//     }
 
-    loadedCount += added;
-    OnTracksUpdated();
-    trackWindow->Layout();
-    trackWindow->FitInside();
-}
+//     // loadedCount += added;
+//     OnTracksUpdated();
+//     trackWindow->Layout();
+//     trackWindow->FitInside();
+// }
 
-void LocalTrackWindow::OnScrollEnd(wxCommandEvent &_event) {
-    _event.Skip();
-    LoadMoreItems(LOAD_CHUNK);
-}
+// void LocalTrackWindow::OnScrollEnd(wxCommandEvent &_event) {
+//     _event.Skip();
+//     LoadMoreItems(LOAD_CHUNK);
+// }
 
-void LocalTrackWindow::search() {
-    filteredIndices.clear();
-    trackWindow->Clear();
-    loadedCount = 0;
+// void LocalTrackWindow::search() {
+//     // filteredIndices.clear();
+//     // trackWindow->Clear();
+//     // loadedCount = 0;
 
-    currentQuery = searchBar->GetValue().ToStdString();
+//     currentQuery = searchBar->GetValue().ToStdString();
 
-    size_t myGen = ++searchGeneration;
+//     size_t myGen = ++searchGeneration;
 
-    // Snapshot UI state (safe, UI thread)
-    auto snapshot = allTracks;
-    auto query = currentQuery;
+//     // Snapshot UI state (safe, UI thread)
+//     auto snapshot = allTracks;
+//     auto query = currentQuery;
 
-    std::thread([this, snapshot = std::move(snapshot), query, myGen]() mutable {
-        std::vector<size_t> result;
-        result.reserve(snapshot.size());
+//     std::thread([this, snapshot = std::move(snapshot), query, myGen]()
+//     mutable {
+//         std::vector<size_t> result;
+//         result.reserve(snapshot.size());
 
-        for (size_t i = 0; i < snapshot.size(); ++i) {
-            if (matchesSearch(snapshot[i], query)) {
-                result.push_back(i);
-            }
-        }
+//         for (size_t i = 0; i < snapshot.size(); ++i) {
+//             if (matchesSearch(snapshot[i], query)) {
+//                 result.push_back(i);
+//             }
+//         }
 
-        // Return to UI thread
-        wxTheApp->CallAfter(
-            [this, result = std::move(result), myGen]() mutable {
-                if (myGen != searchGeneration)
-                    return; // stale result
+//         // Return to UI thread
+//         wxTheApp->CallAfter(
+//             [this, result = std::move(result), myGen]() mutable {
+//                 if (myGen != searchGeneration)
+//                     return; // stale result
 
-                filteredIndices = std::move(result);
-                LoadMoreItems(LOAD_CHUNK);
-            });
-    }).detach();
-}
+//                 // filteredIndices = std::move(result);
+//                 // ensureSorted();
+//                 // LoadMoreItems(LOAD_CHUNK);
+//             });
+//     }).detach();
+// }
 
-void LocalTrackWindow::OnSearch(wxCommandEvent &) { search(); }
+// void LocalTrackWindow::OnSearch(wxCommandEvent &) { search(); }
 
-void LocalTrackWindow::OnTracksUpdated() {
-    itemCount->SetLabelText("Showing " + std::to_string(loadedCount) + "/" +
-                            std::to_string(allTracks.size()) + " items");
-}
+// void LocalTrackWindow::OnTracksUpdated() {
+//     itemCount->SetLabelText("Showing " + std::to_string(loadedCount) + "/" +
+//                             std::to_string(allTracks.size()) + " items");
+// }
 
-void LocalTrackWindow::applyFilterIncremental(
-    const std::vector<std::shared_ptr<TrackInterface>> &batch) {
-    size_t baseIndex = allTracks.size() - batch.size();
+// void LocalTrackWindow::applyFilterIncremental(
+//     const std::vector<std::shared_ptr<TrackInterface>> &batch) {
+//     size_t baseIndex = allTracks.size() - batch.size();
 
-    for (size_t i = 0; i < batch.size(); ++i) {
-        if (matchesSearch(batch[i], searchBar->GetValue().ToStdString())) {
-            filteredIndices.push_back(baseIndex + i);
-        }
-    }
-}
+//     for (size_t i = 0; i < batch.size(); ++i) {
+//         if (matchesSearch(batch[i], searchBar->GetValue().ToStdString())) {
+//             filteredIndices.push_back(baseIndex + i);
+//         }
+//     }
+// }
 
 std::string LocalTrackWindow::toLower(std::string _s) {
     std::transform(_s.begin(), _s.end(), _s.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     return _s;
-};
+}
 
 bool LocalTrackWindow::matchesSearch(std::shared_ptr<TrackInterface> _track,
                                      const std::string &_query) {
@@ -228,3 +212,46 @@ bool LocalTrackWindow::matchesSearch(std::shared_ptr<TrackInterface> _track,
     return contains(_track->get_title()) || contains(_track->get_artist()) ||
            contains(_track->get_album()) || contains(_track->get_genre());
 }
+
+// void LocalTrackWindow::applySortAndRefresh() {
+//     sortFiltered();
+//     trackWindow->Clear();
+//     loadedCount = 0;
+
+//     LoadMoreItems(LOAD_CHUNK);
+// }
+
+// void LocalTrackWindow::sortFiltered() {
+//     std::stable_sort(filteredIndices.begin(), filteredIndices.end(),
+//                      [&](size_t a, size_t b) {
+//                          const auto &ta = allTracks[a];
+//                          const auto &tb = allTracks[b];
+
+//                          switch (currentSortKey) {
+//                          case TrackWindow::SortKey::Title:
+//                              return ta->get_title() < tb->get_title();
+//                          case TrackWindow::SortKey::Artist:
+//                              return ta->get_artist() < tb->get_artist();
+//                          case TrackWindow::SortKey::Album:
+//                              return ta->get_album() < tb->get_album();
+//                          case TrackWindow::SortKey::Genre:
+//                              return ta->get_genre() < tb->get_genre();
+//                          case TrackWindow::SortKey::Length:
+//                              return ta->get_length() < tb->get_length();
+//                          }
+//                          return false;
+//                      });
+
+//     if (!ascending)
+//         std::reverse(filteredIndices.begin(), filteredIndices.end());
+// }
+
+// void LocalTrackWindow::ensureSorted() {
+//     if (!sortDirty) {
+//         std::cout << "sortDirty" << std::endl;
+//         return;
+//     }
+
+//     sortFiltered();
+//     sortDirty = false;
+// }

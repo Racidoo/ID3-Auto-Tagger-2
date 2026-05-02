@@ -7,20 +7,27 @@
 
 wxDEFINE_EVENT(EVT_TRACKWINDOW_SCROLL_BOTTOM, wxCommandEvent);
 wxDEFINE_EVENT(EVT_SHOW_TRACK_DETAILS, wxCommandEvent);
+wxDEFINE_EVENT(EVT_SORT_CHANGED, wxCommandEvent);
 
 TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
-    : wxScrolledWindow(_parent, wxID_ANY), downloader(_downloader) {
+    : wxPanel(_parent, wxID_ANY), downloader(_downloader) {
 
-    SetScrollRate(60, 60);
+    auto *mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    content = new wxPanel(this);
+    headerPanel = new wxPanel(this);
+    contentPanel = new wxScrolledWindow(this);
+
+    contentPanel->SetScrollRate(60, 60);
+
     contentSizer = new wxBoxSizer(wxVERTICAL);
-    content->SetSizer(contentSizer);
-    content->SetAutoLayout(true);
+    contentPanel->SetSizer(contentSizer);
 
-    auto *outerSizer = new wxBoxSizer(wxVERTICAL);
-    outerSizer->Add(content, 1, wxEXPAND);
-    SetSizer(outerSizer);
+    mainSizer->Add(headerPanel, 0, wxEXPAND);  // fixed height
+    mainSizer->Add(contentPanel, 1, wxEXPAND); // fills remaining space
+
+    SetSizer(mainSizer);
+
+    createHeader();
 
     Bind(EVT_TRACK_DELETE, [this](wxCommandEvent &_event) {
         auto id = _event.GetString().ToStdString();
@@ -61,57 +68,85 @@ TrackWindow::TrackWindow(wxWindow *_parent, Downloader *_downloader)
         Layout();
     });
 
-    Bind(wxEVT_SCROLLWIN_THUMBTRACK, [this](wxScrollWinEvent &evt) {
-        evt.Skip();
-        int pos = GetScrollPos(wxVERTICAL);
-        int range = GetScrollRange(wxVERTICAL);
-        int page = GetScrollPageSize(wxVERTICAL);
+    contentPanel->Bind(
+        wxEVT_SCROLLWIN_THUMBTRACK, [this](wxScrollWinEvent &evt) {
+            evt.Skip();
+            int pos = contentPanel->GetScrollPos(wxVERTICAL);
+            int range = contentPanel->GetScrollRange(wxVERTICAL);
+            int page = contentPanel->GetScrollPageSize(wxVERTICAL);
 
-        if (pos >= range - page) {
-            wxCommandEvent notify(
-                EVT_TRACKWINDOW_SCROLL_BOTTOM); // or a custom event
-            wxPostEvent(GetParent(), notify);
-        }
-    });
+            if (pos >= range - page) {
+                wxCommandEvent notify(
+                    EVT_TRACKWINDOW_SCROLL_BOTTOM); // or a custom event
+                wxPostEvent(GetParent(), notify);
+            }
+        });
 }
 
 void TrackWindow::createHeader() {
-    auto headerSizer = new wxFlexGridSizer(1, 6, 5, 5);
-    auto titleHeader =
-        new wxStaticText(this, wxID_ANY, wxT("Title"), wxDefaultPosition,
-                         wxSize(TrackLabel::columnWidths[2], -1));
-    auto albumHeader =
-        new wxStaticText(this, wxID_ANY, wxT("Album"), wxDefaultPosition,
-                         wxSize(TrackLabel::columnWidths[3], -1));
-    auto genreHeader =
-        new wxStaticText(this, wxID_ANY, wxT("Genre"), wxDefaultPosition,
-                         wxSize(TrackLabel::columnWidths[4], -1));
-    auto lengthHeader =
-        new wxStaticText(this, wxID_ANY, wxT("Length"), wxDefaultPosition,
-                         wxSize(TrackLabel::columnWidths[5], -1));
+    auto headerSizer = new wxFlexGridSizer(1, 8, 0, 0);
 
-    headerSizer->Add(new wxStaticText(this, wxID_ANY, wxEmptyString,
-                                      wxDefaultPosition,
-                                      wxSize(TrackLabel::columnWidths[0], -1)),
-                     0, wxEXPAND, 5);
-    headerSizer->Add(new wxStaticText(this, wxID_ANY, wxEmptyString,
-                                      wxDefaultPosition,
-                                      wxSize(TrackLabel::columnWidths[1], -1)),
-                     0, wxEXPAND, 5);
-    headerSizer->Add(titleHeader, 0, wxALL, 5);
-    headerSizer->Add(albumHeader, 0, wxALL, 5);
-    headerSizer->Add(genreHeader, 0, wxALL, 5);
-    headerSizer->Add(lengthHeader, 0, wxALL, 5);
-    GetSizer()->Add(headerSizer);
-    GetSizer()->AddSpacer(10);
+    auto headerProgress = new wxPanel(headerPanel);
+    auto headerCoverBitmap =
+        new wxStaticText(headerPanel, wxID_ANY, wxEmptyString);
+    auto headerTitle = new wxStaticText(headerPanel, wxID_ANY, wxT("Title"));
+    auto headerAlbum = new wxStaticText(headerPanel, wxID_ANY, wxT("Album"));
+    auto headerGenre = new wxStaticText(headerPanel, wxID_ANY, wxT("Genre"));
+    auto headerLength = new wxStaticText(headerPanel, wxID_ANY, wxT("Length"));
+    auto headerActionDelete =
+        new wxStaticText(headerPanel, wxID_ANY, wxEmptyString);
+    auto headerActionVerify =
+        new wxStaticText(headerPanel, wxID_ANY, wxEmptyString);
+
+    headerTitle->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) {
+        sendSortEvent(SortKey::Title);
+    });
+    headerAlbum->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) {
+        sendSortEvent(SortKey::Album);
+    });
+    headerGenre->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) {
+        sendSortEvent(SortKey::Genre);
+    });
+    headerLength->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) {
+        sendSortEvent(SortKey::Length);
+    });
+
+    headerProgress->SetMinSize(wxSize(TrackLabel::columnWidths[0], -1));
+    headerProgress->SetMaxSize(wxSize(TrackLabel::columnWidths[0], -1));
+    headerCoverBitmap->SetMinSize(wxSize(TrackLabel::columnWidths[1], -1));
+    headerTitle->SetMinSize(wxSize(TrackLabel::columnWidths[2], -1));
+    headerAlbum->SetMinSize(wxSize(TrackLabel::columnWidths[3], -1));
+    headerGenre->SetMinSize(wxSize(TrackLabel::columnWidths[4], -1));
+    headerLength->SetMinSize(wxSize(TrackLabel::columnWidths[5], -1));
+    headerActionDelete->SetMinSize(wxSize(TrackLabel::columnWidths[6], -1));
+    headerActionVerify->SetMinSize(wxSize(TrackLabel::columnWidths[7], -1));
+
+    headerSizer->Add(headerProgress, 0, wxALIGN_CENTER_VERTICAL, 5);
+    headerSizer->Add(headerCoverBitmap, 0, wxALIGN_CENTER_VERTICAL, 5);
+    headerSizer->Add(headerTitle, 1, wxEXPAND, 5);
+    headerSizer->Add(headerAlbum, 1, wxEXPAND, 5);
+    headerSizer->Add(headerGenre, 1, wxEXPAND, 5);
+    headerSizer->Add(headerLength, 0, wxALIGN_CENTER_VERTICAL, 5);
+    headerSizer->Add(headerActionDelete, 0, wxALIGN_CENTER_VERTICAL, 5);
+    headerSizer->Add(headerActionVerify, 0, wxALIGN_CENTER_VERTICAL, 5);
+
+    headerSizer->AddGrowableCol(2); // Title
+    headerSizer->AddGrowableCol(3); // Album
+    headerSizer->AddGrowableCol(4); // Genre
+
+    headerPanel->SetSizer(headerSizer);
 }
 
-void TrackWindow::sortByHeader() {}
+void TrackWindow::sendSortEvent(SortKey _key) {
+    wxCommandEvent evt(EVT_SORT_CHANGED);
+    evt.SetInt(static_cast<int>(_key));
+    wxPostEvent(GetParent(), evt);
+}
 
 void TrackWindow::appendChild(std::shared_ptr<TrackInterface> data) {
-    auto *trackLabel = new TrackLabel(content, data);
+    auto *trackLabel = new TrackLabel(contentPanel, data);
 
-    contentSizer->Add(trackLabel, 0, wxALL | wxEXPAND, 5);
+    contentSizer->Add(trackLabel, 0, wxEXPAND, 5);
     trackLabels[data->get_id()] = trackLabel;
 }
 

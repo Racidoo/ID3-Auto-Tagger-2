@@ -7,14 +7,16 @@
 
 #include "LocalTrackService.h"
 #include "TrackInterface.h"
+#include "TrackPanel.h"
+#include "TrackWindow.h"
 
-class TrackWindow;
 class TrackEditWindow;
 class Downloader;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:
     TrackWindow *trackWindow;
+    TrackPanel *trackPanel;
     TrackEditWindow *trackEditWindow;
     wxStaticText *itemCount;
     wxCheckBox *unverifiedCheckBox;
@@ -37,24 +39,31 @@ class LocalTrackWindow : public wxScrolledWindow {
 
     wxTimer searchDebounceTimer;
 
-    void search();
-    void OnTracksUpdated();
+    TrackWindow::SortKey currentSortKey = TrackWindow::SortKey::Title;
+    bool ascending = true;
+    bool sortDirty = true;
 
-    void applyFilterIncremental(
-        const std::vector<std::shared_ptr<TrackInterface>> &batch);
+    // void search();
+    // void OnTracksUpdated();
+
+    // void applyFilterIncremental(
+        // const std::vector<std::shared_ptr<TrackInterface>> &batch);
     static std::string toLower(std::string _s);
     static bool matchesSearch(std::shared_ptr<TrackInterface> _track,
                               const std::string &_query);
+    // void applySortAndRefresh();
+    // void sortFiltered();
+    // void ensureSorted();
 
   public:
     LocalTrackWindow(wxWindow *_parent, Downloader *_downloader);
     ~LocalTrackWindow();
 
-    inline TrackWindow *get_trackWindow() const { return trackWindow; }
+    // inline TrackWindow *get_trackWindow() const { return trackWindow; }
 
     void refresh();
-    void LoadMoreItems(std::size_t _count);
-    void OnScrollEnd(wxCommandEvent &_event);
+    // void LoadMoreItems(std::size_t _count);
+    // void OnScrollEnd(wxCommandEvent &_event);
     void OnSearch(wxCommandEvent &_event);
 };
 
