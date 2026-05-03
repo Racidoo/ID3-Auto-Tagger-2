@@ -6,11 +6,10 @@
 #include <wx/wx.h>
 
 #include "LocalTrackService.h"
-#include "TrackInterface.h"
-#include "TrackPanel.h"
 
 class TrackEditWindow;
 class Downloader;
+class TrackPanel;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:

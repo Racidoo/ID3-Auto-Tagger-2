@@ -34,96 +34,48 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
         this, wxID_ANY, LocalTrack::tag_type_t::COPYRIGHT, "Copyright");
     filenameText = new LabeledTextCtrl(
         this, wxID_ANY, LocalTrack::tag_type_t::FILENAME, "Filename");
+    auto fileExtensionText = new LabeledTextCtrl(
+        this, wxID_ANY, LocalTrack::tag_type_t::FILENAME, "");
+
+    fileExtensionText->Disable();
+    fileExtensionText->SetValue(".mp3");
 
     attributesSizer->Add(titleText, 1, wxEXPAND, 5);
     auto artistSizer = new wxBoxSizer(wxHORIZONTAL);
     auto albumSizer = new wxBoxSizer(wxHORIZONTAL);
     auto albumArtistSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto filenameSizer = new wxBoxSizer(wxHORIZONTAL);
     artistSizer->Add(artistText, 1, wxEXPAND, 5);
     artistSizer->Add(yearText, 0, wxTILE, 5);
     albumSizer->Add(albumText, 1, wxEXPAND, 5);
     albumSizer->Add(trackNumberText, 0, wxTILE, 5);
     albumArtistSizer->Add(albumArtistsText, 1, wxEXPAND, 5);
     albumArtistSizer->Add(discNumberText, 0, wxTILE, 5);
+    filenameSizer->Add(filenameText, 1, wxEXPAND, 5);
+    filenameSizer->Add(fileExtensionText, 0, wxSHRINK, 5);
     attributesSizer->Add(artistSizer, 1, wxEXPAND, 5);
     attributesSizer->Add(albumSizer, 1, wxEXPAND, 5);
     attributesSizer->Add(albumArtistSizer, 1, wxEXPAND, 5);
     attributesSizer->Add(genreText, 1, wxEXPAND, 5);
     attributesSizer->Add(labelText, 1, wxEXPAND, 5);
     attributesSizer->Add(copyrightText, 1, wxEXPAND, 5);
-    attributesSizer->Add(filenameText, 1, wxEXPAND, 5);
+    attributesSizer->Add(filenameSizer, 1, wxEXPAND, 5);
 
     mainSizer->Add(albumCover, 1, wxSHRINK, 5);
     mainSizer->Add(attributesSizer, 1, wxEXPAND, 5);
     this->SetSizerAndFit(mainSizer);
-
-    this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
-        std::string value = event.GetString().ToStdString();
-        LocalTrack::tag_type_t type =
-            static_cast<LocalTrack::tag_type_t>(event.GetInt());
-        std::cout << "Caught event: " << value << " type: " << type
-                  << std::endl;
-        for (auto activeSong : get_activeSongs()) {
-            auto track = activeSong->get_data();
-            if (!track)
-                return;
-            switch (type) {
-            case LocalTrack::tag_type_t::TITLE: {
-                track->set_title(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::ARTIST: {
-                track->set_artist(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::ALBUM: {
-                track->set_album(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::ALBUM_ARTIST: {
-                track->set_albumArtist(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::COPYRIGHT: {
-                track->set_copyright(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::GENRE: {
-                track->set_genre(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::LABEL: {
-                track->set_label(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::YEAR: {
-                track->set_year(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::TRACK: {
-                track->set_trackNumber(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::DISC: {
-                track->set_discNumber(value);
-                break;
-            }
-            case LocalTrack::tag_type_t::FILENAME: {
-                track->get_localTrack()->renameLocalTrack(value);
-                break;
-            }
-            }
-            activeSong->Update();
-        }
-        Update();
-    });
 
     Bind(wxEVT_SHOW, &TrackEditWindow::OnShow, this);
 }
 
 TrackEditWindow::~TrackEditWindow() {}
 
-void TrackEditWindow::show() {
+void TrackEditWindow::set_selected(
+    const std::vector<std::shared_ptr<TrackInterface>> &_selected) {
+    selected = _selected;
+}
+
+void TrackEditWindow::Update() {
 
     albumCover->SetBitmap(getCommonBitmap(
         albumCover->GetSize(), [](auto t) { return t->get_cover(); }));
@@ -153,54 +105,12 @@ void TrackEditWindow::show() {
     this->GetSizer()->Layout();
 }
 
-void TrackEditWindow::toggleSelection(TrackLabel *_trackLabel, bool _multi) {
-    if (!_multi) {
-        bool clickedSingleActiveLabel(false);
-        // Single selection mode → clear everything first
-        for (auto *active : activeSongs) {
-            if (!active)
-                continue;
-            if (active == _trackLabel) {
-                clickedSingleActiveLabel = true;
-                // other trackLabels still need to be 'de-selected'
-                continue;
-            }
-            active->SetBackgroundColour(wxNullColour);
-        }
-        activeSongs.clear();
-        if (clickedSingleActiveLabel) {
-            activeSongs.insert(_trackLabel);
-        }
-    }
-
-    if (activeSongs.contains(_trackLabel)) {
-        _trackLabel->SetBackgroundColour(wxNullColour);
-        activeSongs.erase(_trackLabel);
-    } else {
-        activeSongs.insert(_trackLabel);
-        _trackLabel->SetBackgroundColour(*wxLIGHT_GREY);
-    }
-
-    updateVisibility();
-}
-
-void TrackEditWindow::updateVisibility() {
-    if (activeSongs.empty()) {
-        Hide();
-    } else {
-        Show();
-    }
-
-    if (auto *parent = GetParent()) {
-        parent->Layout();
-    }
-    show();
-}
-
 void TrackEditWindow::OnShow(wxShowEvent &_event) {
-    if (!_event.IsShown()) {
-        activeSongs.clear();
+    if (selected.empty()) {
+        // we don't want to show an empty edit window
+        Hide();
     }
+    Update();
     _event.Skip();
 }
 

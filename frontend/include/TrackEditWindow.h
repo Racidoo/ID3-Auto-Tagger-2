@@ -3,15 +3,13 @@
 
 #include <functional> // for std::hash
 #include <string>     // for std::string
-#include <unordered_set>
+#include <vector>
 #include <wx/wx.h>
 
 #include "MediaLabel.h"
-#include "TrackInterface.h"
-#include "TrackLabel.h"
 
 class LabeledTextCtrl;
-// class TrackLabel;
+class TrackInterface;
 
 class TrackEditWindow : public wxPanel {
   private:
@@ -28,7 +26,7 @@ class TrackEditWindow : public wxPanel {
     LabeledTextCtrl *copyrightText;
     LabeledTextCtrl *filenameText;
 
-    std::unordered_set<TrackLabel *> activeSongs;
+    std::vector<std::shared_ptr<TrackInterface>> selected;
 
   public:
     TrackEditWindow(wxWindow *_parent, wxWindowID _winid = wxID_ANY,
@@ -36,17 +34,10 @@ class TrackEditWindow : public wxPanel {
                     const wxSize &_size = wxDefaultSize);
     ~TrackEditWindow();
 
-    inline std::unordered_set<TrackLabel *> &get_activeSongs() {
-        return activeSongs;
-    }
-    inline const std::unordered_set<TrackLabel *> &get_activeSongs() const {
-        return activeSongs;
-    }
+    void
+    set_selected(const std::vector<std::shared_ptr<TrackInterface>> &_selected);
 
-    void show();
-
-    void toggleSelection(TrackLabel *_trackLabel, bool _multiple);
-    void updateVisibility();
+    void Update();
 
     static std::size_t bitmapHash(const wxBitmap &bmp);
     static bool bitmapsEqual(const wxBitmap &a, const wxBitmap &b);
@@ -63,17 +54,17 @@ class TrackEditWindow : public wxPanel {
      * @tparam Getter Callable: (TagLib::ID3v2::Tag*) -> std::string
      */
     template <typename Getter> wxString getCommonAttribute(Getter getter) {
-        if (activeSongs.empty())
+        if (selected.empty())
             return {};
 
         std::string commonValue;
         bool initialized = false;
 
-        for (auto activeSong : get_activeSongs()) {
-            if (!activeSong || !activeSong->get_data())
+        for (auto active : selected) {
+            if (!active)
                 continue;
 
-            std::string value = getter(activeSong->get_data()); // call lambda
+            std::string value = getter(active); // call lambda
 
             // Treat empty string as "not present"
             if (value.empty())
@@ -102,26 +93,26 @@ class TrackEditWindow : public wxPanel {
      */
     template <typename Getter>
     wxBitmap getCommonBitmap(const wxSize &_size, Getter getAttribute) {
-        if (activeSongs.empty())
+        if (selected.empty())
             return wxBitmap(_size);
 
         // Access the first file, and check it has the expected tag
-        auto firstLabel = *get_activeSongs().begin();
+        auto first = *selected.begin();
 
-        if (!firstLabel || !firstLabel->get_data()) {
+        if (!first) {
             return wxBitmap(_size);
         }
 
         // Get the common value from the first file
         wxBitmap commonBitmap =
-            MediaLabel::loadImage(getAttribute(firstLabel->get_data()), _size);
+            MediaLabel::loadImage(getAttribute(first), _size);
 
-        for (auto activeSong : get_activeSongs()) {
-            if (!activeSong || !activeSong->get_data())
+        for (auto active : selected) {
+            if (!active)
                 continue;
-            if (!bitmapsEqual(MediaLabel::loadImage(
-                                  getAttribute(activeSong->get_data()), _size),
-                              commonBitmap))
+            if (!bitmapsEqual(
+                    MediaLabel::loadImage(getAttribute(active), _size),
+                    commonBitmap))
                 return wxBitmap(_size);
         }
         return commonBitmap;

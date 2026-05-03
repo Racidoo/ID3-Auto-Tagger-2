@@ -1,7 +1,9 @@
-#include "../include/LocalTrackWindow.h"
-#include "../include/Downloader.h"
-#include "../include/TrackEditWindow.h"
-#include "../include/TrackLabel.h"
+#include "LocalTrackWindow.h"
+#include "Downloader.h"
+#include "LabeledTextCtrl.h"
+#include "TrackEditWindow.h"
+#include "TrackLabel.h"
+#include "TrackPanel.h"
 
 LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent, wxID_ANY) {
@@ -35,7 +37,6 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
 
     trackPanel = new TrackPanel(this, _downloader);
     trackEditWindow = new TrackEditWindow(this);
-    trackEditWindow->Hide();
 
     auto trackSizer = new wxBoxSizer(wxHORIZONTAL);
     trackSizer->Add(trackPanel, 1, wxEXPAND | wxALL, 5);
@@ -49,6 +50,19 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     verifiedCheckBox->Bind(wxEVT_CHECKBOX, &LocalTrackWindow::OnSearch, this);
     subtreeCheckBox->Bind(wxEVT_CHECKBOX,
                           [this](wxCommandEvent &event) { this->refresh(); });
+    Bind(EVT_TRACK_SELECTION_CHANGED, [this](wxCommandEvent &) {
+        trackEditWindow->set_selected(trackPanel->GetSelectedRows());
+        trackEditWindow->Update();
+        trackEditWindow->Show();
+        Layout();
+    });
+
+    this->Bind(EVT_VALUE_CHANGE, [this](wxCommandEvent &event) {
+        std::string value = event.GetString().ToStdString();
+        LocalTrack::tag_type_t type =
+            static_cast<LocalTrack::tag_type_t>(event.GetInt());
+        trackPanel->ApplyChangeToSelectedRows(type, value);
+    });
 
     size_t currentGen = trackService.getGeneration();
     trackService.onBatch =

@@ -5,9 +5,13 @@
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
+#include "LocalTrack.h" // tag_type_t
+
 class TrackInterface;
 class TrackModel;
 class Downloader;
+
+wxDECLARE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
 
 class TrackPanel : public wxPanel {
   public:
@@ -18,7 +22,9 @@ class TrackPanel : public wxPanel {
     void Refresh();
     void
     MergeTracks(const std::vector<std::shared_ptr<TrackInterface>> &_batch);
-
+    std::vector<std::shared_ptr<TrackInterface>> GetSelectedRows();
+    void ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
+                                   const std::string &_value);
     void Search(const wxString &_query, bool _showVerified,
                 bool _showUnverified);
 
@@ -27,7 +33,7 @@ class TrackPanel : public wxPanel {
     TrackModel *model{};
     Downloader *downloader;
 
-    void OnSelectionChanged(wxDataViewEvent &event);
+    void OnSelectionChanged(wxDataViewEvent &);
     void OnActivated(wxDataViewEvent &event);
     void OnColumnSorted(wxDataViewEvent &_event);
     void OnLeftDown(wxMouseEvent &event);

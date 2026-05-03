@@ -4,6 +4,8 @@
 #include "TrackModel.h"
 #include "TrackModelRow.h"
 
+wxDEFINE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
+
 TrackPanel::TrackPanel(wxWindow *parent, Downloader *_downloader)
     : wxPanel(parent), downloader(_downloader) {
     auto *sizer = new wxBoxSizer(wxVERTICAL);
@@ -53,6 +55,8 @@ TrackPanel::TrackPanel(wxWindow *parent, Downloader *_downloader)
 
     ctrl->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED,
                &TrackPanel::OnSelectionChanged, this);
+    ctrl->Bind(wxEVT_DATAVIEW_ITEM_VALUE_CHANGED,
+               &TrackPanel::OnSelectionChanged, this);
     ctrl->GetMainWindow()->Bind(wxEVT_LEFT_DOWN, &TrackPanel::OnLeftDown, this);
     ctrl->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, &TrackPanel::OnActivated, this);
     ctrl->Bind(wxEVT_DATAVIEW_COLUMN_SORTED, &TrackPanel::OnColumnSorted, this);
@@ -71,29 +75,91 @@ void TrackPanel::MergeTracks(
     model->MergeRows(_batch);
 }
 
+std::vector<std::shared_ptr<TrackInterface>> TrackPanel::GetSelectedRows() {
+    std::vector<std::shared_ptr<TrackInterface>> selectedTracks;
+    wxDataViewItemArray selectedDataViewItems;
+    ctrl->GetSelections(selectedDataViewItems);
+    for (auto &&item : selectedDataViewItems) {
+        if (!item.IsOk()) {
+            wxLogDebug("Item selected but not valid");
+            continue;
+        }
+        selectedTracks.push_back(
+            model->GetTrack(model->GetRowByIndex(model->GetRow(item))));
+    }
+    return selectedTracks;
+}
+
+void TrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
+                                           const std::string &_value) {
+    wxDataViewItemArray selectedDataViewItems;
+    ctrl->GetSelections(selectedDataViewItems);
+    for (auto item : selectedDataViewItems) {
+        auto rowIndex = model->GetRow(item);
+        auto row = model->GetRowByIndex(rowIndex);
+        auto track = model->GetTrack(row);
+        if (!track)
+            return;
+        switch (_type) {
+        case LocalTrack::tag_type_t::TITLE: {
+            track->set_title(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::ARTIST: {
+            track->set_artist(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::ALBUM: {
+            track->set_album(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::ALBUM_ARTIST: {
+            track->set_albumArtist(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::COPYRIGHT: {
+            track->set_copyright(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::GENRE: {
+            track->set_genre(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::LABEL: {
+            track->set_label(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::YEAR: {
+            track->set_year(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::TRACK: {
+            track->set_trackNumber(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::DISC: {
+            track->set_discNumber(_value);
+            break;
+        }
+        case LocalTrack::tag_type_t::FILENAME: {
+            track->get_localTrack()->renameLocalTrack(_value);
+            break;
+        }
+        }
+        model->RowChanged(rowIndex);
+        // make sure that changes are already visible
+        row->RebuildSortCache();
+    }
+}
+
 void TrackPanel::Search(const wxString &_query, bool _showVerified,
                         bool _showUnverified) {
     model->SetFilterState({_showVerified, _showUnverified, _query});
 }
 
-void TrackPanel::OnSelectionChanged(wxDataViewEvent &event) {
-    wxDataViewItem item = event.GetItem();
-
-    if (!item.IsOk())
-        return;
-
-    unsigned int rowIndex = model->GetRow(item);
-    std::cout << rowIndex << std::endl;
-
-    auto row = model->GetRowByIndex(rowIndex);
-
-    std::cout << "verified: " << row->get_sortVerified()
-              << "\ntitle: " << row->get_title()
-              << "\nartist: " << row->get_artist()
-              << "\nalbum: " << row->get_album()
-              << "\ngenre: " << row->get_genre() << "\n"
-
-        ;
+void TrackPanel::OnSelectionChanged(wxDataViewEvent &) {
+    wxCommandEvent evt(EVT_TRACK_SELECTION_CHANGED);
+    wxPostEvent(GetParent(), evt);
 }
 
 void TrackPanel::OnActivated(wxDataViewEvent &event) {
