@@ -44,9 +44,7 @@ std::vector<std::byte> TrackInterface::get_cover() {
     return source ? source->get_cover() : std::vector<std::byte>{};
 }
 
-bool TrackInterface::is_inBlocklist() const { return inBlocklist; }
 bool TrackInterface::is_verified() const { return verified; }
-bool TrackInterface::is_downloaded() const { return downloaded; }
 
 void TrackInterface::set_title(const std::string &_title) {
     if (source)
@@ -93,13 +91,7 @@ void TrackInterface::set_cover(const std::vector<std::byte> &_imageData) {
         source->set_cover(_imageData);
 }
 
-void TrackInterface::set_inBlocklist(bool _inBlocklist) {
-    inBlocklist = _inBlocklist;
-}
 void TrackInterface::set_verified(bool _verified) { verified = _verified; }
-void TrackInterface::set_downloaded(bool _downloaded) {
-    downloaded = _downloaded;
-}
 
 std::shared_ptr<Spotify::Track> TrackInterface::get_spotifyTrack() const {
     auto src = std::dynamic_pointer_cast<SpotifyTrackSource>(source);
@@ -115,7 +107,6 @@ std::shared_ptr<TrackInterface>
 TrackInterface::fromLocal(std::shared_ptr<LocalTrack> _track) {
     auto trackInterface = std::make_shared<TrackInterface>(
         std::make_shared<LocalTrackSource>(_track));
-    trackInterface->set_downloaded(true);
     return trackInterface;
 }
 
@@ -123,16 +114,15 @@ std::shared_ptr<TrackInterface>
 TrackInterface::fromSpotify(std::shared_ptr<Spotify::Track> _track) {
     auto trackInterface = std::make_shared<TrackInterface>(
         std::make_shared<SpotifyTrackSource>(_track));
-    trackInterface->set_verified(true);
-    trackInterface->set_downloaded(_track->isDownloaded());
+    trackInterface->set_verified(_track->isDownloaded());
     return trackInterface;
 }
 
-void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
+bool TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
                             Downloader *_downloader) {
 
     if (!_data || !_downloader || !_data->get_localTrack()) {
-        return;
+        return false;
     }
 
     const auto &filepath = _data->get_localTrack()->get_filepath();
@@ -142,7 +132,7 @@ void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
         std::cerr
             << "Unable to retrieve meta data from SpotifyAPI. Will not add '"
             << filepath << "' to blacklist!" << std::endl;
-        return;
+        return false;
     }
     _data->verifyTags(spotifyTrackData);
     const auto &id = spotifyTrackData->get_id();
@@ -151,7 +141,7 @@ void TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
         _data->get_localTrack()->renameLocalTrack(id);
     }
     _downloader->makeBlocked(_data);
-    _data->inBlocklist = true;
+    return true;
 }
 
 void TrackInterface::verifyTags(std::shared_ptr<TrackInterface> _template) {

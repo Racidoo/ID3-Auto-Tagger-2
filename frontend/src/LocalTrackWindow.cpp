@@ -33,9 +33,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     toolbarSizer->Add(itemCount, 0, wxALL, 5);
     toolbarSizer->Add(searchBar, 1, wxALL, 5);
 
-    trackPanel = new TrackPanel(this);
-    trackWindow = new TrackWindow(this, _downloader);
-    trackWindow->Hide();
+    trackPanel = new TrackPanel(this, _downloader);
     trackEditWindow = new TrackEditWindow(this);
     trackEditWindow->Hide();
 
@@ -81,8 +79,8 @@ void LocalTrackWindow::refresh() {
     trackEditWindow->Hide();
 
     std::filesystem::path musicPath =
-        trackWindow->get_downloader()->get_trackPath();
-    trackService.loadTracks(musicPath, trackWindow->get_downloader(),
+        trackPanel->get_downloader()->get_trackPath();
+    trackService.loadTracks(musicPath, trackPanel->get_downloader(),
                             subtreeCheckBox->GetValue());
 
     if (!std::filesystem::exists(musicPath) ||

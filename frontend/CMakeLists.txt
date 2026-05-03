@@ -19,8 +19,9 @@ set(SOURCES
     src/SpotifyWindow.cpp
     src/TrackEditWindow.cpp
     src/TrackLabel.cpp
-    src/TrackModel.cpp
     src/TrackPanel.cpp
+    src/TrackModel.cpp
+    src/TrackModelRow.cpp
     src/TrackWindow.cpp
     src/VideoLabel.cpp
     src/YouTubeWindow.cpp

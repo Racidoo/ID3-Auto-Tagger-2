@@ -8,14 +8,12 @@
 #include "LocalTrackService.h"
 #include "TrackInterface.h"
 #include "TrackPanel.h"
-#include "TrackWindow.h"
 
 class TrackEditWindow;
 class Downloader;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:
-    TrackWindow *trackWindow;
     TrackPanel *trackPanel;
     TrackEditWindow *trackEditWindow;
     wxStaticText *itemCount;

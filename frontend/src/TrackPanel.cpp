@@ -1,8 +1,11 @@
 #include "TrackPanel.h"
+#include "Downloader.h"
 #include "TrackInterface.h"
 #include "TrackModel.h"
+#include "TrackModelRow.h"
 
-TrackPanel::TrackPanel(wxWindow *parent) : wxPanel(parent) {
+TrackPanel::TrackPanel(wxWindow *parent, Downloader *_downloader)
+    : wxPanel(parent), downloader(_downloader) {
     auto *sizer = new wxBoxSizer(wxVERTICAL);
 
     ctrl = new wxDataViewCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
@@ -50,7 +53,7 @@ TrackPanel::TrackPanel(wxWindow *parent) : wxPanel(parent) {
 
     ctrl->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED,
                &TrackPanel::OnSelectionChanged, this);
-
+    ctrl->GetMainWindow()->Bind(wxEVT_LEFT_DOWN, &TrackPanel::OnLeftDown, this);
     ctrl->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, &TrackPanel::OnActivated, this);
     ctrl->Bind(wxEVT_DATAVIEW_COLUMN_SORTED, &TrackPanel::OnColumnSorted, this);
 
@@ -58,6 +61,8 @@ TrackPanel::TrackPanel(wxWindow *parent) : wxPanel(parent) {
 
     SetSizer(sizer);
 }
+
+Downloader *TrackPanel::get_downloader() const { return downloader; }
 
 void TrackPanel::Refresh() {}
 
@@ -77,21 +82,47 @@ void TrackPanel::OnSelectionChanged(wxDataViewEvent &event) {
     if (!item.IsOk())
         return;
 
-    unsigned int row = model->GetRow(item);
+    unsigned int rowIndex = model->GetRow(item);
+    std::cout << rowIndex << std::endl;
 
-    // const auto &track = model->GetTrack(row);
+    auto row = model->GetRowByIndex(rowIndex);
 
-    std::cout << row << std::endl;
+    std::cout << "verified: " << row->get_sortVerified()
+              << "\ntitle: " << row->get_title()
+              << "\nartist: " << row->get_artist()
+              << "\nalbum: " << row->get_album()
+              << "\ngenre: " << row->get_genre() << "\n"
+
+        ;
 }
 
 void TrackPanel::OnActivated(wxDataViewEvent &event) {
-    unsigned int row = model->GetRow(event.GetItem());
+    unsigned int rowIndex = model->GetRow(event.GetItem());
     int column = event.GetColumn();
 
-    std::cout << row << ", " << column << std::endl;
+    std::cout << rowIndex << ", " << column << std::endl;
+
+    auto row = model->GetRowByIndex(rowIndex);
+    const auto &track = model->GetTrack(row);
 
     if (column == TrackModel::COL_DELETE) {
-        std::cout << "delete" << std::endl;
+        wxMessageDialog dialog(this, "Delete selected track?",
+                               "Confirm deletion", wxYES_NO | wxICON_WARNING);
+
+        if (dialog.ShowModal() == wxID_YES) {
+
+            model->RemoveRow(rowIndex);
+            downloader->deleteLocalTrack(track);
+        }
+        return;
+    } else if (column == TrackModel::COL_VERIFY) {
+        if (!TrackInterface::verify(track, downloader)) {
+            wxMessageBox("Unable to retrieve meta data from SpotifyAPI");
+            return;
+        }
+        model->RowChanged(rowIndex);
+        // make sure that changes are already visible
+        row->RebuildSortCache();
     }
 }
 
@@ -103,4 +134,34 @@ void TrackPanel::OnColumnSorted(wxDataViewEvent &_event) {
 
     model->SortByHeader(column->GetModelColumn(),
                         column->IsSortOrderAscending());
+}
+
+void TrackPanel::OnLeftDown(wxMouseEvent &event) {
+    wxDataViewItem item;
+    wxDataViewColumn *column = nullptr;
+
+    auto pos = event.GetPosition();
+
+    ctrl->HitTest(pos, item, column);
+
+    if (item.IsOk() && column) {
+
+        int modelColumn = column->GetModelColumn();
+
+        switch (column->GetModelColumn()) {
+        case TrackModel::Columns::COL_DELETE:
+            std::cout << "OnLeftDown(): delete" << std::endl;
+            break;
+        case TrackModel::Columns::COL_VERIFY:
+            std::cout << "OnLeftDown(): verify" << std::endl;
+            break;
+
+        default:
+            break;
+        }
+    } else {
+        std::cout << item.IsOk() << " && " << column << std::endl;
+    }
+
+    event.Skip();
 }

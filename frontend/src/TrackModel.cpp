@@ -1,85 +1,22 @@
 #include "TrackModel.h"
-#include "IconProvider.h"
-#include "MediaLabel.h"
 #include "TrackInterface.h"
+#include "TrackModelRow.h"
 
-TrackModel::TrackModelRow::TrackModelRow(
-    const std::shared_ptr<TrackInterface> &_trackInterface) {
+TrackModel::TrackModel()
+    : wxDataViewVirtualListModel(0), filterState{true, true, ""} {}
 
-    sortVerified = _trackInterface->is_inBlocklist();
-
-    title = wxString::FromUTF8(_trackInterface->get_title());
-    cover = MediaLabel::loadImage(_trackInterface->get_cover(), wxSize(64, 64));
-    artist = wxString::FromUTF8(_trackInterface->get_artist());
-    album = wxString::FromUTF8(_trackInterface->get_album());
-    genre = wxString::FromUTF8(_trackInterface->get_genre());
-    sortLength = _trackInterface->get_length();
-
-    int minutes = (sortLength / 60) % 60;
-    int seconds = sortLength % 60;
-
-    wxString duration =
-        wxString(std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") +
-                 std::to_string(seconds));
-
-    length = duration;
-
-    verified =
-        sortVerified
-            ? wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK, wxART_BUTTON)
-            : wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK, wxART_BUTTON);
-
-    sortTitle = title.Lower();
-    sortArtist = artist.Lower();
-    sortAlbum = album.Lower();
-    sortGenre = genre.Lower();
+std::shared_ptr<TrackInterface>
+TrackModel::GetTrack(std::shared_ptr<TrackModelRow> _row) {
+    return _row->get_track();
 }
 
-TrackModel::TrackModelRow::~TrackModelRow() {}
+std::shared_ptr<TrackModelRow>
+TrackModel::GetRowByIndex(std::size_t _index) const {
+    if (_index >= visibleRows.size())
+        return nullptr;
 
-wxBitmap TrackModel::TrackModelRow::get_verified() const { return verified; }
-wxBitmap TrackModel::TrackModelRow::get_cover() const { return cover; }
-wxString TrackModel::TrackModelRow::get_title() const { return title; }
-wxString TrackModel::TrackModelRow::get_artist() const { return artist; }
-wxString TrackModel::TrackModelRow::get_album() const { return album; }
-wxString TrackModel::TrackModelRow::get_genre() const { return genre; }
-wxString TrackModel::TrackModelRow::get_length() const { return length; }
-
-bool TrackModel::TrackModelRow::get_sortVerified() const {
-    return sortVerified;
+    return visibleRows[_index];
 }
-wxString TrackModel::TrackModelRow::get_sortTitle() const { return sortTitle; }
-wxString TrackModel::TrackModelRow::get_sortArtist() const {
-    return sortArtist;
-}
-wxString TrackModel::TrackModelRow::get_sortAlbum() const { return sortAlbum; }
-wxString TrackModel::TrackModelRow::get_sortGenre() const { return sortGenre; }
-std::size_t TrackModel::TrackModelRow::get_sortLength() const {
-    return sortLength;
-}
-
-const wxBitmap &TrackModel::TrackModelRow::GetVerifyBitmap() {
-    static wxBitmap bitmap = [] {
-        wxBitmap bmp = wxArtProvider::GetBitmap(wxART_ASSESSMENT, wxART_BUTTON);
-        bmp = wxBitmap(
-            bmp.ConvertToImage().Rescale(16, 16, wxIMAGE_QUALITY_HIGH));
-        return bmp;
-    }();
-    return bitmap;
-}
-
-const wxBitmap &TrackModel::TrackModelRow::GetDeleteBitmap() {
-    static wxBitmap bitmap = [] {
-        wxBitmap bmp =
-            wxArtProvider::GetBitmap(wxART_TRASH_XMARK, wxART_BUTTON);
-        bmp = wxBitmap(
-            bmp.ConvertToImage().Rescale(16, 16, wxIMAGE_QUALITY_HIGH));
-        return bmp;
-    }();
-    return bitmap;
-}
-
-TrackModel::TrackModel() : wxDataViewVirtualListModel(0) {}
 
 void TrackModel::AddRows(
     const std::vector<std::shared_ptr<TrackModelRow>> &_batch) {
@@ -115,6 +52,20 @@ void TrackModel::MergeRows(
     }
 }
 
+void TrackModel::RemoveRow(std::size_t _rowIndex) {
+    auto row = GetRowByIndex(_rowIndex);
+    auto id = row->get_track()->get_id();
+
+    auto it = allTracks.find(id);
+    if (it == allTracks.end())
+        return;
+
+    allTracks.erase(it);
+    visibleRows.erase(visibleRows.begin() + _rowIndex);
+
+    RowDeleted(_rowIndex);
+}
+
 void TrackModel::RebuildVisibleTracks() {
 
     std::vector<std::shared_ptr<TrackModelRow>> newVisibleTracks;
@@ -135,22 +86,22 @@ void TrackModel::RebuildVisibleTracks() {
 }
 
 bool TrackModel::MatchesSearch(
-    const std::shared_ptr<TrackModelRow> &row) const {
+    const std::shared_ptr<TrackModelRow> &_row) const {
     if (filterState.searchQuery.empty())
         return true;
 
-    return row->get_sortTitle().Contains(filterState.searchQuery) ||
-           row->get_sortArtist().Contains(filterState.searchQuery) ||
-           row->get_sortAlbum().Contains(filterState.searchQuery) ||
-           row->get_sortGenre().Contains(filterState.searchQuery);
+    return _row->get_sortTitle().Contains(filterState.searchQuery) ||
+           _row->get_sortArtist().Contains(filterState.searchQuery) ||
+           _row->get_sortAlbum().Contains(filterState.searchQuery) ||
+           _row->get_sortGenre().Contains(filterState.searchQuery);
 }
 
 bool TrackModel::MatchesFilter(
-    const std::shared_ptr<TrackModelRow> &row) const {
-    if (filterState.showVerified && row->get_sortVerified()) {
+    const std::shared_ptr<TrackModelRow> &_row) const {
+    if (filterState.showVerified && _row->get_sortVerified()) {
         return true;
     }
-    if (filterState.showUnverified && !row->get_sortVerified()) {
+    if (filterState.showUnverified && !_row->get_sortVerified()) {
         return true;
     }
     return false;
@@ -163,8 +114,8 @@ void TrackModel::SetFilterState(const FilterState &_state) {
 
 unsigned int TrackModel::GetColumnCount() const { return COL_MAX; }
 
-wxString TrackModel::GetColumnType(unsigned int col) const {
-    switch (col) {
+wxString TrackModel::GetColumnType(unsigned int _col) const {
+    switch (_col) {
     case COL_PROGRESS:
         return "wxBitmap";
     case COL_COVER:
@@ -179,40 +130,40 @@ wxString TrackModel::GetColumnType(unsigned int col) const {
     }
 }
 
-void TrackModel::GetValueByRow(wxVariant &variant, unsigned int row,
-                               unsigned int col) const {
-    auto r = visibleRows[row];
+void TrackModel::GetValueByRow(wxVariant &_variant, unsigned int _row,
+                               unsigned int _col) const {
+    auto r = visibleRows[_row];
 
-    switch (col) {
+    switch (_col) {
     case COL_PROGRESS:
-        variant << r->get_verified();
+        _variant << r->get_verified();
         break;
     case COL_COVER:
-        variant << r->get_cover();
+        _variant << r->get_cover();
         break;
     case COL_TITLE:
-        variant = r->get_title();
+        _variant = r->get_title();
         break;
     case COL_ARTIST:
-        variant = r->get_artist();
+        _variant = r->get_artist();
         break;
     case COL_ALBUM:
-        variant = r->get_album();
+        _variant = r->get_album();
         break;
     case COL_GENRE:
-        variant = r->get_genre();
+        _variant = r->get_genre();
         break;
     case COL_LENGTH:
-        variant = r->get_length();
+        _variant = r->get_length();
         break;
     case COL_VERIFY:
-        variant << TrackModelRow::GetVerifyBitmap();
+        _variant << TrackModelRow::GetVerifyBitmap();
         break;
     case COL_DELETE:
-        variant << TrackModelRow::GetDeleteBitmap();
+        _variant << TrackModelRow::GetDeleteBitmap();
         break;
     default:
-        wxLogDebug(wxT("No view specified for column " + std::to_string(col)));
+        wxLogDebug(wxT("No view specified for column " + std::to_string(_col)));
     }
 }
 

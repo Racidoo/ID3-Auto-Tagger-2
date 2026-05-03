@@ -50,7 +50,7 @@ void TrackLabel::Create() {
 
     progressBar->SetMinSize(wxSize(columnWidths[0], columnWidths[0]));
     // progressBar->SetMaxSize(wxSize(columnWidths[0], -1));
-    coverBitmap->SetMinSize(wxSize(columnWidths[1],columnWidths[1]));
+    coverBitmap->SetMinSize(wxSize(columnWidths[1], columnWidths[1]));
     titleText->SetMinSize(wxSize(columnWidths[2], -1));
     artistText->SetMinSize(wxSize(columnWidths[2], -1));
     albumText->SetMinSize(wxSize(columnWidths[3], -1));
@@ -108,10 +108,10 @@ void TrackLabel::Update() {
     lengthText->SetLabel(duration);
 
     // Progress logic
-    if (data->get_spotifyTrack() && data->is_downloaded()) {
+    if (data->get_spotifyTrack() && data->is_verified()) {
         progressBar->SetProgress(CIRCLE_PROGRESSBAR_FINISH);
     } else if (data->get_localTrack()) {
-        progressBar->SetProgress(data->is_inBlocklist()
+        progressBar->SetProgress(data->is_verified()
                                      ? CIRCLE_PROGRESSBAR_FINISH
                                      : CIRCLE_PROGRESSBAR_CANCEL);
 
@@ -165,7 +165,7 @@ void TrackLabel::onClick(wxMouseEvent &_event) {
  */
 void TrackLabel::onDownloadButtonClick(wxMouseEvent &_event) {
     if (!data->get_spotifyTrack() || data->get_id().empty() ||
-        data->get_localTrack() || data->is_downloaded() ||
+        data->get_localTrack() || data->is_verified() ||
         progressBar->get_progress() == CIRCLE_PROGRESSBAR_FINISH) {
         // wxLogDebug(wxT("no data | full progress"));
         return;

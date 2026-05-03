@@ -7,10 +7,13 @@
 
 class TrackInterface;
 class TrackModel;
+class Downloader;
 
 class TrackPanel : public wxPanel {
   public:
-    explicit TrackPanel(wxWindow *parent);
+    explicit TrackPanel(wxWindow *parent, Downloader *_downloader);
+
+    Downloader *get_downloader() const;
 
     void Refresh();
     void
@@ -22,9 +25,10 @@ class TrackPanel : public wxPanel {
   private:
     wxDataViewCtrl *ctrl{};
     TrackModel *model{};
+    Downloader *downloader;
 
     void OnSelectionChanged(wxDataViewEvent &event);
     void OnActivated(wxDataViewEvent &event);
-
     void OnColumnSorted(wxDataViewEvent &_event);
+    void OnLeftDown(wxMouseEvent &event);
 };

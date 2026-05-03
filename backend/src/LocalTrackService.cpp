@@ -52,8 +52,7 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
             auto track =
                 TrackInterface::fromLocal(std::make_shared<LocalTrack>(file));
 
-            bool blocked = _downloader->isBlocked(track->get_id());
-            track->set_inBlocklist(blocked);
+            track->set_verified(_downloader->isBlocked(track->get_id()));
 
             batch.push_back(track);
 

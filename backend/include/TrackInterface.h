@@ -14,9 +14,7 @@ class Downloader;
 
 class TrackInterface {
   private:
-    bool inBlocklist = false;
     bool verified = false;
-    bool downloaded = false;
 
     std::shared_ptr<ITrackSource> source;
 
@@ -39,9 +37,7 @@ class TrackInterface {
     std::size_t get_length();
     std::vector<std::byte> get_cover();
 
-    bool is_inBlocklist() const;
     bool is_verified() const;
-    bool is_downloaded() const;
 
     void set_title(const std::string &_title);
     void set_artist(const std::string &_artist);
@@ -55,9 +51,7 @@ class TrackInterface {
     void set_discNumber(const std::string &_disc);
     void set_cover(const std::vector<std::byte> &_imageData);
 
-    void set_inBlocklist(bool _inBlocklist);
     void set_verified(bool _verified);
-    void set_downloaded(bool _downloaded);
 
     std::shared_ptr<Spotify::Track> get_spotifyTrack() const;
     std::shared_ptr<LocalTrack> get_localTrack() const;
@@ -69,7 +63,7 @@ class TrackInterface {
     static std::shared_ptr<TrackInterface>
     fromSpotify(std::shared_ptr<Spotify::Track> _track);
 
-    static void verify(std::shared_ptr<TrackInterface> _data,
+    static bool verify(std::shared_ptr<TrackInterface> _data,
                        Downloader *_downloader);
 };
 

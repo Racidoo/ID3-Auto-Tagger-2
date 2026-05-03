@@ -1,12 +1,12 @@
 #pragma once
 
 #include <memory>
-#include <thread>
 #include <vector>
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
 class TrackInterface;
+class TrackModelRow;
 
 class TrackModel : public wxDataViewVirtualListModel {
   public:
@@ -23,49 +23,6 @@ class TrackModel : public wxDataViewVirtualListModel {
         COL_MAX
     };
 
-    class TrackModelRow {
-      private:
-        wxBitmap verified;
-        wxBitmap cover;
-        wxString title;
-        wxString artist;
-        wxString album;
-        wxString genre;
-        wxString length;
-
-        bool sortVerified;
-        wxString sortTitle;
-        wxString sortArtist;
-        wxString sortAlbum;
-        wxString sortGenre;
-        std::size_t sortLength;
-
-        std::thread workerAlbumCover;
-
-      public:
-        TrackModelRow(const std::shared_ptr<TrackInterface> &_trackInterface);
-
-        ~TrackModelRow();
-
-        wxBitmap get_verified() const;
-        wxBitmap get_cover() const;
-        wxString get_title() const;
-        wxString get_artist() const;
-        wxString get_album() const;
-        wxString get_genre() const;
-        wxString get_length() const;
-
-        bool get_sortVerified() const;
-        wxString get_sortTitle() const;
-        wxString get_sortArtist() const;
-        wxString get_sortAlbum() const;
-        wxString get_sortGenre() const;
-        std::size_t get_sortLength() const;
-
-        static const wxBitmap &GetVerifyBitmap();
-        static const wxBitmap &GetDeleteBitmap();
-    };
-
     struct FilterState {
         bool showVerified;
         bool showUnverified;
@@ -75,18 +32,22 @@ class TrackModel : public wxDataViewVirtualListModel {
 
     explicit TrackModel();
 
+    std::shared_ptr<TrackInterface>
+    GetTrack(std::shared_ptr<TrackModelRow> _row);
+    std::shared_ptr<TrackModelRow> GetRowByIndex(std::size_t _index) const;
+
     void SetFilterState(const FilterState &_state);
 
     void AddRows(const std::vector<std::shared_ptr<TrackModelRow>> &_batch);
     void MergeRows(const std::vector<std::shared_ptr<TrackInterface>> &_batch);
-
+    void RemoveRow(std::size_t _rowIndex);
     void RebuildVisibleTracks();
-    bool MatchesSearch(const std::shared_ptr<TrackModelRow> &row) const;
-    bool MatchesFilter(const std::shared_ptr<TrackModelRow> &row) const;
+    bool MatchesSearch(const std::shared_ptr<TrackModelRow> &_row) const;
+    bool MatchesFilter(const std::shared_ptr<TrackModelRow> &_row) const;
     unsigned int GetColumnCount() const override;
-    wxString GetColumnType(unsigned int col) const override;
-    void GetValueByRow(wxVariant &variant, unsigned int row,
-                       unsigned int col) const override;
+    wxString GetColumnType(unsigned int _col) const override;
+    void GetValueByRow(wxVariant &_variant, unsigned int _row,
+                       unsigned int _col) const override;
     bool SetValueByRow(const wxVariant &, unsigned int, unsigned int) override;
     // bool HasDefaultCompare() const override;
     // int Compare(const wxDataViewItem &_item1, const wxDataViewItem &_item2,

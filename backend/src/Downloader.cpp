@@ -292,6 +292,7 @@ void Downloader::makeBlocked(std::shared_ptr<TrackInterface> _data) {
 
     blacklist["blacklist"][filename]["title"] = _data->get_title();
     blacklist["blacklist"][filename]["artist"] = _data->get_artist();
+    _data->set_verified(true);
 }
 
 void Downloader::removeBlocked(std::shared_ptr<TrackInterface> _data) {

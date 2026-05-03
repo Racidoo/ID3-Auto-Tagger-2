@@ -43,7 +43,6 @@ void MediaLabel::onClick(wxMouseEvent &_event) {
 wxBitmap MediaLabel::loadImage(const std::vector<std::byte> &_imageData,
                                const wxSize &_size) {
     if (_imageData.empty()) {
-        // wxLogError("loadImage: empty image data");
         return wxBitmap(_size);
     }
 
@@ -51,7 +50,7 @@ wxBitmap MediaLabel::loadImage(const std::vector<std::byte> &_imageData,
 
     wxImage image;
     if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY) || !image.IsOk()) {
-        wxLogError("loadImage: failed to load image");
+        wxLogDebug(__FUNCTION__ + wxString(": failed to load image"));
         return wxBitmap();
     }
 
