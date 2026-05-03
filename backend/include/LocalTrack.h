@@ -16,18 +16,22 @@ class LocalTrack {
   private:
     std::filesystem::path filepath;
 
-    bool tagsLoaded;
+    bool mainTagsLoaded;
+    bool additionalTagsLoadded;
+    // main tags
     std::string title;
     std::string artist;
     std::string album;
     std::string genre;
     std::string year;
     std::string trackNumber;
+    int length;
+
+    // additional tags
     std::string albumArtist;
     std::string copyright;
     std::string label;
     std::string discNumber;
-    int length;
 
   public:
     LocalTrack(const std::filesystem::path &_path);
@@ -78,7 +82,8 @@ class LocalTrack {
 
     void set_filepath(const std::filesystem::path &_filepath);
 
-    void ensureTagsLoaded();
+    void ensureMainTagsLoaded();
+    void ensureAdditionalTagsLoaded();
 
     static std::string getFrameText(TagLib::ID3v2::Tag *_tag, const char *_id);
     static bool setTagValue(const std::filesystem::path &_filepath,

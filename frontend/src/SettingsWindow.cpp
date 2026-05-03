@@ -118,11 +118,10 @@ SettingsWindow::SettingsWindow(wxWindow *_parent, Downloader *_downloader,
     mainSizer->Add(googleAuthSizer, 0, wxALL, 5);
     mainSizer->Add(spotifyCredentialsSizer, 0, wxALL, 5);
     mainSizer->Add(musicPathSizer, 0, wxALL, 5);
-    // soundcloudCredentialsSizer->Add(soundcloudCredentialsButton, 0, wxALL, 5);
-    // soundcloudCredentialsSizer->Add(soundcloudCredentialsIcon, 0, wxALL, 5);
+    // soundcloudCredentialsSizer->Add(soundcloudCredentialsButton, 0, wxALL,
+    // 5); soundcloudCredentialsSizer->Add(soundcloudCredentialsIcon, 0, wxALL,
+    // 5);
 
-    mainSizer->Add(googleAuthSizer, 0, wxALL, 5);
-    mainSizer->Add(spotifyCredentialsSizer, 0, wxALL, 5);
     // mainSizer->Add(soundcloudCredentialsSizer, 0, wxALL, 5);
 
     this->SetSizerAndFit(mainSizer);

@@ -19,8 +19,7 @@ class LocalTrackService {
     size_t getGeneration();
 
     void loadTracks(const std::filesystem::path &_path, Downloader *_downloader,
-                    bool recursiveSearch = false, bool includeBlocked = true,
-                    bool includeNonBlocked = false);
+                    bool recursiveSearch = false);
 
     std::function<void(std::vector<std::shared_ptr<TrackInterface>>, size_t)>
         onBatch;

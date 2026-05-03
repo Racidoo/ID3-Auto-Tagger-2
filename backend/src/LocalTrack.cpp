@@ -1,52 +1,55 @@
 #include "LocalTrack.h"
 
 LocalTrack::LocalTrack(const std::filesystem::path &_path)
-    : filepath(_path), tagsLoaded(false), length(0) {}
+    : filepath(_path), mainTagsLoaded(false), additionalTagsLoadded(false),
+      length(0) {
+    ensureMainTagsLoaded();
+}
 
 LocalTrack::~LocalTrack() {}
 
 std::string LocalTrack::get_title() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return title;
 }
 std::string LocalTrack::get_artist() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return artist;
 }
 std::string LocalTrack::get_album() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return album;
 }
 std::string LocalTrack::get_albumArtist() {
-    ensureTagsLoaded();
+    ensureAdditionalTagsLoaded();
     return albumArtist;
 }
 std::string LocalTrack::get_copyright() {
-    ensureTagsLoaded();
+    ensureAdditionalTagsLoaded();
     return copyright;
 }
 std::string LocalTrack::get_genre() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return genre;
 }
 std::string LocalTrack::get_year() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return year;
 }
 std::string LocalTrack::get_label() {
-    ensureTagsLoaded();
+    ensureAdditionalTagsLoaded();
     return label;
 }
 std::string LocalTrack::get_trackNumber() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return trackNumber;
 }
 std::string LocalTrack::get_discNumber() {
-    ensureTagsLoaded();
+    ensureAdditionalTagsLoaded();
     return discNumber;
 }
 std::size_t LocalTrack::get_length() {
-    ensureTagsLoaded();
+    ensureMainTagsLoaded();
     return length;
 }
 
@@ -248,26 +251,26 @@ void LocalTrack::set_cover(const std::vector<std::byte> &_imageData) {
 
 void LocalTrack::set_filepath(const std::filesystem::path &_filepath) {
     filepath = _filepath;
-    tagsLoaded = false;
+    mainTagsLoaded = false;
+    additionalTagsLoadded = false;
 }
 
-void LocalTrack::ensureTagsLoaded() {
-    if (tagsLoaded)
+void LocalTrack::ensureMainTagsLoaded() {
+    if (mainTagsLoaded)
         return;
 
     if (filepath.empty()) {
-        tagsLoaded = true;
+        mainTagsLoaded = true;
         return;
     }
 
     TagLib::MPEG::File file(filepath.c_str());
     if (!file.isValid() || !file.tag()) {
-        tagsLoaded = true;
+        mainTagsLoaded = true;
         return;
     }
 
     TagLib::Tag *tag = file.tag();
-    auto id3Tag = file.ID3v2Tag();
     TagLib::FileRef fr(TagLib::FileName(filepath.c_str()), true,
                        TagLib::AudioProperties::Accurate);
 
@@ -277,12 +280,33 @@ void LocalTrack::ensureTagsLoaded() {
     genre = tag->genre().to8Bit(true);
     year = tag->year() == 0 ? "" : std::to_string(tag->year());
     trackNumber = tag->track() == 0 ? "" : std::to_string(tag->track());
+
+    length = fr.audioProperties() ? fr.audioProperties()->length() : 0;
+    mainTagsLoaded = true;
+}
+
+void LocalTrack::ensureAdditionalTagsLoaded() {
+    if (additionalTagsLoadded)
+        return;
+
+    if (filepath.empty()) {
+        additionalTagsLoadded = true;
+        return;
+    }
+
+    TagLib::MPEG::File file(filepath.c_str());
+    if (!file.isValid()) {
+        additionalTagsLoadded = true;
+        return;
+    }
+
+    auto id3Tag = file.ID3v2Tag();
+
     albumArtist = getFrameText(id3Tag, "TPE2");
     label = getFrameText(id3Tag, "TPUB");
     discNumber = getFrameText(id3Tag, "TPOS");
     copyright = getFrameText(id3Tag, "TCOP");
-    length = fr.audioProperties() ? fr.audioProperties()->length() : 0;
-    tagsLoaded = true;
+    additionalTagsLoadded = true;
 }
 
 std::string LocalTrack::getFrameText(TagLib::ID3v2::Tag *_tag,

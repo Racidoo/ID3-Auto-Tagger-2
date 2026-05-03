@@ -3,17 +3,13 @@
 #include "MediaLabel.h"
 #include "TrackInterface.h"
 
-wxBitmap TrackModel::TrackModelRow::VERIFY_BITMAP(
-    wxArtProvider::GetBitmap(wxART_ASSESSMENT, wxART_BUTTON));
-wxBitmap TrackModel::TrackModelRow::DELETE_BITMAP(
-    wxArtProvider::GetBitmap(wxART_TRASH_XMARK, wxART_BUTTON));
-
 TrackModel::TrackModelRow::TrackModelRow(
     const std::shared_ptr<TrackInterface> &_trackInterface) {
 
     sortVerified = _trackInterface->is_inBlocklist();
-    cover = wxBitmap{};
+
     title = wxString::FromUTF8(_trackInterface->get_title());
+    cover = MediaLabel::loadImage(_trackInterface->get_cover(), wxSize(64, 64));
     artist = wxString::FromUTF8(_trackInterface->get_artist());
     album = wxString::FromUTF8(_trackInterface->get_album());
     genre = wxString::FromUTF8(_trackInterface->get_genre());
@@ -37,12 +33,9 @@ TrackModel::TrackModelRow::TrackModelRow(
     sortArtist = artist.Lower();
     sortAlbum = album.Lower();
     sortGenre = genre.Lower();
-
-    wxTheApp->CallAfter([this, _trackInterface]() mutable {
-        cover =
-            MediaLabel::loadImage(_trackInterface->get_cover(), wxSize(64, 64));
-    });
 }
+
+TrackModel::TrackModelRow::~TrackModelRow() {}
 
 wxBitmap TrackModel::TrackModelRow::get_verified() const { return verified; }
 wxBitmap TrackModel::TrackModelRow::get_cover() const { return cover; }
@@ -65,22 +58,107 @@ std::size_t TrackModel::TrackModelRow::get_sortLength() const {
     return sortLength;
 }
 
-void TrackModel::TrackModelRow::set_cover(const wxBitmap &_cover) {
-    cover = _cover;
+const wxBitmap &TrackModel::TrackModelRow::GetVerifyBitmap() {
+    static wxBitmap bitmap = [] {
+        wxBitmap bmp = wxArtProvider::GetBitmap(wxART_ASSESSMENT, wxART_BUTTON);
+        bmp = wxBitmap(
+            bmp.ConvertToImage().Rescale(16, 16, wxIMAGE_QUALITY_HIGH));
+        return bmp;
+    }();
+    return bitmap;
+}
+
+const wxBitmap &TrackModel::TrackModelRow::GetDeleteBitmap() {
+    static wxBitmap bitmap = [] {
+        wxBitmap bmp =
+            wxArtProvider::GetBitmap(wxART_TRASH_XMARK, wxART_BUTTON);
+        bmp = wxBitmap(
+            bmp.ConvertToImage().Rescale(16, 16, wxIMAGE_QUALITY_HIGH));
+        return bmp;
+    }();
+    return bitmap;
 }
 
 TrackModel::TrackModel() : wxDataViewVirtualListModel(0) {}
 
 void TrackModel::AddRows(
     const std::vector<std::shared_ptr<TrackModelRow>> &_batch) {
-    rows.reserve(rows.size() + _batch.size());
     visibleRows.reserve(visibleRows.size() + _batch.size());
-    for (auto &&row : _batch) {
-        rows.emplace_back(std::move(row));
-        visibleRows.push_back(rows.size() - 1);
+    for (auto &&trackInterface : _batch) {
+        visibleRows.push_back(std::move(trackInterface));
     }
     // Notify ctrl that row count changed
-    Reset(visibleRows.size());
+    SortByHeader(Columns::COL_TITLE, true);
+}
+
+void TrackModel::MergeRows(
+    const std::vector<std::shared_ptr<TrackInterface>> &_batch) {
+
+    bool changed = false;
+
+    for (const auto &track : _batch) {
+        auto id = track->get_id();
+        auto [it, inserted] =
+            allTracks.emplace(id, std::make_shared<TrackModelRow>(track));
+        if (inserted) {
+            changed = true;
+        }
+    }
+
+    if (_batch.empty()) {
+        allTracks.clear();
+        changed = true;
+    }
+
+    if (changed) {
+        RebuildVisibleTracks();
+    }
+}
+
+void TrackModel::RebuildVisibleTracks() {
+
+    std::vector<std::shared_ptr<TrackModelRow>> newVisibleTracks;
+    visibleRows.clear();
+
+    for (auto &[id, track] : allTracks) {
+
+        if (!MatchesFilter(track))
+            continue;
+        if (!MatchesSearch(track))
+            continue;
+
+        newVisibleTracks.push_back(track);
+    }
+
+    Cleared();
+    AddRows(newVisibleTracks);
+}
+
+bool TrackModel::MatchesSearch(
+    const std::shared_ptr<TrackModelRow> &row) const {
+    if (filterState.searchQuery.empty())
+        return true;
+
+    return row->get_sortTitle().Contains(filterState.searchQuery) ||
+           row->get_sortArtist().Contains(filterState.searchQuery) ||
+           row->get_sortAlbum().Contains(filterState.searchQuery) ||
+           row->get_sortGenre().Contains(filterState.searchQuery);
+}
+
+bool TrackModel::MatchesFilter(
+    const std::shared_ptr<TrackModelRow> &row) const {
+    if (filterState.showVerified && row->get_sortVerified()) {
+        return true;
+    }
+    if (filterState.showUnverified && !row->get_sortVerified()) {
+        return true;
+    }
+    return false;
+}
+
+void TrackModel::SetFilterState(const FilterState &_state) {
+    filterState = _state;
+    RebuildVisibleTracks();
 }
 
 unsigned int TrackModel::GetColumnCount() const { return COL_MAX; }
@@ -103,7 +181,7 @@ wxString TrackModel::GetColumnType(unsigned int col) const {
 
 void TrackModel::GetValueByRow(wxVariant &variant, unsigned int row,
                                unsigned int col) const {
-    auto r = rows[visibleRows[row]];
+    auto r = visibleRows[row];
 
     switch (col) {
     case COL_PROGRESS:
@@ -128,10 +206,10 @@ void TrackModel::GetValueByRow(wxVariant &variant, unsigned int row,
         variant = r->get_length();
         break;
     case COL_VERIFY:
-        variant << TrackModelRow::VERIFY_BITMAP;
+        variant << TrackModelRow::GetVerifyBitmap();
         break;
     case COL_DELETE:
-        variant << TrackModelRow::DELETE_BITMAP;
+        variant << TrackModelRow::GetDeleteBitmap();
         break;
     default:
         wxLogDebug(wxT("No view specified for column " + std::to_string(col)));
@@ -147,27 +225,22 @@ void TrackModel::SortByHeader(unsigned int _column, bool _ascending) {
         return _ascending ? _a < _b : _a > _b;
     };
     std::stable_sort(
-        visibleRows.begin(), visibleRows.end(), [&](size_t a, size_t b) {
+        visibleRows.begin(), visibleRows.end(),
+        [&](const auto &a, const auto &b) {
             switch (_column) {
 
             case COL_PROGRESS:
-                return compare(rows[a]->get_sortVerified(),
-                               rows[b]->get_sortVerified());
+                return compare(a->get_sortVerified(), b->get_sortVerified());
             case COL_TITLE:
-                return compare(rows[a]->get_sortTitle(),
-                               rows[b]->get_sortTitle());
+                return compare(a->get_sortTitle(), b->get_sortTitle());
             case COL_ARTIST:
-                return compare(rows[a]->get_sortArtist(),
-                               rows[b]->get_sortArtist());
+                return compare(a->get_sortArtist(), b->get_sortArtist());
             case COL_ALBUM:
-                return compare(rows[a]->get_sortAlbum(),
-                               rows[b]->get_sortAlbum());
+                return compare(a->get_sortAlbum(), b->get_sortAlbum());
             case COL_GENRE:
-                return compare(rows[a]->get_sortGenre(),
-                               rows[b]->get_sortGenre());
+                return compare(a->get_sortGenre(), b->get_sortGenre());
             case COL_LENGTH:
-                return compare(rows[a]->get_sortLength(),
-                               rows[b]->get_sortLength());
+                return compare(a->get_sortLength(), b->get_sortLength());
             default:
                 wxLogDebug(wxT("Sorting not supported for column " +
                                std::to_string(_column)));

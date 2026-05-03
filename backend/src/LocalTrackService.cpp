@@ -11,8 +11,7 @@ size_t LocalTrackService::getGeneration() { return generation; }
 
 void LocalTrackService::loadTracks(const std::filesystem::path &_path,
                                    Downloader *_downloader,
-                                   bool recursiveSearch, bool includeBlocked,
-                                   bool includeNonBlocked) {
+                                   bool recursiveSearch) {
     stopRequested = true;
 
     if (worker.joinable())
@@ -22,8 +21,7 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
 
     size_t myGen = ++generation;
 
-    worker = std::thread([this, myGen, _downloader, _path, recursiveSearch,
-                          includeBlocked, includeNonBlocked]() {
+    worker = std::thread([this, myGen, _downloader, _path, recursiveSearch]() {
         std::vector<std::shared_ptr<TrackInterface>> batch;
         batch.reserve(128);
 
@@ -32,8 +30,11 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
         for (std::filesystem::recursive_directory_iterator it(_path, ec), end;
              it != end; it.increment(ec)) {
 
-            if (stopRequested || myGen != generation)
+            if (stopRequested || myGen != generation) {
+                std::cerr << "stopRequested || myGen != generation"
+                          << std::endl;
                 return;
+            }
 
             if (ec) {
                 ec.clear();
@@ -54,22 +55,14 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
             bool blocked = _downloader->isBlocked(track->get_id());
             track->set_inBlocklist(blocked);
 
-            if (!includeBlocked && blocked)
-                continue;
-            if (!includeNonBlocked && !blocked)
-                continue;
-
             batch.push_back(track);
 
-            if (batch.size() >= 128) {
+            if (batch.size() >= 32) {
                 dispatchBatch(batch, myGen);
                 batch.clear();
             }
         }
-
-        if (!batch.empty()) {
-            dispatchBatch(batch, myGen);
-        }
+        dispatchBatch(batch, myGen);
     });
 }
 

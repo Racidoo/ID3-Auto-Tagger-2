@@ -61,14 +61,14 @@ TrackPanel::TrackPanel(wxWindow *parent) : wxPanel(parent) {
 
 void TrackPanel::Refresh() {}
 
-void TrackPanel::AddTracks(
-    const std::vector<std::shared_ptr<TrackInterface>> &_trackInterfaces) {
-    std::vector<std::shared_ptr<TrackModel::TrackModelRow>> rows;
-    for (auto &&trackInterface : _trackInterfaces) {
-        rows.emplace_back(
-            std::make_shared<TrackModel::TrackModelRow>(trackInterface));
-    }
-    model->AddRows(rows);
+void TrackPanel::MergeTracks(
+    const std::vector<std::shared_ptr<TrackInterface>> &_batch) {
+    model->MergeRows(_batch);
+}
+
+void TrackPanel::Search(const wxString &_query, bool _showVerified,
+                        bool _showUnverified) {
+    model->SetFilterState({_showVerified, _showUnverified, _query});
 }
 
 void TrackPanel::OnSelectionChanged(wxDataViewEvent &event) {

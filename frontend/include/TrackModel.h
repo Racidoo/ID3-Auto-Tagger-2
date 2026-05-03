@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
+#include <thread>
 #include <vector>
 #include <wx/dataview.h>
 #include <wx/wx.h>
@@ -24,10 +24,6 @@ class TrackModel : public wxDataViewVirtualListModel {
     };
 
     class TrackModelRow {
-      public:
-        static wxBitmap VERIFY_BITMAP;
-        static wxBitmap DELETE_BITMAP;
-
       private:
         wxBitmap verified;
         wxBitmap cover;
@@ -44,10 +40,12 @@ class TrackModel : public wxDataViewVirtualListModel {
         wxString sortGenre;
         std::size_t sortLength;
 
+        std::thread workerAlbumCover;
+
       public:
         TrackModelRow(const std::shared_ptr<TrackInterface> &_trackInterface);
 
-        ~TrackModelRow() = default;
+        ~TrackModelRow();
 
         wxBitmap get_verified() const;
         wxBitmap get_cover() const;
@@ -64,12 +62,27 @@ class TrackModel : public wxDataViewVirtualListModel {
         wxString get_sortGenre() const;
         std::size_t get_sortLength() const;
 
-        void set_cover(const wxBitmap &_cover);
+        static const wxBitmap &GetVerifyBitmap();
+        static const wxBitmap &GetDeleteBitmap();
+    };
+
+    struct FilterState {
+        bool showVerified;
+        bool showUnverified;
+
+        wxString searchQuery;
     };
 
     explicit TrackModel();
 
+    void SetFilterState(const FilterState &_state);
+
     void AddRows(const std::vector<std::shared_ptr<TrackModelRow>> &_batch);
+    void MergeRows(const std::vector<std::shared_ptr<TrackInterface>> &_batch);
+
+    void RebuildVisibleTracks();
+    bool MatchesSearch(const std::shared_ptr<TrackModelRow> &row) const;
+    bool MatchesFilter(const std::shared_ptr<TrackModelRow> &row) const;
     unsigned int GetColumnCount() const override;
     wxString GetColumnType(unsigned int col) const override;
     void GetValueByRow(wxVariant &variant, unsigned int row,
@@ -82,6 +95,8 @@ class TrackModel : public wxDataViewVirtualListModel {
     void SortByHeader(unsigned int _column, bool _ascending);
 
   private:
-    std::vector<std::shared_ptr<TrackModelRow>> rows;
-    std::vector<std::size_t> visibleRows;
+    std::vector<std::shared_ptr<TrackModelRow>> visibleRows;
+    std::unordered_map<std::string, std::shared_ptr<TrackModelRow>> allTracks;
+
+    FilterState filterState;
 };

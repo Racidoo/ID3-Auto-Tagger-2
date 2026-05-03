@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
@@ -12,8 +13,11 @@ class TrackPanel : public wxPanel {
     explicit TrackPanel(wxWindow *parent);
 
     void Refresh();
-    void AddTracks(
-        const std::vector<std::shared_ptr<TrackInterface>> &_trackInterfaces);
+    void
+    MergeTracks(const std::vector<std::shared_ptr<TrackInterface>> &_batch);
+
+    void Search(const wxString &_query, bool _showVerified,
+                bool _showUnverified);
 
   private:
     wxDataViewCtrl *ctrl{};
