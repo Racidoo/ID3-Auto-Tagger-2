@@ -2,72 +2,104 @@
 
 namespace Spotify {
 
-SpotifyAPI::SpotifyAPI() : Query("Spotify") {}
-
+SpotifyAPI::SpotifyAPI() {}
 SpotifyAPI::SpotifyAPI(const std::string &_clientId,
                        const std::string &_clientSecret)
-    : Query("Spotify", _clientId, _clientSecret, "") {}
+    : clientId(_clientId), clientSecret(_clientSecret) {
+    saveCredentials();
+}
 
-SpotifyAPI::~SpotifyAPI() {}
+void SpotifyAPI::saveCredentials() {
+    json credentials = loadCredentials();
+    credentials["OAuth"]["Spotify"]["client_id"] = clientId;
+    credentials["OAuth"]["Spotify"]["client_secret"] = clientSecret;
+    credentials["OAuth"]["Spotify"]["token_uri"] =
+        "https://accounts.spotify.com/api/token";
 
-// json SpotifyAPI::handleRequest(const std::string &_request) {
+    saveCredentialsToFile(credentials);
+}
 
-//     std::string response_data;
-//     auto curl(curl_easy_init());
-//     struct curl_slist *headers(nullptr);
+std::string SpotifyAPI::generateAccessToken() {
 
-//     std::cout << "Retrieving data from: " << _request << std::endl;
+    if (!accessToken.empty() &&
+        std::chrono::steady_clock::now() < tokenExpirationTime) {
+        return accessToken;
+    }
 
-//     if (!curl) {
-//         std::cerr << "cURL not initialized!" << std::endl;
-//         return {};
-//     }
+    json credentials = loadCredentials();
 
-//     headers = curl_slist_append(
-//         headers, ("Authorization: Bearer " + getValidToken()).c_str());
-//     headers = curl_slist_append(headers, "Content-Type: application/json");
-//     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    auto &spotify = credentials["OAuth"]["Spotify"];
 
-//     // Ensure headers are set
-//     if (headers) {
-//         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-//     } else {
-//         std::cerr << "Error: Headers not initialized!" << std::endl;
-//     }
+    if (spotify["client_id"].empty() || spotify["client_secret"].empty()) {
+        std::cerr
+            << "Please provide 'client_id' and 'client_secret' from Spotify API"
+            << std::endl;
+        return "";
+    }
+    if (spotify["token_uri"].empty()) {
+        std::cerr << "Please provide 'token_uri' from Spotify API" << std::endl;
+        return "";
+    }
 
-//     // Set the request URL
-//     curl_easy_setopt(curl, CURLOPT_URL, _request.c_str());
-//     // Set response handling
-//     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-//     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
+    auto clientId = spotify["client_id"].get<std::string>();
+    auto clientSecret = spotify["client_secret"].get<std::string>();
+    static std::string tokenUri = spotify["token_uri"].get<std::string>();
 
-//     // Execute the request
-//     CURLcode res = curl_easy_perform(curl);
-//     if (res != CURLE_OK) {
-//         std::cerr << "cURL request failed: " << curl_easy_strerror(res)
-//                   << std::endl;
-//         return {};
-//     }
-//     if (curl)
-//         curl_easy_cleanup(curl);
+    CURL *accessTokenCurl = curl_easy_init();
+    if (!accessTokenCurl) {
+        std::cerr << "Failed to initialize cURL" << std::endl;
+        return "";
+    }
 
-//     if (response_data.empty()) {
-//         std::cerr << "Error: Received empty response!" << std::endl;
-//         return {};
-//     }
+    std::string response_data;
+    std::string postFields =
+        "grant_type=client_credentials&client_id=" + clientId +
+        "&client_secret=" + clientSecret;
 
-//     // Parse JSON response
-//     json response = json::parse(response_data, nullptr, false);
-//     if (response.is_discarded()) {
-//         std::cerr << "Error: Failed to parse JSON response!" << std::endl;
-//         return {};
-//     }
-//     if (response.contains("error")) {
-//         std::cerr << response.dump(4) << std::endl;
-//     }
-//     std::ofstream("response.json") << response.dump(4);
-//     return response;
-// }
+    struct curl_slist *accessTokenHeaders = nullptr;
+    accessTokenHeaders = curl_slist_append(
+        accessTokenHeaders, "Content-Type: application/x-www-form-urlencoded");
+
+    // Set cURL options
+    curl_easy_setopt(accessTokenCurl, CURLOPT_URL, tokenUri.c_str());
+    curl_easy_setopt(accessTokenCurl, CURLOPT_POST, 1L);
+    curl_easy_setopt(accessTokenCurl, CURLOPT_POSTFIELDS, postFields.c_str());
+    curl_easy_setopt(accessTokenCurl, CURLOPT_HTTPHEADER, accessTokenHeaders);
+    curl_easy_setopt(accessTokenCurl, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(accessTokenCurl, CURLOPT_WRITEDATA, &response_data);
+
+    CURLcode res = curl_easy_perform(accessTokenCurl);
+    curl_easy_cleanup(accessTokenCurl);
+    curl_slist_free_all(accessTokenHeaders);
+
+    if (res != CURLE_OK) {
+        std::cerr << "cURL request failed: " << curl_easy_strerror(res)
+                  << std::endl;
+        return "";
+    }
+
+    // Parse JSON response
+    json response_json = json::parse(response_data);
+    if (response_json.contains("access_token")) {
+        tokenExpirationTime =
+            std::chrono::steady_clock::now() +
+            std::chrono::seconds(response_json.at("expires_in").get<int>());
+        accessToken = response_json["access_token"];
+    } else {
+        std::cerr << "Failed to retrieve access token! Response:" +
+                         response_json.dump(4)
+                  << std::endl;
+    }
+    return accessToken;
+}
+
+void SpotifyAPI::prepareHeaders(struct curl_slist *&_headers) {
+
+    _headers = curl_slist_append(
+        _headers, ("Authorization: Bearer " + generateAccessToken()).c_str());
+
+    _headers = curl_slist_append(_headers, "Content-Type: application/json");
+}
 
 Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
     Album album(_jsonAlbum.at("id").get<std::string>(),
@@ -124,19 +156,19 @@ User SpotifyAPI::createUser(const json &_jsonUser) const {
 }
 
 Album SpotifyAPI::getAlbum(const std::string &_id) {
-    return createAlbum(headerRequest(urlAPI + "albums/" + _id));
+    return createAlbum(performRequest(urlAPI + "albums/" + _id));
 }
 
 Artist SpotifyAPI::getArtist(const std::string &_id) {
-    return createArtist(headerRequest(urlAPI + "artists/" + _id));
+    return createArtist(performRequest(urlAPI + "artists/" + _id));
 }
 
 Playlist SpotifyAPI::getPlaylist(const std::string &_id) {
-    return createPlaylist(headerRequest(urlAPI + "playlists/" + _id));
+    return createPlaylist(performRequest(urlAPI + "playlists/" + _id));
 }
 
 Track SpotifyAPI::getTrack(const std::string &_id) {
-    json jsonTrack = headerRequest(urlAPI + "tracks/" + _id);
+    json jsonTrack = performRequest(urlAPI + "tracks/" + _id);
     json jsonArtist = jsonTrack.at("artists");
     json jsonAlbum = jsonTrack.at("album");
 
@@ -144,7 +176,7 @@ Track SpotifyAPI::getTrack(const std::string &_id) {
 }
 
 std::vector<Track> SpotifyAPI::getAlbumTracks(const std::string &_id) {
-    json jsonAlbum = headerRequest(urlAPI + "albums/" + _id);
+    json jsonAlbum = performRequest(urlAPI + "albums/" + _id);
     json jsonTracks = jsonAlbum.at("tracks");
     Album album = createAlbum(jsonAlbum);
     std::vector<Track> tracks;
@@ -156,7 +188,7 @@ std::vector<Track> SpotifyAPI::getAlbumTracks(const std::string &_id) {
 }
 
 std::vector<Track> SpotifyAPI::getPlaylistTracks(const std::string &_id) {
-    json jsonPlaylist = headerRequest(urlAPI + "playlists/" + _id);
+    json jsonPlaylist = performRequest(urlAPI + "playlists/" + _id);
     json jsonTracks = jsonPlaylist.at("tracks");
     std::vector<Track> tracks;
 
@@ -209,7 +241,7 @@ json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
     if (!_offset.empty())
         url << "&offset=" << _offset;
 
-    json result = headerRequest(url.str());
+    json result = performRequest(url.str());
     if (result.contains("error")) {
         throw std::runtime_error(result.dump());
     }
@@ -372,15 +404,15 @@ std::string SpotifyAPI::searchId(std::shared_ptr<TrackInterface> _localData) {
 
 void SpotifyAPI::loadAdditionalData(Track &_track) {
     json jsonFullAlbum =
-        headerRequest(urlAPI + "albums/" + _track.get_album().get_id());
+        performRequest(urlAPI + "albums/" + _track.get_album().get_id());
     _track.get_album().set_copyright(jsonFullAlbum.at("copyrights")[0]["text"]);
     _track.get_album().set_label(jsonFullAlbum.at("label"));
 }
 
 void SpotifyAPI::loadAdditionalData(
     std::shared_ptr<TrackInterface> _spotifyTrackInterface) {
-   
-    json jsonFullAlbum = headerRequest(
+
+    json jsonFullAlbum = performRequest(
         urlAPI + "albums/" +
         _spotifyTrackInterface->get_spotifyTrack()->get_album().get_id());
     if (!jsonFullAlbum.at("copyrights").empty()) {

@@ -3,29 +3,40 @@
 
 namespace YouTube {
 
-YouTubeAPI::YouTubeAPI() : Query("Google") {}
+YouTubeAPI::YouTubeAPI() {}
 
 YouTubeAPI::YouTubeAPI(const std::string &_accessToken)
-    : Query("Google", "", "", _accessToken) {}
+    : accessToken(_accessToken) {
+    saveCredentials();
+}
 
 YouTubeAPI::~YouTubeAPI() {}
 
-json YouTubeAPI::query(const std::string &_url) {
-    std::string response;
-    auto queryCurl(curl_easy_init());
-    curl_easy_setopt(queryCurl, CURLOPT_URL, _url.c_str());
-    curl_easy_setopt(queryCurl, CURLOPT_WRITEFUNCTION, writeCallback);
-    curl_easy_setopt(queryCurl, CURLOPT_WRITEDATA, &response);
-
-    CURLcode res = curl_easy_perform(queryCurl);
-    if (res != CURLE_OK) {
-        std::cerr << "Curl request failed: " << curl_easy_strerror(res)
-                  << ". URL: " << _url << std::endl;
+std::string YouTubeAPI::generateAccessToken() {
+    if (!accessToken.empty()) {
+        return accessToken;
     }
-    if (queryCurl)
-        curl_easy_cleanup(queryCurl);
-    std::ofstream("query.json") << json::parse(response).dump(4);
-    return json::parse(response);
+    json credentials = loadCredentials();
+    if (credentials["OAuth"]["Google"]["auth_token"].empty()) {
+        std::cerr << "Please provide 'auth_token' from Google API" << std::endl;
+        return "";
+    }
+    tokenExpirationTime =
+        std::chrono::steady_clock::time_point(std::chrono::seconds(0));
+    return credentials["OAuth"]["Google"]["auth_token"].get<std::string>();
+}
+
+void YouTubeAPI::saveCredentials() {
+
+    json credentials = loadCredentials();
+    credentials["OAuth"]["Google"]["auth_token"] = accessToken;
+    saveCredentialsToFile(credentials);
+}
+
+void YouTubeAPI::prepareHeaders(struct curl_slist *&_headers) {}
+
+std::string YouTubeAPI::prepareUrl(const std::string &_url) {
+    return (_url + "&key=" + generateAccessToken());
 }
 
 // Function to perform YouTubeAPI search
@@ -46,13 +57,12 @@ json YouTubeAPI::searchList(const std::string &_query,
         urlAPI +
         "search?part=snippet&q=" + std::string(curl_escape(_query.c_str(), 0)) +
         "&type=" + _type +
-        (_maxResults != 0 ? "&maxResults=" + std::to_string(_maxResults) : "") +
-        "&key=" + getValidToken();
+        (_maxResults != 0 ? "&maxResults=" + std::to_string(_maxResults) : "");
 
     if (_nextPageToken && !_nextPageToken->empty())
         url += "&pageToken=" + *_nextPageToken;
 
-    json result = query(url);
+    json result = performRequest(url);
 
     if (result.contains("error")) {
         if (result["error"].contains("code")) {
@@ -76,10 +86,10 @@ json YouTubeAPI::searchList(const std::string &_query,
 }
 
 json YouTubeAPI::fetchContentDetails(const std::string &_id) {
-    json response = query(urlAPI + "videos?part=contentDetails&id=" + _id +
-                          "&fields=items(id,kind,contentDetails(duration,"
-                          "licensedContent),statistics(viewCount))&key=" +
-                          getValidToken());
+    json response =
+        performRequest(urlAPI + "videos?part=contentDetails&id=" + _id +
+                       "&fields=items(id,kind,contentDetails(duration,"
+                       "licensedContent),statistics(viewCount))");
     if (!response.contains("items") || response["items"].empty())
         throw std::runtime_error("No contentDetails found for video ID: " +
                                  _id);
@@ -173,12 +183,11 @@ std::unique_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
 
 std::unique_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
     return createVideo(
-        query(urlAPI +
-              "videos?part=snippet,contentDetails,statistics&id=" + _id +
-              "&fields=items(id,kind,snippet(title,channelTitle,publishedAt,"
-              "thumbnails/high/url),contentDetails(duration,licensedContent),"
-              "statistics(viewCount))&key=" +
-              getValidToken())
+        performRequest(
+            urlAPI + "videos?part=snippet,contentDetails,statistics&id=" + _id +
+            "&fields=items(id,kind,snippet(title,channelTitle,publishedAt,"
+            "thumbnails/high/url),contentDetails(duration,licensedContent),"
+            "statistics(viewCount))")
             .at("items")
             .front());
 }

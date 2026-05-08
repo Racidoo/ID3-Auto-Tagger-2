@@ -1,38 +1,5 @@
 #include "../include/Query.h"
 
-Query::Query(const std::string &_type)
-    : tokenExpirationTime(std::chrono::steady_clock::now()), type(_type),
-      initialized(false) {
-    getValidToken();
-}
-
-Query::Query(const std::string &_type, const std::string &_clientId,
-             const std::string &_clientSecret, const std::string &_accessToken)
-    : tokenExpirationTime(std::chrono::steady_clock::now()), type(_type),
-      initialized(false), clientId(_clientId), clientSecret(_clientSecret),
-      accessToken(_accessToken) {
-    saveCredentials();
-    getValidToken();
-}
-
-Query::~Query() {}
-
-std::string Query::getValidToken() {
-    if (!isTokenValid()) {
-        accessToken = generateAccessToken();
-    }
-    initialized = accessToken.empty() ? false : true;
-    return accessToken; // Use the stored token
-}
-
-bool Query::isTokenValid() const {
-    // return true, if a token has no expiry time
-    return (tokenExpirationTime == std::chrono::steady_clock::time_point(
-                                       std::chrono::seconds(0))
-                ? true
-                : std::chrono::steady_clock::now() < tokenExpirationTime);
-}
-
 void Query::ensureCredentialFile() const {
     std::filesystem::create_directories(pathCredentials.parent_path());
 
@@ -46,23 +13,13 @@ void Query::ensureCredentialFile() const {
     }
 }
 
-void Query::saveCredentials() {
-    json jsonCredentials = loadCredentials();
-
-    if (type == "Google") {
-        jsonCredentials["OAuth"]["Google"]["auth_token"] = accessToken;
-    } else if (type == "Spotify") {
-        jsonCredentials["OAuth"]["Spotify"]["client_id"] = clientId;
-        jsonCredentials["OAuth"]["Spotify"]["client_secret"] = clientSecret;
-        jsonCredentials["OAuth"]["Spotify"]["token_uri"] =
-            "https://accounts.spotify.com/api/token";
-    }
+void Query::saveCredentialsToFile(const json &_credentials) const {
 
     std::ofstream file(pathCredentials);
     if (!file)
         throw std::runtime_error("Failed to write " + pathCredentials.string());
 
-    file << jsonCredentials.dump(4);
+    file << _credentials.dump(4);
 }
 
 json Query::loadCredentials() const {
@@ -77,152 +34,42 @@ json Query::loadCredentials() const {
     return data;
 }
 
-/**
- * @brief
- *
- * @param _type "Google" | "Spotify"
- * @return const std::string&
- */
-std::string Query::generateAccessToken() {
+std::string Query::prepareUrl(const std::string &_url) { return _url; }
 
-    json jsonCredentials = loadCredentials();
+json Query::performRequest(const std::string &_url) {
 
-    json jsonCredentialsOAuth = jsonCredentials.contains("OAuth")
-                                    ? jsonCredentials["OAuth"]
-                                    : json::object();
-
-    if (type == "Google") {
-        if (!jsonCredentialsOAuth.contains("Google") ||
-            jsonCredentialsOAuth["Google"]["auth_token"].empty()) {
-            std::cerr << "Please provide 'auth_token' from Google API"
-                      << std::endl;
-            return "";
-        }
-        tokenExpirationTime =
-            std::chrono::steady_clock::time_point(std::chrono::seconds(0));
-        return jsonCredentialsOAuth["Google"]["auth_token"].get<std::string>();
-    } else if (type == "Spotify") {
-        if (!jsonCredentialsOAuth.contains("Spotify") ||
-            jsonCredentialsOAuth["Spotify"]["client_id"].empty() ||
-            jsonCredentialsOAuth["Spotify"]["client_secret"].empty()) {
-            std::cerr << "Please provide 'client_id' and 'client_secret' from "
-                         "Spotify API"
-                      << std::endl;
-            return "";
-        }
-        clientId =
-            jsonCredentialsOAuth["Spotify"]["client_id"].get<std::string>();
-        clientSecret =
-            jsonCredentialsOAuth["Spotify"]["client_secret"].get<std::string>();
-        if (jsonCredentialsOAuth["Spotify"].at("token_uri").empty()) {
-            std::cerr << "Please provide 'token_uri' from Spotify API"
-                      << std::endl;
-            return "";
-        }
-
-        CURL *accessTokenCurl = curl_easy_init();
-        if (!accessTokenCurl) {
-            std::cerr << "Failed to initialize cURL" << std::endl;
-            return "";
-        }
-
-        std::string response_data;
-        std::string postFields =
-            "grant_type=client_credentials&client_id=" + clientId +
-            "&client_secret=" + clientSecret;
-
-        struct curl_slist *accessTokenHeaders = nullptr;
-        accessTokenHeaders = curl_slist_append(
-            accessTokenHeaders,
-            "Content-Type: application/x-www-form-urlencoded");
-
-        // Set cURL options
-        curl_easy_setopt(accessTokenCurl, CURLOPT_URL,
-                         jsonCredentialsOAuth["Spotify"]["token_uri"]
-                             .get<std::string>()
-                             .c_str());
-        curl_easy_setopt(accessTokenCurl, CURLOPT_POST, 1L);
-        curl_easy_setopt(accessTokenCurl, CURLOPT_POSTFIELDS,
-                         postFields.c_str());
-        curl_easy_setopt(accessTokenCurl, CURLOPT_HTTPHEADER,
-                         accessTokenHeaders);
-        curl_easy_setopt(accessTokenCurl, CURLOPT_WRITEFUNCTION, writeCallback);
-        curl_easy_setopt(accessTokenCurl, CURLOPT_WRITEDATA, &response_data);
-
-        CURLcode res = curl_easy_perform(accessTokenCurl);
-        curl_easy_cleanup(accessTokenCurl);
-        curl_slist_free_all(accessTokenHeaders);
-
-        if (res != CURLE_OK) {
-            std::cerr << "cURL request failed: " << curl_easy_strerror(res)
-                      << std::endl;
-            return "";
-        }
-
-        // Parse JSON response
-        json response_json = json::parse(response_data);
-        if (response_json.contains("access_token")) {
-            tokenExpirationTime =
-                std::chrono::steady_clock::now() +
-                std::chrono::seconds(response_json.at("expires_in").get<int>());
-            return response_json["access_token"];
-        } else {
-            std::cerr << "Failed to retrieve access token! Response:" +
-                             response_json.dump(4)
-                      << std::endl;
-        }
-    } else {
-        std::cerr << "'" + type + " is not supported" << std::endl;
-    }
-    return "";
-}
-
-json Query::headerRequest(const std::string &_request) {
-
-    std::string response_data;
-    auto curl(curl_easy_init());
-    struct curl_slist *headers(nullptr);
+    CURL *curl = curl_easy_init();
 
     if (!curl) {
-        std::cerr << "cURL not initialized!" << std::endl;
+        std::cerr << "curl not initialized!" << std::endl;
         return {};
     }
 
-    headers = curl_slist_append(
-        headers, ("Authorization: Bearer " + getValidToken()).c_str());
-    headers = curl_slist_append(headers, "Content-Type: application/json");
+    std::string responseData;
+
+    struct curl_slist *headers = nullptr;
+
+    prepareHeaders(headers);
+    auto url = prepareUrl(_url);
+
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    // Ensure headers are set
-    if (headers) {
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    } else {
-        std::cerr << "Error: Headers not initialized!" << std::endl;
-    }
-
-    // Set the request URL
-    curl_easy_setopt(curl, CURLOPT_URL, _request.c_str());
-    // Set response handling
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
 
-    // Execute the request
     CURLcode res = curl_easy_perform(curl);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
     if (res != CURLE_OK) {
-        std::cerr << "cURL request failed: " << curl_easy_strerror(res)
-                  << std::endl;
-        return {};
-    }
-    if (curl)
-        curl_easy_cleanup(curl);
-
-    if (response_data.empty()) {
-        std::cerr << "Error: Received empty response!" << std::endl;
+        std::cerr << "Request failed: " << res
+                  << "\nRequest: " << prepareUrl(_url)
+                  << "\nResponse: " << responseData << std::endl;
         return {};
     }
 
-    // Parse JSON response
-    json response = json::parse(response_data, nullptr, false);
+    json response = json::parse(responseData, nullptr, false);
     if (response.is_discarded()) {
         std::cerr << "Error: Failed to parse JSON response!" << std::endl;
         return {};
@@ -230,19 +77,9 @@ json Query::headerRequest(const std::string &_request) {
     if (response.contains("error")) {
         std::cerr << response.dump(4) << std::endl;
     }
-    std::ofstream(type + "response.json") << response.dump(4);
+    std::ofstream("response.json") << response.dump(4);
     return response;
 }
-
-// void Query::ensureExists(const std::filesystem::path& path) {
-//     if (std::filesystem::exists(path)) return;
-//     if (path.has_extension()) {
-//         std::filesystem::create_directories(path.parent_path());
-//         std::ofstream(path);
-//     } else {
-//         std::filesystem::create_directories(path);
-//     }
-// }
 
 /**
  * @brief curl callback needed for general textual data
@@ -253,11 +90,11 @@ json Query::headerRequest(const std::string &_request) {
  * @param output
  * @return size_t
  */
-size_t Query::writeCallback(void *contents, size_t size, size_t nmemb,
-                            std::string *output) {
-    size_t total_size = size * nmemb;
-    if (output) {
-        output->append((char *)contents, total_size);
+size_t Query::writeCallback(void *_contents, size_t _size, size_t _nmemb,
+                            std::string *_output) {
+    size_t total_size = _size * _nmemb;
+    if (_output) {
+        _output->append((char *)_contents, total_size);
     }
     return total_size;
 }
@@ -271,25 +108,25 @@ size_t Query::writeCallback(void *contents, size_t size, size_t nmemb,
  * @param output
  * @return size_t
  */
-size_t Query::writeImageCallback(void *contents, size_t size, size_t nmemb,
-                                 std::vector<char> *output) {
-    size_t total_size = size * nmemb;
-    output->insert(output->end(), (char *)contents,
-                   (char *)contents + total_size);
+size_t Query::writeImageCallback(void *_contents, size_t _size, size_t _nmemb,
+                                 std::vector<char> *_output) {
+    size_t total_size = _size * _nmemb;
+    _output->insert(_output->end(), (char *)_contents,
+                    (char *)_contents + total_size);
     return total_size;
 }
 
 // Convert string to lowercase
-std::string Query::toLower(const std::string &str) {
-    std::string result = str;
+std::string Query::toLower(const std::string &_str) {
+    std::string result = _str;
     std::transform(result.begin(), result.end(), result.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     return result;
 }
 
 // Compute Levenshtein distance
-int Query::levenshteinDistance(const std::string &s1, const std::string &s2) {
-    size_t len1 = s1.size(), len2 = s2.size();
+int Query::levenshteinDistance(const std::string &_s1, const std::string &_s2) {
+    size_t len1 = _s1.size(), len2 = _s2.size();
     std::vector<std::vector<int>> dp(len1 + 1, std::vector<int>(len2 + 1));
 
     for (size_t i = 0; i <= len1; ++i)
@@ -299,7 +136,7 @@ int Query::levenshteinDistance(const std::string &s1, const std::string &s2) {
 
     for (size_t i = 1; i <= len1; ++i) {
         for (size_t j = 1; j <= len2; ++j) {
-            int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+            int cost = (_s1[i - 1] == _s2[j - 1]) ? 0 : 1;
             dp[i][j] = std::min({dp[i - 1][j] + 1,          // Deletion
                                  dp[i][j - 1] + 1,          // Insertion
                                  dp[i - 1][j - 1] + cost}); // Substitution
@@ -309,9 +146,9 @@ int Query::levenshteinDistance(const std::string &s1, const std::string &s2) {
 }
 
 // Calculate a similarity score
-double Query::similarityScore(const std::string &s1, const std::string &s2) {
-    int dist = levenshteinDistance(toLower(s1), toLower(s2));
-    int maxLength = std::max(s1.size(), s2.size());
+double Query::similarityScore(const std::string &_s1, const std::string &_s2) {
+    int dist = levenshteinDistance(toLower(_s1), toLower(_s2));
+    int maxLength = std::max(_s1.size(), _s2.size());
     return 1.0 - (double)dist / maxLength; // Normalize to 0-1
 }
 
@@ -329,8 +166,8 @@ double Query::similarityScore(int duration1, int duration2) {
     return std::exp(-decayFactor * diff);
 }
 
-double Query::similarityScoreDate(const std::string &date1,
-                                  const std::string &date2) {
+double Query::similarityScoreDate(const std::string &_date1,
+                                  const std::string &_date2) {
     auto daysSinceEpoch = [](std::string date) -> int {
         if (date.size() == 4) {
             date.append("-01-01");
@@ -342,7 +179,7 @@ double Query::similarityScoreDate(const std::string &date1,
         strptime(date.c_str(), "%Y-%m-%d", &tm);
         return std::mktime(&tm) / 86400; // Convert to days
     };
-    return similarityScore(daysSinceEpoch(date1), daysSinceEpoch(date2));
+    return similarityScore(daysSinceEpoch(_date1), daysSinceEpoch(_date2));
 }
 
 std::vector<std::byte> Query::downloadImage(const std::string &_url,
@@ -389,17 +226,4 @@ json Query::exec(const std::string &_cmd) const {
         first = false;
     }
     return json::parse(result += "]");
-}
-
-void Query::set_accessToken(const std::string &_accessToken) {
-    accessToken = _accessToken;
-    saveCredentials();
-}
-void Query::set_clientId(const std::string &_clientId) {
-    clientId = _clientId;
-    saveCredentials();
-}
-void Query::set_clientSecret(const std::string &_clientSecret) {
-    clientSecret = _clientSecret;
-    saveCredentials();
 }

@@ -44,7 +44,7 @@ bool Downloader::initializeSpotify(const std::string &_clientId,
             (_clientId.empty() && _clientSecret.empty()
                  ? new Spotify::SpotifyAPI()
                  : new Spotify::SpotifyAPI(_clientId, _clientSecret));
-        if (temp->is_initialized()) {
+        if (!temp->generateAccessToken().empty()) {
             std::cout << " success!" << std::endl;
             spotify = temp;
         } else {
@@ -62,7 +62,7 @@ bool Downloader::initializeYouTube(const std::string &_googleAuthToken) {
             (_googleAuthToken.empty()
                  ? new YouTube::YouTubeAPI()
                  : new YouTube::YouTubeAPI(_googleAuthToken));
-        if (temp->is_initialized()) {
+        if (!temp->generateAccessToken().empty()) {
             std::cout << " success!" << std::endl;
             youTube = temp;
         } else {
