@@ -1,11 +1,10 @@
-#include "../include/SpotifyWindow.h"
-#include "../include/AlbumLabel.h"
-#include "../include/ArtistLabel.h"
-#include "../include/CircleProgressBar.h"
-#include "../include/IconProvider.h"
-#include "../include/PlaylistLabel.h"
-#include "../include/TrackLabel.h"
-#include "../include/TrackWindow.h"
+#include "SpotifyWindow.h"
+#include "AlbumLabel.h"
+#include "ArtistLabel.h"
+#include "CircleProgressBar.h"
+#include "IconProvider.h"
+#include "PlaylistLabel.h"
+#include "TrackPanel.h"
 
 enum {
     IDM_TOOLBAR_ALL = 200,
@@ -58,19 +57,22 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    trackWindow = new TrackWindow(this, downloader);
+    // trackWindow = new TrackWindow(this, downloader);
+    trackPanel = new TrackPanel(this, downloader);
     albumWindow = new AlbumWindow(this);
     artistWindow = new ArtistWindow(this);
     playlistWindow = new PlaylistWindow(this);
 
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
-    mainSizer->Add(trackWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    mainSizer->Add(trackPanel, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    // mainSizer->Add(trackWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(albumWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(artistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(playlistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
-    trackWindow->Hide();
+    // trackWindow->Hide();
+    trackPanel->Hide();
     albumWindow->Hide();
     artistWindow->Hide();
     playlistWindow->Hide();
@@ -132,20 +134,16 @@ void SpotifyWindow::search(const wxString &_searchText) {
 void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
 
     albumWindow->deleteChildren();
-    trackWindow->Clear();
+    trackPanel->MergeTracks({});
     artistWindow->deleteChildren();
     playlistWindow->deleteChildren();
 
     if (!result.tracks.empty()) {
-        trackWindow->Show();
-        for (auto &track : result.tracks) {
-            if (downloader->isBlocked(track->get_id())) {
-                track->set_downloaded(true);
-            }
-            trackWindow->appendChild(TrackInterface::fromSpotify(track));
-        }
+        trackPanel->Show();
+        trackPanel->MergeTracks(result.tracks);
+
     } else {
-        trackWindow->Hide();
+        trackPanel->Hide();
     }
 
     if (!result.albums.empty()) {
@@ -193,12 +191,13 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
         std::cerr << "Downloader not fully initialized" << std::endl;
         return;
     }
-    TrackLabel *chosenTrackLabel =
-        trackWindow->get_trackLabels().at(_event.GetString().ToStdString());
-    std::vector<std::shared_ptr<TrackInterface>> choosenTracks{
-        chosenTrackLabel->get_data()};
-    downloader->downloadResource(
-        choosenTracks, [chosenTrackLabel](int progress) {
-            chosenTrackLabel->get_ProgressBar()->SetProgress(progress);
+    auto rows = trackPanel->GetSelectedRows();
+
+    for (auto row : rows) {
+        auto track = trackPanel->GetTrack(row);
+
+        downloader->downloadResource(track, [this, row](int progress) {
+            trackPanel->SetDownloadProgress(row, progress);
         });
+    }
 }

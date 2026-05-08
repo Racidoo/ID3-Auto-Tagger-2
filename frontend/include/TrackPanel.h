@@ -12,6 +12,7 @@ class TrackModel;
 class Downloader;
 
 wxDECLARE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
+wxDECLARE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
 
 class TrackPanel : public wxPanel {
   public:
@@ -22,7 +23,11 @@ class TrackPanel : public wxPanel {
     void Refresh();
     void
     MergeTracks(const std::vector<std::shared_ptr<TrackInterface>> &_batch);
-    std::vector<std::shared_ptr<TrackInterface>> GetSelectedRows();
+    std::vector<std::size_t> GetSelectedRows() const;
+    std::vector<std::shared_ptr<TrackInterface>>
+    GetTracksOfSelectedRows() const;
+    void SetDownloadProgress(unsigned _row, int _progress);
+    std::shared_ptr<TrackInterface> GetTrack(std::size_t _row) const;
     void ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
                                    const std::string &_value);
     void Search(const wxString &_query, bool _showVerified,

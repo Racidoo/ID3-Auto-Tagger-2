@@ -64,7 +64,7 @@ class Downloader {
     };
 
     struct SearchResult {
-        std::vector<std::shared_ptr<Spotify::Track>> tracks;
+        std::vector<std::shared_ptr<TrackInterface>> tracks;
         std::vector<Spotify::Album> albums;
         std::vector<Spotify::Artist> artists;
         std::vector<Spotify::Playlist> playlists;
@@ -81,9 +81,8 @@ class Downloader {
                                const std::string &_market = "DE",
                                unsigned int _limit = 0,
                                const std::string &_offset = "0");
-    void downloadResource(
-        const std::vector<std::shared_ptr<TrackInterface>> &_tracks,
-        std::function<void(int)> _onProgress);
+    void downloadResource(std::shared_ptr<TrackInterface> _track,
+                          std::function<void(int)> _onProgress);
     std::string downloadResource(std::vector<YouTube::Video> &&_videos,
                                  std::function<void(int)> _onProgress);
     void deleteLocalTrack(std::shared_ptr<TrackInterface> _data);
