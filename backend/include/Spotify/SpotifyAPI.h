@@ -23,7 +23,10 @@ class SpotifyAPI : public Query {
   public:
     SpotifyAPI();
     SpotifyAPI(const std::string &_clientId, const std::string &_clientSecret);
-    ~SpotifyAPI();
+    ~SpotifyAPI() = default;
+
+    void saveCredentials() override;
+    std::string generateAccessToken() override;
 
     static SpotifyAPI &getInstance() {
         static SpotifyAPI instance;
@@ -73,8 +76,11 @@ class SpotifyAPI : public Query {
 
   private:
     inline const static std::string urlAPI = "https://api.spotify.com/v1/";
-    // inline const static std::string urlToken =
-    //     "https://accounts.spotify.com/api/token";
+    std::string accessToken;
+    std::string clientId;
+    std::string clientSecret;
+
+    void prepareHeaders(struct curl_slist *&_headers) override;
 
     json search(searchItem_type _type, const std::string &_query,
                 const std::string &_market = "", unsigned int _limit = 0,
