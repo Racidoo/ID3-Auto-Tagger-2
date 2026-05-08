@@ -1,16 +1,13 @@
-#include "../include/MainFrame.h"
-#include "../include/Downloader.h"
-#include "../include/IconProvider.h"
-#include "../include/LabeledTextCtrl.h"
-#include "../include/LocalTrackWindow.h"
-#include "../include/SettingsWindow.h"
-#include "../include/SpotifyWindow.h"
-#include "../include/TrackEditWindow.h"
-#include "../include/TrackInterface.h"
-#include "../include/TrackLabel.h"
-#include "../include/TrackWindow.h"
-#include "../include/YouTubeWindow.h"
-#include <taglib/mpegfile.h>
+#include "MainFrame.h"
+#include "Downloader.h"
+#include "IconProvider.h"
+#include "LabeledTextCtrl.h"
+#include "LocalTrackWindow.h"
+#include "SettingsWindow.h"
+#include "SpotifyWindow.h"
+#include "TrackEditWindow.h"
+#include "TrackInterface.h"
+#include "YouTubeWindow.h"
 
 enum {
     IDM_TOOLBAR_DOWNLOAD = 200,
@@ -65,7 +62,6 @@ MainFrame::MainFrame()
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);
     mainSizer->Add(youtubePanel, 1, wxEXPAND);
     mainSizer->Add(settingsPanel, 1, wxEXPAND);
-
 
     // Bind toolbar events
     Bind(wxEVT_TOOL, &MainFrame::OnDownloadClicked, this, IDM_TOOLBAR_DOWNLOAD);

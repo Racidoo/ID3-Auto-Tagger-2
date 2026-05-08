@@ -1,6 +1,5 @@
 #include "../include/YouTubeWindow.h"
 #include "../include/Downloader.h"
-#include "../include/TrackLabel.h"
 #include "../include/VideoLabel.h"
 
 YouTubeWindow::YouTubeWindow(wxWindow *_parent, Downloader *_downloader)

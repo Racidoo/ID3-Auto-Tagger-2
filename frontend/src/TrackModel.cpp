@@ -1,4 +1,5 @@
 #include "TrackModel.h"
+#include "DownloadStatusRenderer.h"
 #include "TrackInterface.h"
 #include "TrackModelRow.h"
 
@@ -90,18 +91,20 @@ bool TrackModel::MatchesSearch(
     if (filterState.searchQuery.empty())
         return true;
 
-    return _row->get_sortTitle().Contains(filterState.searchQuery) ||
-           _row->get_sortArtist().Contains(filterState.searchQuery) ||
-           _row->get_sortAlbum().Contains(filterState.searchQuery) ||
-           _row->get_sortGenre().Contains(filterState.searchQuery);
+    return _row->get_sortTitle().contains(filterState.searchQuery) ||
+           _row->get_sortArtist().contains(filterState.searchQuery) ||
+           _row->get_sortAlbum().contains(filterState.searchQuery) ||
+           _row->get_sortGenre().contains(filterState.searchQuery);
 }
 
 bool TrackModel::MatchesFilter(
     const std::shared_ptr<TrackModelRow> &_row) const {
-    if (filterState.showVerified && _row->get_sortVerified()) {
+    if (filterState.showVerified &&
+        _row->get_status().state == DownloadState::Verified) {
         return true;
     }
-    if (filterState.showUnverified && !_row->get_sortVerified()) {
+    if (filterState.showUnverified &&
+        !(_row->get_status().state == DownloadState::Verified)) {
         return true;
     }
     return false;
@@ -117,7 +120,7 @@ unsigned int TrackModel::GetColumnCount() const { return COL_MAX; }
 wxString TrackModel::GetColumnType(unsigned int _col) const {
     switch (_col) {
     case COL_PROGRESS:
-        return "wxBitmap";
+        return "long";
     case COL_COVER:
         return "wxBitmap";
     case COL_VERIFY:
@@ -136,7 +139,7 @@ void TrackModel::GetValueByRow(wxVariant &_variant, unsigned int _row,
 
     switch (_col) {
     case COL_PROGRESS:
-        _variant << r->get_verified();
+        _variant = static_cast<long>(r->get_status().progress);
         break;
     case COL_COVER:
         _variant << r->get_cover();
@@ -171,6 +174,12 @@ bool TrackModel::SetValueByRow(const wxVariant &, unsigned int, unsigned int) {
     return false;
 }
 
+void TrackModel::SetDownloadStatusByRow(std::size_t _row,
+                                        const DownloadStatus &_status) {
+    visibleRows[_row]->set_status(_status);
+    RowChanged(_row);
+}
+
 void TrackModel::SortByHeader(unsigned int _column, bool _ascending) {
     auto compare = [_ascending](const auto &_a, const auto &_b) {
         return _ascending ? _a < _b : _a > _b;
@@ -181,7 +190,8 @@ void TrackModel::SortByHeader(unsigned int _column, bool _ascending) {
             switch (_column) {
 
             case COL_PROGRESS:
-                return compare(a->get_sortVerified(), b->get_sortVerified());
+                return compare(a->get_status().progress,
+                               b->get_status().progress);
             case COL_TITLE:
                 return compare(a->get_sortTitle(), b->get_sortTitle());
             case COL_ARTIST:

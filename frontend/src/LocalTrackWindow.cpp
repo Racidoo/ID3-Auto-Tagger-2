@@ -2,7 +2,6 @@
 #include "Downloader.h"
 #include "LabeledTextCtrl.h"
 #include "TrackEditWindow.h"
-#include "TrackLabel.h"
 #include "TrackPanel.h"
 
 LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
@@ -51,7 +50,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     subtreeCheckBox->Bind(wxEVT_CHECKBOX,
                           [this](wxCommandEvent &event) { this->refresh(); });
     Bind(EVT_TRACK_SELECTION_CHANGED, [this](wxCommandEvent &) {
-        trackEditWindow->set_selected(trackPanel->GetSelectedRows());
+        trackEditWindow->set_selected(trackPanel->GetTracksOfSelectedRows());
         trackEditWindow->Update();
         trackEditWindow->Show();
         Layout();

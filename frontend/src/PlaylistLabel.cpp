@@ -1,5 +1,4 @@
 #include "../include/PlaylistLabel.h"
-#include "../include/TrackLabel.h"
 
 PlaylistLabel::PlaylistLabel(wxWindow *_parent,
                              const Spotify::Playlist &_playlist)

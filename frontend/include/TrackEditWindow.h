@@ -25,6 +25,9 @@ class TrackEditWindow : public wxPanel {
     LabeledTextCtrl *discNumberText;
     LabeledTextCtrl *copyrightText;
     LabeledTextCtrl *filenameText;
+    LabeledTextCtrl *bitrateText;
+    LabeledTextCtrl *channelsText;
+    LabeledTextCtrl *sampleRateText;
 
     std::vector<std::shared_ptr<TrackInterface>> selected;
 

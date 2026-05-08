@@ -15,22 +15,24 @@ std::shared_ptr<TrackInterface> TrackModelRow::get_track() const {
     return track;
 }
 
-wxBitmap TrackModelRow::get_verified() const {
-    return sortVerified ? GetCheckmarkBitmap() : GetXmarkBitmap();
-}
-wxBitmap TrackModelRow::get_cover() const { return cover; }
-wxString TrackModelRow::get_title() const { return title; }
-wxString TrackModelRow::get_artist() const { return artist; }
-wxString TrackModelRow::get_album() const { return album; }
-wxString TrackModelRow::get_genre() const { return genre; }
-wxString TrackModelRow::get_length() const { return length; }
+const DownloadStatus &TrackModelRow::get_status() const { return status; }
+const wxBitmap &TrackModelRow::get_cover() const { return cover; }
+const wxString &TrackModelRow::get_title() const { return title; }
+const wxString &TrackModelRow::get_artist() const { return artist; }
+const wxString &TrackModelRow::get_album() const { return album; }
+const wxString &TrackModelRow::get_genre() const { return genre; }
+const wxString &TrackModelRow::get_length() const { return length; }
 
-bool TrackModelRow::get_sortVerified() const { return sortVerified; }
-wxString TrackModelRow::get_sortTitle() const { return sortTitle; }
-wxString TrackModelRow::get_sortArtist() const { return sortArtist; }
-wxString TrackModelRow::get_sortAlbum() const { return sortAlbum; }
-wxString TrackModelRow::get_sortGenre() const { return sortGenre; }
+// bool TrackModelRow::get_sortVerified() const { return sortVerified; }
+const std::string &TrackModelRow::get_sortTitle() const { return sortTitle; }
+const std::string &TrackModelRow::get_sortArtist() const { return sortArtist; }
+const std::string &TrackModelRow::get_sortAlbum() const { return sortAlbum; }
+const std::string &TrackModelRow::get_sortGenre() const { return sortGenre; }
 std::size_t TrackModelRow::get_sortLength() const { return sortLength; }
+
+void TrackModelRow::set_status(const DownloadStatus &_status) {
+    status = _status;
+}
 
 const wxBitmap &TrackModelRow::GetCheckmarkBitmap() {
     static wxBitmap bitmap = [] {
@@ -75,7 +77,15 @@ void TrackModelRow::RebuildSortCache() {
     album = wxString::FromUTF8(track->get_album());
     genre = wxString::FromUTF8(track->get_genre());
 
-    sortVerified = track->is_verified();
+    // sortVerified = track->is_verified();
+    if (track->is_verified()) {
+        status = {100, DownloadState::Verified};
+    } else if (track->get_spotifyTrack()) {
+        status = {0, DownloadState::NotDownloaded};
+    } else {
+        status = {-1, DownloadState::Failed};
+    }
+
     sortTitle = title.Lower();
     sortArtist = artist.Lower();
     sortAlbum = album.Lower();

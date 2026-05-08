@@ -32,6 +32,9 @@ class LocalTrack {
     std::string copyright;
     std::string label;
     std::string discNumber;
+    std::size_t bitrate;
+    std::size_t sampleRate;
+    std::size_t channels;
 
   public:
     LocalTrack(const std::filesystem::path &_path);
@@ -48,7 +51,11 @@ class LocalTrack {
         YEAR,
         TRACK,
         DISC,
-        FILENAME
+        FILENAME,
+        FILE_EXTENSION,
+        BITRATE,
+        CHANNELS,
+        SAMPLE_RATE
     };
 
     std::string get_title();
@@ -62,6 +69,9 @@ class LocalTrack {
     std::string get_trackNumber();
     std::string get_discNumber();
     std::size_t get_length();
+    std::string get_bitrate();
+    std::string get_sampleRate();
+    std::string get_channels();
 
     std::vector<std::byte> get_cover() const;
 

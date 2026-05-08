@@ -5,6 +5,7 @@ set(SOURCES
     src/App.cpp
     src/ArtistLabel.cpp
     src/CircleProgressBar.cpp
+    src/DownloadStatusRenderer.cpp
     src/IconProvider.cpp
     src/LabeledTextCtrl.cpp
     src/LocalTrackWindow.cpp
@@ -18,11 +19,9 @@ set(SOURCES
     src/SettingsWindow.cpp
     src/SpotifyWindow.cpp
     src/TrackEditWindow.cpp
-    src/TrackLabel.cpp
     src/TrackPanel.cpp
     src/TrackModel.cpp
     src/TrackModelRow.cpp
-    src/TrackWindow.cpp
     src/VideoLabel.cpp
     src/YouTubeWindow.cpp
 )

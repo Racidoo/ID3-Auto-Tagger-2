@@ -3,6 +3,8 @@
 #include <memory>
 #include <wx/wx.h>
 
+#include "DownloadStatusRenderer.h"
+
 class TrackInterface;
 
 class TrackModelRow {
@@ -16,11 +18,12 @@ class TrackModelRow {
     wxString genre;
     wxString length;
 
-    bool sortVerified;
-    wxString sortTitle;
-    wxString sortArtist;
-    wxString sortAlbum;
-    wxString sortGenre;
+    // bool sortVerified;
+    DownloadStatus status;
+    std::string sortTitle;
+    std::string sortArtist;
+    std::string sortAlbum;
+    std::string sortGenre;
     std::size_t sortLength;
 
   public:
@@ -33,20 +36,22 @@ class TrackModelRow {
     ~TrackModelRow();
 
     std::shared_ptr<TrackInterface> get_track() const;
-    wxBitmap get_verified() const;
-    wxBitmap get_cover() const;
-    wxString get_title() const;
-    wxString get_artist() const;
-    wxString get_album() const;
-    wxString get_genre() const;
-    wxString get_length() const;
+    const DownloadStatus &get_status() const;
+    const wxBitmap &get_cover() const;
+    const wxString &get_title() const;
+    const wxString &get_artist() const;
+    const wxString &get_album() const;
+    const wxString &get_genre() const;
+    const wxString &get_length() const;
 
-    bool get_sortVerified() const;
-    wxString get_sortTitle() const;
-    wxString get_sortArtist() const;
-    wxString get_sortAlbum() const;
-    wxString get_sortGenre() const;
+    // bool get_sortVerified() const;
+    const std::string &get_sortTitle() const;
+    const std::string &get_sortArtist() const;
+    const std::string &get_sortAlbum() const;
+    const std::string &get_sortGenre() const;
     std::size_t get_sortLength() const;
+
+    void set_status(const DownloadStatus &_status);
 
     static const wxBitmap &GetCheckmarkBitmap();
     static const wxBitmap &GetXmarkBitmap();

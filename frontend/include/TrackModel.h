@@ -5,6 +5,8 @@
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
+#include "DownloadStatusRenderer.h"
+
 class TrackInterface;
 class TrackModelRow;
 
@@ -27,7 +29,7 @@ class TrackModel : public wxDataViewVirtualListModel {
         bool showVerified;
         bool showUnverified;
 
-        wxString searchQuery;
+        std::string searchQuery;
     };
 
     explicit TrackModel();
@@ -52,7 +54,8 @@ class TrackModel : public wxDataViewVirtualListModel {
     // bool HasDefaultCompare() const override;
     // int Compare(const wxDataViewItem &_item1, const wxDataViewItem &_item2,
     //             unsigned int _column, bool _ascending) const override;
-
+    void SetDownloadStatusByRow(std::size_t _row,
+                                const DownloadStatus &_status);
     void SortByHeader(unsigned int _column, bool _ascending);
 
   private:

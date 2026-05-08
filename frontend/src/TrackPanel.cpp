@@ -1,10 +1,12 @@
 #include "TrackPanel.h"
+#include "DownloadStatusRenderer.h"
 #include "Downloader.h"
 #include "TrackInterface.h"
 #include "TrackModel.h"
 #include "TrackModelRow.h"
 
 wxDEFINE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
 
 TrackPanel::TrackPanel(wxWindow *parent, Downloader *_downloader)
     : wxPanel(parent), downloader(_downloader) {
@@ -20,16 +22,19 @@ TrackPanel::TrackPanel(wxWindow *parent, Downloader *_downloader)
     model->DecRef();
 
     // Columns
-    ctrl->AppendBitmapColumn("", TrackModel::COL_PROGRESS,
-                             wxDATAVIEW_CELL_INERT, 64, wxALIGN_CENTER,
-                             wxDATAVIEW_COL_SORTABLE);
+    ctrl->AppendColumn(
+        new wxDataViewColumn("Download", new DownloadStatusRenderer(),
+                             TrackModel::COL_PROGRESS, 64, wxALIGN_CENTER));
+    // ctrl->AppendBitmapColumn("", TrackModel::COL_PROGRESS,
+    //                          wxDATAVIEW_CELL_INERT, 64, wxALIGN_CENTER,
+    //                          wxDATAVIEW_COL_SORTABLE);
 
     ctrl->AppendBitmapColumn("Cover", TrackModel::COL_COVER,
                              wxDATAVIEW_CELL_INERT, 64, wxALIGN_CENTER);
 
     ctrl->AppendTextColumn("Title", TrackModel::COL_TITLE,
                            wxDATAVIEW_CELL_INERT, 250, wxALIGN_LEFT,
-                           wxDATAVIEW_COL_SORTABLE);
+                           wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
 
     ctrl->AppendTextColumn("Artist", TrackModel::COL_ARTIST,
                            wxDATAVIEW_CELL_INERT, 200, wxALIGN_LEFT,
@@ -45,7 +50,7 @@ TrackPanel::TrackPanel(wxWindow *parent, Downloader *_downloader)
 
     ctrl->AppendTextColumn("Length", TrackModel::COL_LENGTH,
                            wxDATAVIEW_CELL_INERT, 64, wxALIGN_LEFT,
-                           wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+                           wxDATAVIEW_COL_SORTABLE);
 
     ctrl->AppendBitmapColumn("Verify", TrackModel::COL_VERIFY,
                              wxDATAVIEW_CELL_INERT, 64, wxALIGN_CENTER);
@@ -75,8 +80,8 @@ void TrackPanel::MergeTracks(
     model->MergeRows(_batch);
 }
 
-std::vector<std::shared_ptr<TrackInterface>> TrackPanel::GetSelectedRows() {
-    std::vector<std::shared_ptr<TrackInterface>> selectedTracks;
+std::vector<std::size_t> TrackPanel::GetSelectedRows() const {
+    std::vector<std::size_t> selectedRows;
     wxDataViewItemArray selectedDataViewItems;
     ctrl->GetSelections(selectedDataViewItems);
     for (auto &&item : selectedDataViewItems) {
@@ -84,10 +89,27 @@ std::vector<std::shared_ptr<TrackInterface>> TrackPanel::GetSelectedRows() {
             wxLogDebug("Item selected but not valid");
             continue;
         }
-        selectedTracks.push_back(
-            model->GetTrack(model->GetRowByIndex(model->GetRow(item))));
+        selectedRows.push_back(model->GetRow(item));
     }
-    return selectedTracks;
+    return selectedRows;
+}
+
+std::vector<std::shared_ptr<TrackInterface>>
+TrackPanel::GetTracksOfSelectedRows() const {
+    std::vector<std::shared_ptr<TrackInterface>> tracks;
+    for (auto &&row : GetSelectedRows()) {
+        tracks.push_back(GetTrack(row));
+    }
+    return tracks;
+}
+
+void TrackPanel::SetDownloadProgress(unsigned _row, int _progress) {
+    model->SetDownloadStatusByRow(_row,
+                                  {_progress, DownloadState::Downloading});
+}
+
+std::shared_ptr<TrackInterface> TrackPanel::GetTrack(std::size_t _row) const {
+    return model->GetTrack(model->GetRowByIndex(_row));
 }
 
 void TrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
@@ -154,7 +176,8 @@ void TrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
 
 void TrackPanel::Search(const wxString &_query, bool _showVerified,
                         bool _showUnverified) {
-    model->SetFilterState({_showVerified, _showUnverified, _query});
+    model->SetFilterState(
+        {_showVerified, _showUnverified, _query.ToStdString()});
 }
 
 void TrackPanel::OnSelectionChanged(wxDataViewEvent &) {
@@ -171,7 +194,10 @@ void TrackPanel::OnActivated(wxDataViewEvent &event) {
     auto row = model->GetRowByIndex(rowIndex);
     const auto &track = model->GetTrack(row);
 
-    if (column == TrackModel::COL_DELETE) {
+    if (column == TrackModel::COL_PROGRESS && track->get_spotifyTrack()) {
+        wxCommandEvent evt(EVT_TRACK_DOWNLOAD);
+        wxPostEvent(GetParent(), evt);
+    } else if (column == TrackModel::COL_DELETE) {
         wxMessageDialog dialog(this, "Delete selected track?",
                                "Confirm deletion", wxYES_NO | wxICON_WARNING);
 

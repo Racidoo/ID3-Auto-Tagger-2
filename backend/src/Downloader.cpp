@@ -185,19 +185,22 @@ Downloader::fetchResource(const std::string &_query,
 
     if (type == "track") {
         auto track = spotify->getTrack(id);
-        result.tracks.push_back(std::make_shared<Spotify::Track>(track));
+        result.tracks.push_back(TrackInterface::fromSpotify(
+            std::make_shared<Spotify::Track>(track)));
         track.set_downloaded(isBlocked(track.get_id()));
     } else if (type == "album") {
         auto tracks = spotify->getAlbumTracks(id);
         for (auto &&track : tracks) {
             track.set_downloaded(isBlocked(track.get_id()));
-            result.tracks.push_back(std::make_shared<Spotify::Track>(track));
+            result.tracks.push_back(TrackInterface::fromSpotify(
+                std::make_shared<Spotify::Track>(track)));
         }
     } else if (type == "playlist") {
         auto tracks = spotify->getPlaylistTracks(id);
         for (auto &&track : tracks) {
             track.set_downloaded(isBlocked(track.get_id()));
-            result.tracks.push_back(std::make_shared<Spotify::Track>(track));
+            result.tracks.push_back(TrackInterface::fromSpotify(
+                std::make_shared<Spotify::Track>(track)));
         }
     } else if (type == "video") {
         auto video = youTube->getVideo(id);
@@ -212,8 +215,8 @@ Downloader::fetchResource(const std::string &_query,
                     spotify->searchTrack(_query, _market, _limit, _offset);
                 for (auto &track : tracks) {
                     track.set_downloaded(isBlocked(track.get_id()));
-                    result.tracks.push_back(
-                        std::make_shared<Spotify::Track>(track));
+                    result.tracks.push_back(TrackInterface::fromSpotify(
+                        std::make_shared<Spotify::Track>(track)));
                 }
                 break;
             }
@@ -263,13 +266,9 @@ std::string Downloader::downloadResource(std::vector<YouTube::Video> &&_videos,
     return result;
 }
 
-void Downloader::downloadResource(
-    const std::vector<std::shared_ptr<TrackInterface>> &_tracks,
-    std::function<void(int)> _onProgress) {
-
-    for (auto &&track : _tracks) {
-        downloadAndTag(track, _onProgress);
-    }
+void Downloader::downloadResource(std::shared_ptr<TrackInterface> _track,
+                                  std::function<void(int)> _onProgress) {
+    downloadAndTag(_track, _onProgress);
 }
 
 bool Downloader::isBlocked(const std::string &_id) const {

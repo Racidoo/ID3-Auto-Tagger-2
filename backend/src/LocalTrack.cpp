@@ -52,6 +52,18 @@ std::size_t LocalTrack::get_length() {
     ensureMainTagsLoaded();
     return length;
 }
+std::string LocalTrack::get_bitrate() {
+    ensureAdditionalTagsLoaded();
+    return std::to_string(bitrate);
+}
+std::string LocalTrack::get_sampleRate() {
+    ensureAdditionalTagsLoaded();
+    return std::to_string(sampleRate);
+}
+std::string LocalTrack::get_channels() {
+    ensureAdditionalTagsLoaded();
+    return std::to_string(channels);
+}
 
 std::vector<std::byte> LocalTrack::get_cover() const {
     TagLib::MPEG::File _track(get_filepath().c_str());
@@ -295,6 +307,8 @@ void LocalTrack::ensureAdditionalTagsLoaded() {
     }
 
     TagLib::MPEG::File file(filepath.c_str());
+    TagLib::FileRef fr(TagLib::FileName(filepath.c_str()), true,
+                       TagLib::AudioProperties::Accurate);
     if (!file.isValid()) {
         additionalTagsLoadded = true;
         return;
@@ -306,6 +320,11 @@ void LocalTrack::ensureAdditionalTagsLoaded() {
     label = getFrameText(id3Tag, "TPUB");
     discNumber = getFrameText(id3Tag, "TPOS");
     copyright = getFrameText(id3Tag, "TCOP");
+
+    bitrate = file.audioProperties()->bitrate();
+    sampleRate = file.audioProperties()->sampleRate();
+    channels = file.audioProperties()->channels();
+
     additionalTagsLoadded = true;
 }
 
