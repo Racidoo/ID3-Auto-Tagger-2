@@ -27,6 +27,8 @@ class Query {
     static std::vector<std::byte>
     downloadImage(const std::string &_url, const std::string &_outputPath = "");
 
+    std::string urlEncode(const std::string &_value);
+
   protected:
     inline const static std::filesystem::path pathCredentials =
         std::filesystem::current_path() / "backend" / "api" /
@@ -37,7 +39,7 @@ class Query {
     void saveCredentialsToFile(const json &_credentials) const;
 
     virtual void prepareHeaders(struct curl_slist *&_headers) = 0;
-    virtual std::string prepareUrl(const std::string &_url);
+    virtual std::string prepareUrl(const std::string &_url) = 0;
     json performRequest(const std::string &_url);
 
     static std::string toLower(const std::string &_str);

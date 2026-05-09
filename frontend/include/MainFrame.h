@@ -10,7 +10,7 @@
 class Downloader;
 class SettingsWindow;
 class SpotifyWindow;
-class TrackWindow;
+class DiscogsWindow;
 class LocalTrackWindow;
 class YouTubeWindow;
 
@@ -26,12 +26,14 @@ class MainFrame : public wxFrame {
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;
     SpotifyWindow *spotifyPanel;
+    DiscogsWindow *discogsPanel;
     LocalTrackWindow *downloadPanel;
     YouTubeWindow *youtubePanel;
 
     void ShowPanel(wxScrolledWindow *panel);
     void OnDownloadClicked(wxCommandEvent &event);
     void OnSpotifyClicked(wxCommandEvent &event);
+    void OnDiscogsClicked(wxCommandEvent &event);
     void OnYouTubeClicked(wxCommandEvent &event);
     void OnSettingsClicked(wxCommandEvent &event);
 

@@ -18,6 +18,11 @@ wxBitmap IconProvider::CreateBitmap(const wxArtID &_id,
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
                                     wxIMAGE_QUALITY_HIGH));
     }
+    if (_id == wxART_BRAND_DISCOGS) {
+        wxImage img(wxT("img/discogs_256.png"), wxBITMAP_TYPE_PNG);
+        return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
+                                    wxIMAGE_QUALITY_HIGH));
+    }
     if (_id == wxART_BRAND_YOUTUBE) {
         wxImage img(wxT("img/youtube_256.png"), wxBITMAP_TYPE_PNG);
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),

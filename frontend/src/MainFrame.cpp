@@ -1,4 +1,5 @@
 #include "MainFrame.h"
+#include "DiscogsWindow.h"
 #include "Downloader.h"
 #include "IconProvider.h"
 #include "LabeledTextCtrl.h"
@@ -12,6 +13,7 @@
 enum {
     IDM_TOOLBAR_DOWNLOAD = 200,
     IDM_TOOLBAR_SPOTIFY,
+    IDM_TOOLBAR_DISCOGS,
     IDM_TOOLBAR_YOUTUBE,
     IDM_TOOLBAR_SETTINGS
 };
@@ -37,6 +39,11 @@ MainFrame::MainFrame()
         wxNullBitmap, wxITEM_NORMAL, wxT("Spotify"),
         wxT("Open Spotify Screen"));
     toolBar->AddTool(
+        IDM_TOOLBAR_DISCOGS, wxEmptyString,
+        wxArtProvider::GetBitmap(wxART_BRAND_DISCOGS, wxART_TOOLBAR),
+        wxNullBitmap, wxITEM_NORMAL, wxT("Discogs"),
+        wxT("Open Discogs Screen"));
+    toolBar->AddTool(
         IDM_TOOLBAR_YOUTUBE, wxEmptyString,
         wxArtProvider::GetBitmap(wxART_BRAND_YOUTUBE, wxART_TOOLBAR),
         wxNullBitmap, wxITEM_NORMAL, wxT("YouTube"),
@@ -55,17 +62,20 @@ MainFrame::MainFrame()
     // Create panels for different screens (Initially hidden)
     downloadPanel = new LocalTrackWindow(mainPanel, downloader.get());
     spotifyPanel = new SpotifyWindow(mainPanel, downloader.get());
+    discogsPanel = new DiscogsWindow(mainPanel, downloader.get());
     youtubePanel = new YouTubeWindow(mainPanel, downloader.get());
     settingsPanel = new SettingsWindow(mainPanel, downloader.get());
 
     mainSizer->Add(downloadPanel, 1, wxEXPAND);
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);
+    mainSizer->Add(discogsPanel, 1, wxEXPAND);
     mainSizer->Add(youtubePanel, 1, wxEXPAND);
     mainSizer->Add(settingsPanel, 1, wxEXPAND);
 
     // Bind toolbar events
     Bind(wxEVT_TOOL, &MainFrame::OnDownloadClicked, this, IDM_TOOLBAR_DOWNLOAD);
     Bind(wxEVT_TOOL, &MainFrame::OnSpotifyClicked, this, IDM_TOOLBAR_SPOTIFY);
+    Bind(wxEVT_TOOL, &MainFrame::OnDiscogsClicked, this, IDM_TOOLBAR_DISCOGS);
     Bind(wxEVT_TOOL, &MainFrame::OnYouTubeClicked, this, IDM_TOOLBAR_YOUTUBE);
     Bind(wxEVT_TOOL, &MainFrame::OnSettingsClicked, this, IDM_TOOLBAR_SETTINGS);
 
@@ -85,6 +95,7 @@ MainFrame::MainFrame()
 void MainFrame::ShowPanel(wxScrolledWindow *panel) {
     downloadPanel->Hide();
     spotifyPanel->Hide();
+    discogsPanel->Hide();
     youtubePanel->Hide();
     settingsPanel->Hide();
     panel->Show();
@@ -104,6 +115,15 @@ void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
         return;
     }
     ShowPanel(spotifyPanel);
+}
+
+void MainFrame::OnDiscogsClicked(wxCommandEvent &event) {
+    if (!downloader->initializeDiscogs()) {
+        wxLogError(wxT("Provide Discogs-credentials in the Settings, before "
+                       "using API-Services!"));
+        return;
+    }
+    ShowPanel(discogsPanel);
 }
 
 void MainFrame::OnYouTubeClicked(wxCommandEvent &event) {

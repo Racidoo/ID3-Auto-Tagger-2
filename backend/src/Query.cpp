@@ -34,8 +34,6 @@ json Query::loadCredentials() const {
     return data;
 }
 
-std::string Query::prepareUrl(const std::string &_url) { return _url; }
-
 json Query::performRequest(const std::string &_url) {
 
     CURL *curl = curl_easy_init();
@@ -46,37 +44,65 @@ json Query::performRequest(const std::string &_url) {
     }
 
     std::string responseData;
+    std::string headerData;
+
+    char errorBuffer[CURL_ERROR_SIZE] = {0};
 
     struct curl_slist *headers = nullptr;
 
     prepareHeaders(headers);
+
     auto url = prepareUrl(_url);
+
+    std::cout << "Request: " << url << std::endl;
 
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, writeCallback);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerData);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
+
+#ifdef DEBUG
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+#endif
 
     CURLcode res = curl_easy_perform(curl);
+
+    long responseCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 
     if (res != CURLE_OK) {
-        std::cerr << "Request failed: " << res
-                  << "\nRequest: " << url
-                  << "\nResponse: " << responseData << std::endl;
+        std::cerr << "Request failed\n"
+                  << "CURL code: " << res << "\n"
+                  << "CURL error: " << errorBuffer << "\n"
+                  << "URL: " << url << "\n"
+                  << "HTTP status: " << responseCode << "\n"
+                  << "Headers:\n"
+                  << headerData << "\n"
+                  << "Response:\n"
+                  << responseData << std::endl;
+
         return {};
     }
 
     json response = json::parse(responseData, nullptr, false);
+
     if (response.is_discarded()) {
-        std::cerr << "Error: Failed to parse JSON response!" << std::endl;
+        std::cerr << "Failed to parse JSON\n"
+                  << "Response:\n"
+                  << responseData << std::endl;
         return {};
     }
+
     if (response.contains("error")) {
         std::cerr << response.dump(4) << std::endl;
     }
+    std::cout << response.dump(4) << std::endl;
     std::ofstream("response.json") << response.dump(4);
     return response;
 }
@@ -206,6 +232,18 @@ std::vector<std::byte> Query::downloadImage(const std::string &_url,
     if (curl)
         curl_easy_cleanup(curl);
     return imageData;
+}
+
+std::string Query::urlEncode(const std::string &_value) {
+    CURL *curl = curl_easy_init();
+    if (!curl) {
+        return {};
+    }
+    char *escaped = curl_easy_escape(curl, _value.c_str(), _value.length());
+    std::string result = escaped ? escaped : "";
+    curl_free(escaped);
+    curl_easy_cleanup(curl);
+    return result;
 }
 
 json Query::exec(const std::string &_cmd) const {

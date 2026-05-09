@@ -7,6 +7,7 @@
 
 #include "TrackSource/ITrackSource.hpp"
 
+#include "Discogs/SearchResult.h"
 #include "LocalTrack.h"
 #include "Spotify/Track.h"
 
@@ -62,6 +63,8 @@ class TrackInterface {
     fromLocal(std::shared_ptr<LocalTrack> _track);
     static std::shared_ptr<TrackInterface>
     fromSpotify(std::shared_ptr<Spotify::Track> _track);
+    static std::shared_ptr<TrackInterface>
+    fromDiscogs(std::shared_ptr<Discogs::SearchResult> _track);
 
     static bool verify(std::shared_ptr<TrackInterface> _data,
                        Downloader *_downloader);

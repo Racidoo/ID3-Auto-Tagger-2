@@ -75,12 +75,13 @@ class SpotifyAPI : public Query {
     static bool isValidIdFormat(const std::string &_id);
 
   private:
-    inline const static std::string urlAPI = "https://api.spotify.com/v1/";
+    inline const static std::string urlAPI = "https://api.spotify.com/v1";
     std::string accessToken;
     std::string clientId;
     std::string clientSecret;
 
     void prepareHeaders(struct curl_slist *&_headers) override;
+    std::string prepareUrl(const std::string &_url) override;
 
     json search(searchItem_type _type, const std::string &_query,
                 const std::string &_market = "", unsigned int _limit = 0,

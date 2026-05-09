@@ -3,7 +3,7 @@
 
 Downloader::Downloader()
     : trackPath(std::filesystem::current_path() / "music/"), spotify(nullptr),
-      youTube(nullptr)
+      youTube(nullptr), discogs(nullptr)
 //   ,coverPath(std::filesystem::current_path() / "cover/")
 {
     initialize();
@@ -18,6 +18,8 @@ Downloader::~Downloader() {
         delete spotify;
     if (youTube)
         delete youTube;
+    if (discogs)
+        delete discogs;
 }
 
 const std::filesystem::path &Downloader::get_trackPath() const {
@@ -28,12 +30,12 @@ void Downloader::set_trackPath(const std::filesystem::path &_path) {
     trackPath = _path;
 }
 
-bool Downloader::is_initialized() const { return (spotify && youTube); }
+bool Downloader::is_initialized() const {
+    return (spotify && youTube && discogs);
+}
 
 bool Downloader::initialize() {
-
-    return initializeSpotify() && initializeYouTube();
-    //  && initializeSoundcloud();
+    return initializeSpotify() && initializeYouTube() && initializeDiscogs();
 }
 
 bool Downloader::initializeSpotify(const std::string &_clientId,
@@ -55,13 +57,12 @@ bool Downloader::initializeSpotify(const std::string &_clientId,
     return spotify;
 }
 
-bool Downloader::initializeYouTube(const std::string &_googleAuthToken) {
+bool Downloader::initializeYouTube(const std::string &_accessToken) {
     if (!youTube) {
         std::cout << "Initializing YouTube...";
         YouTube::YouTubeAPI *temp =
-            (_googleAuthToken.empty()
-                 ? new YouTube::YouTubeAPI()
-                 : new YouTube::YouTubeAPI(_googleAuthToken));
+            (_accessToken.empty() ? new YouTube::YouTubeAPI()
+                                  : new YouTube::YouTubeAPI(_accessToken));
         if (!temp->generateAccessToken().empty()) {
             std::cout << " success!" << std::endl;
             youTube = temp;
@@ -71,6 +72,23 @@ bool Downloader::initializeYouTube(const std::string &_googleAuthToken) {
         }
     }
     return youTube;
+}
+
+bool Downloader::initializeDiscogs(const std::string &_accessToken) {
+    if (!discogs) {
+        std::cout << "Initializing Discogs...";
+        Discogs::DiscogsAPI *temp =
+            (_accessToken.empty() ? new Discogs::DiscogsAPI()
+                                  : new Discogs::DiscogsAPI(_accessToken));
+        if (!temp->generateAccessToken().empty()) {
+            std::cout << " success!" << std::endl;
+            discogs = temp;
+        } else {
+            std::cout << " failed!" << std::endl;
+            delete temp;
+        }
+    }
+    return discogs;
 }
 
 bool Downloader::loadOrCreateBlacklist() {

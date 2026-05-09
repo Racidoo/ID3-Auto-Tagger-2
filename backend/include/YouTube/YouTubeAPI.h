@@ -35,7 +35,7 @@ class YouTubeAPI : public Query {
   private:
     std::string accessToken;
     inline const static std::string urlAPI =
-        "https://www.googleapis.com/youtube/v3/";
+        "https://www.googleapis.com/youtube/v3";
 
     // inline static const std::string searchListUrl =
     //     "https://www.googleapis.com/youtube/v3/search?part=snippet&q=";

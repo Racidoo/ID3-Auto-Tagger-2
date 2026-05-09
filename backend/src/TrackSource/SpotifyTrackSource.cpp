@@ -14,7 +14,7 @@ std::string SpotifyTrackSource::get_albumArtist() {
 std::string SpotifyTrackSource::get_copyright() {
     return track->get_album().get_copyright();
 }
-std::string SpotifyTrackSource::get_genre() { return "Unknown"; }
+std::string SpotifyTrackSource::get_genre() { return track->get_genre(); }
 std::string SpotifyTrackSource::get_year() {
     return track->get_album().get_releaseYear();
 }
@@ -53,7 +53,7 @@ void SpotifyTrackSource::set_copyright(const std::string &_copyright) {
     track->get_album().set_copyright(_copyright);
 }
 void SpotifyTrackSource::set_genre(const std::string &_genre) {
-    throw std::logic_error("Spotify Object is not mutable!");
+    track->set_genre(_genre);
 }
 void SpotifyTrackSource::set_year(const std::string &_year) {
     throw std::logic_error("Spotify Object is not mutable!");

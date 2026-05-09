@@ -29,8 +29,6 @@ class YouTubeWindow : public wxScrolledWindow {
     void loadAdditionalSearchResults(const wxString &_type);
     void startDownload(wxCommandEvent &_event);
     void verifyTags(wxCommandEvent &_event);
-}
-
-;
+};
 
 #endif // YOUTUBE_WINDOW_H

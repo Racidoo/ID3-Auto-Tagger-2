@@ -64,6 +64,31 @@ SettingsWindow::SettingsWindow(wxWindow *_parent, Downloader *_downloader,
         }
     });
 
+    auto discogsCredentialsSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto discogsCredentialsIcon = new wxStaticBitmap(
+        this, wxID_ANY,
+        wxBitmap(downloader->initializeDiscogs()
+                     ? wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK)
+                     : wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK)));
+    auto discogsCredentialsDialog =
+        new MultiInputDialog(this, wxT("Discogs API Authentication"),
+                             {{"authToken", wxT("Discogs Auth Token"), true}});
+    auto discogsCredentialsButton =
+        new wxButton(this, wxID_ANY, wxT("Discogs API Authentication"));
+    discogsCredentialsButton->Bind(wxEVT_BUTTON, [discogsCredentialsDialog,
+                                                  discogsCredentialsIcon,
+                                                  this](wxCommandEvent &event) {
+        if (discogsCredentialsDialog->ShowModal() == wxID_OK) {
+            discogsCredentialsIcon->SetBitmap(
+                downloader->initializeDiscogs(
+                    discogsCredentialsDialog->GetValues()
+                        .at("authToken")
+                        .ToStdString())
+                    ? wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK)
+                    : wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK));
+        }
+    });
+
     auto musicPathSizer = new wxBoxSizer(wxHORIZONTAL);
     auto musicPathText = new wxStaticText(
         this, wxID_ANY, wxString(downloader->get_trackPath().string()));
@@ -79,50 +104,20 @@ SettingsWindow::SettingsWindow(wxWindow *_parent, Downloader *_downloader,
             downloader->set_trackPath(path.ToStdString());
         }
     });
-    // auto soundcloudCredentialsSizer = new wxBoxSizer(wxHORIZONTAL);
-    // auto soundcloudCredentialsIcon = new wxStaticBitmap(
-    //     this, wxID_ANY,
-    //     wxBitmap(downloader->initializeSoundcloud()
-    //                  ? wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK)
-    //                  : wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK)));
-    // auto soundcloudCredentialsDialog = new MultiInputDialog(
-    //     this, wxT("Soundcloud API Authentication"),
-    //     {{"clientId", wxT("Soundcloud Client ID"), false},
-    //      {"clientSecret", wxT("Soundcloud Client Secret"), true}});
-    // auto soundcloudCredentialsButton =
-    //     new wxButton(this, wxID_ANY, wxT("Soundcloud API Authentication"));
-    // soundcloudCredentialsButton->Bind(
-    //     wxEVT_BUTTON, [soundcloudCredentialsDialog, soundcloudCredentialsIcon,
-    //                    this](wxCommandEvent &event) {
-    //         if (soundcloudCredentialsDialog->ShowModal() == wxID_OK) {
-    //             soundcloudCredentialsIcon->SetBitmap(
-    //                 downloader->initializeSoundcloud(
-    //                     soundcloudCredentialsDialog->GetValues()
-    //                         .at("clientId")
-    //                         .ToStdString(),
-    //                     soundcloudCredentialsDialog->GetValues()
-    //                         .at("clientSecret")
-    //                         .ToStdString())
-    //                     ? wxArtProvider::GetBitmap(wxART_CIRCLE_CHECKMARK)
-    //                     : wxArtProvider::GetBitmap(wxART_CIRCLE_XMARK));
-    //         }
-    //     });
 
     googleAuthSizer->Add(googleAuthTokenButton, 0, wxALL, 5);
     googleAuthSizer->Add(googleAuthIcon, 0, wxALL, 5);
     spotifyCredentialsSizer->Add(spotifyCredentialsButton, 0, wxALL, 5);
     spotifyCredentialsSizer->Add(spotifyCredentialsIcon, 0, wxALL, 5);
+    discogsCredentialsSizer->Add(discogsCredentialsButton, 0, wxALL, 5);
+    discogsCredentialsSizer->Add(discogsCredentialsIcon, 0, wxALL, 5);
     musicPathSizer->Add(musicPathButton, 0, wxALL, 5);
     musicPathSizer->Add(musicPathText, 0, wxALL, 5);
 
     mainSizer->Add(googleAuthSizer, 0, wxALL, 5);
     mainSizer->Add(spotifyCredentialsSizer, 0, wxALL, 5);
+    mainSizer->Add(discogsCredentialsSizer, 0, wxALL, 5);
     mainSizer->Add(musicPathSizer, 0, wxALL, 5);
-    // soundcloudCredentialsSizer->Add(soundcloudCredentialsButton, 0, wxALL,
-    // 5); soundcloudCredentialsSizer->Add(soundcloudCredentialsIcon, 0, wxALL,
-    // 5);
-
-    // mainSizer->Add(soundcloudCredentialsSizer, 0, wxALL, 5);
 
     this->SetSizerAndFit(mainSizer);
 }

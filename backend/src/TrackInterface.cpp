@@ -1,6 +1,7 @@
 #include "../include/TrackInterface.h"
 #include "../include/Downloader.h"
 #include "../include/Query.h"
+#include "TrackSource/DiscogsTrackSource.h"
 #include "TrackSource/LocalTrackSource.h"
 #include "TrackSource/SpotifyTrackSource.h"
 
@@ -118,6 +119,14 @@ TrackInterface::fromSpotify(std::shared_ptr<Spotify::Track> _track) {
     return trackInterface;
 }
 
+std::shared_ptr<TrackInterface>
+TrackInterface::fromDiscogs(std::shared_ptr<Discogs::SearchResult> _track) {
+    auto trackInterface = std::make_shared<TrackInterface>(
+        std::make_shared<DiscogsTrackSource>(_track));
+    trackInterface->set_verified(false);
+    return trackInterface;
+}
+
 bool TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
                             Downloader *_downloader) {
 
@@ -134,13 +143,48 @@ bool TrackInterface::verify(std::shared_ptr<TrackInterface> _data,
             << filepath << "' to blacklist!" << std::endl;
         return false;
     }
+
+    if (!_downloader->initializeDiscogs()) {
+        Discogs::DiscogsAPI::SearchParams params{};
+
+        params.releaseTitle = spotifyTrackData->get_album();
+        params.artist = spotifyTrackData->get_albumArtist();
+        params.year = std::stoi(spotifyTrackData->get_year());
+
+        auto releases = _downloader->get_discogs()->searchRelease(params);
+        if (releases.empty()) {
+            std::cerr << "Could not locate track details using DicogsAPI!"
+                      << std::endl;
+        }
+
+        std::unordered_set<std::string> styles;
+        for (auto &&release : releases) {
+            for (auto &&style : release.get_styles()) {
+                styles.insert(style);
+            }
+        }
+        if (styles.size() == 1) {
+            spotifyTrackData->set_genre(*styles.begin());
+        } else {
+            std::cout << "Cannot determine correct genre:" << std::endl;
+            for (auto &&style : styles) {
+                std::cout << style << std::endl;
+            }
+        }
+    } else {
+        std::cerr << "DiscogsAPI unavailable. Cannot determine genre!"
+                  << std::endl;
+    }
+
     _data->verifyTags(spotifyTrackData);
+
     const auto &id = spotifyTrackData->get_id();
     if (filepath.stem() != id) {
         _downloader->removeBlocked(_data);
         _data->get_localTrack()->renameLocalTrack(id);
     }
     _downloader->makeBlocked(_data);
+
     return true;
 }
 
@@ -177,10 +221,12 @@ void TrackInterface::verifyTags(std::shared_ptr<TrackInterface> _template) {
                   << _template->get_copyright() << "'" << std::endl;
         set_copyright(_template->get_copyright());
     }
-    // skip genre as it's not correctly provided
-    // if (_template->get_genre() != get_genre()) {
-    //     set_genre(_template->get_genre());
-    // }
+    // Only set genre, if it's emtpy
+    if (get_genre().empty() && _template->get_genre() != get_genre()) {
+        std::cout << "Changed genre from '" << get_genre() << "' to  '"
+                  << _template->get_genre() << "'" << std::endl;
+        set_genre(_template->get_genre());
+    }
     if (_template->get_year() != get_year()) {
         std::cout << "Changed year from '" << get_year() << "' to '"
                   << _template->get_year() << "'" << std::endl;

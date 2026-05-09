@@ -5,6 +5,7 @@ set(SOURCES
     src/App.cpp
     src/ArtistLabel.cpp
     src/CircleProgressBar.cpp
+    src/DiscogsWindow.cpp
     src/DownloadStatusRenderer.cpp
     src/IconProvider.cpp
     src/LabeledTextCtrl.cpp

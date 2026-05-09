@@ -20,6 +20,28 @@
 namespace Spotify {
 
 class Track : public QueryObject {
+  public:
+    Track(const std::string &_id, const std::string &_name,
+          unsigned int _discNumber, unsigned long _durationMs,
+          bool _explicitContent, unsigned int _trackNumber, const Album &_album,
+          const std::vector<Artist> &_artists);
+    ~Track() = default;
+
+    const std::string get_imageUrl() = delete;
+    const std::vector<Artist> &get_artists() const;
+    std::vector<Artist> &get_artists();
+    Album &get_album();
+    const Album &get_album() const;
+    std::string get_stringArtists() const;
+    unsigned int get_trackNumber() const;
+    unsigned int get_discNumber() const;
+    unsigned int get_durationMs() const;
+    const std::string &get_genre() const;
+    bool isDownloaded() const;
+
+    void set_genre(const std::string &_genre);
+    void set_downloaded(bool _downloaded);
+
   private:
     unsigned int discNumber;
     unsigned long durationMs;
@@ -27,30 +49,9 @@ class Track : public QueryObject {
     unsigned int trackNumber;
     Album album;
     std::vector<Artist> artists;
+    std::string genre;
 
     bool downloaded;
-
-  public:
-    Track(const std::string &_id, const std::string &_name,
-          unsigned int _discNumber, unsigned long _durationMs,
-          bool _explicitContent, unsigned int _trackNumber, const Album &_album,
-          const std::vector<Artist> &_artists);
-    ~Track();
-
-    const std::string get_imageUrl() = delete;
-    inline const std::vector<Artist> &get_artists() const { return artists; }
-    inline std::vector<Artist> &get_artists() { return artists; }
-    inline Album &get_album() { return album; }
-    inline const Album &get_album() const { return album; }
-    inline std::string get_stringArtists() const {
-        return Artist::vecToStr(artists);
-    }
-    inline unsigned int get_trackNumber() const { return trackNumber; }
-    inline unsigned int get_discNumber() const { return discNumber; }
-    inline unsigned int get_durationMs() const { return durationMs; }
-    inline bool isDownloaded() const { return downloaded; }
-
-    inline void set_downloaded(bool _downloaded) { downloaded = _downloaded; }
 };
 
 } // namespace Spotify

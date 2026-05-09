@@ -10,6 +10,7 @@
 #include <future>
 #include <taglib/mpegfile.h>
 
+#include "Discogs/DiscogsAPI.h"
 #include "Spotify/SpotifyAPI.h"
 #include "TrackInterface.h"
 #include "YouTube/YouTubeAPI.h"
@@ -18,6 +19,7 @@ class Downloader {
   private:
     Spotify::SpotifyAPI *spotify;
     YouTube::YouTubeAPI *youTube;
+    Discogs::DiscogsAPI *discogs;
 
     std::filesystem::path trackPath;
     // std::string coverPath;
@@ -43,7 +45,7 @@ class Downloader {
 
     inline Spotify::SpotifyAPI *get_spotify() const { return spotify; }
     inline YouTube::YouTubeAPI *get_youtube() const { return youTube; }
-    inline YouTube::YouTubeAPI *get_beatport() const { return youTube; }
+    inline Discogs::DiscogsAPI *get_discogs() const { return discogs; }
 
     const std::filesystem::path &get_trackPath() const;
     void set_trackPath(const std::filesystem::path &_path);
@@ -52,7 +54,8 @@ class Downloader {
     bool initialize();
     bool initializeSpotify(const std::string &_clientId = "",
                            const std::string &_clientSecret = "");
-    bool initializeYouTube(const std::string &_googleAuthToken = "");
+    bool initializeYouTube(const std::string &_accessToken = "");
+    bool initializeDiscogs(const std::string &_accessToken = "");
 
     enum class SearchCategory {
         Track,

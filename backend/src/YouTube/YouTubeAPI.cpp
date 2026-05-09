@@ -36,7 +36,7 @@ void YouTubeAPI::saveCredentials() {
 void YouTubeAPI::prepareHeaders(struct curl_slist *&_headers) {}
 
 std::string YouTubeAPI::prepareUrl(const std::string &_url) {
-    return (_url + "&key=" + generateAccessToken());
+    return (urlAPI + _url + "&key=" + generateAccessToken());
 }
 
 // Function to perform YouTubeAPI search
@@ -54,9 +54,8 @@ json YouTubeAPI::searchList(const std::string &_query,
     //     "\"dailyLimitExceeded\"}],\"status\":\"FAILED\"}}");
 
     std::string url =
-        urlAPI +
-        "search?part=snippet&q=" + std::string(curl_escape(_query.c_str(), 0)) +
-        "&type=" + _type +
+        "/search?part=snippet&q=" +
+        std::string(curl_escape(_query.c_str(), 0)) + "&type=" + _type +
         (_maxResults != 0 ? "&maxResults=" + std::to_string(_maxResults) : "");
 
     if (_nextPageToken && !_nextPageToken->empty())
@@ -87,7 +86,7 @@ json YouTubeAPI::searchList(const std::string &_query,
 
 json YouTubeAPI::fetchContentDetails(const std::string &_id) {
     json response =
-        performRequest(urlAPI + "videos?part=contentDetails&id=" + _id +
+        performRequest("/videos?part=contentDetails&id=" + _id +
                        "&fields=items(id,kind,contentDetails(duration,"
                        "licensedContent),statistics(viewCount))");
     if (!response.contains("items") || response["items"].empty())
@@ -184,7 +183,7 @@ std::unique_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
 std::unique_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
     return createVideo(
         performRequest(
-            urlAPI + "videos?part=snippet,contentDetails,statistics&id=" + _id +
+            "/videos?part=snippet,contentDetails,statistics&id=" + _id +
             "&fields=items(id,kind,snippet(title,channelTitle,publishedAt,"
             "thumbnails/high/url),contentDetails(duration,licensedContent),"
             "statistics(viewCount))")

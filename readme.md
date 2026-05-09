@@ -50,6 +50,9 @@ If not already done, the tool will provide an empty credentials file `backend/ap
 ```json
 {
     "OAuth": {
+        "Discogs":{
+            "auth_token": "YOUR_DISCOGS_API_KEY"
+        },
         "Google": {
             "auth_token": "YOUR_GOOGLE_API_KEY"
             
@@ -61,8 +64,8 @@ If not already done, the tool will provide an empty credentials file `backend/ap
         }
     }
 }
-```
 
+```
 Personal Spotify credentials can be retrieved from the developer dashboard
 ```
 https://developer.spotify.com/dashboard
@@ -71,6 +74,11 @@ https://developer.spotify.com/dashboard
 The auth token from the Google API needs to be set here
 ```
 https://console.cloud.google.com/apis/credentials
+```
+
+The auth token for the Discogs API needs to be set here
+```
+https://www.discogs.com/settings/developers
 ```
 
 Alternatively, if no credentials are provided the tool will start in a restricted mode. In the settings menu the credentials can also be provided.
