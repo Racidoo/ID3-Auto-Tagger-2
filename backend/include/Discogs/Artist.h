@@ -8,7 +8,8 @@ namespace Discogs {
 
 class Artist : public QueryObject {
   public:
-    Artist(int _id, const std::string &_name, const std::string &_imageUrl);
+    Artist(int _id, const std::string &_name, MetadataState _state,
+           const std::string &_imageUrl);
     ~Artist() = default;
 
   private:

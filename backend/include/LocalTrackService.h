@@ -7,7 +7,7 @@
 #include <string>
 #include <thread>
 
-#include "TrackInterface.h"
+#include "Interfaces/ITrack.h"
 
 class Downloader;
 class LocalTrackService {
@@ -21,9 +21,9 @@ class LocalTrackService {
     void loadTracks(const std::filesystem::path &_path, Downloader *_downloader,
                     bool recursiveSearch = false);
 
-    std::function<void(std::vector<std::shared_ptr<TrackInterface>>, size_t)>
+    std::function<void(std::vector<std::shared_ptr<ITrack>>, size_t)>
         onBatch;
-    void dispatchBatch(std::vector<std::shared_ptr<TrackInterface>> &_batch,
+    void dispatchBatch(std::vector<std::shared_ptr<ITrack>> &_batch,
                        size_t _gen);
 
   private:

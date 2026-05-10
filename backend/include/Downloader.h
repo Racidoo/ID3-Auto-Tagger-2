@@ -11,9 +11,15 @@
 #include <taglib/mpegfile.h>
 
 #include "Discogs/DiscogsAPI.h"
+#include "Interfaces/ISearchResult.hpp"
 #include "Spotify/SpotifyAPI.h"
-#include "TrackInterface.h"
 #include "YouTube/YouTubeAPI.h"
+
+class IAlbum;
+class IArtist;
+class ITrack;
+class IPlaylist;
+class IVideo;
 
 class Downloader {
   private:
@@ -33,10 +39,10 @@ class Downloader {
 
     void makeBlocked(const Spotify::Track &_track);
 
-    void downloadAndTag(std::shared_ptr<TrackInterface> _track,
+    void downloadAndTag(std::shared_ptr<ITrack> _track,
                         std::function<void(int)> _onProgress);
 
-    void downloadAndTag(YouTube::Video &_video,
+    void downloadAndTag(std::shared_ptr<IVideo> &_video,
                         std::function<void(int)> _onProgress);
 
   public:
@@ -57,38 +63,21 @@ class Downloader {
     bool initializeYouTube(const std::string &_accessToken = "");
     bool initializeDiscogs(const std::string &_accessToken = "");
 
-    enum class SearchCategory {
-        Track,
-        Album,
-        Artist,
-        Playlist,
-        Video
-        // Add more categories here if needed
-    };
-
-    struct SearchResult {
-        std::vector<std::shared_ptr<TrackInterface>> tracks;
-        std::vector<Spotify::Album> albums;
-        std::vector<Spotify::Artist> artists;
-        std::vector<Spotify::Playlist> playlists;
-        std::vector<std::unique_ptr<YouTube::Video>> videos;
-    };
-
     bool isBlocked(const std::string &_id) const;
-    void makeBlocked(std::shared_ptr<TrackInterface> _data);
-    void removeBlocked(std::shared_ptr<TrackInterface> _data);
+    void makeBlocked(std::shared_ptr<ITrack> _data);
+    void removeBlocked(std::shared_ptr<ITrack> _data);
 
     // void verifyTags();
-    SearchResult fetchResource(const std::string &_query,
-                               const std::set<SearchCategory> &categories = {},
-                               const std::string &_market = "DE",
-                               unsigned int _limit = 0,
-                               const std::string &_offset = "0");
-    void downloadResource(std::shared_ptr<TrackInterface> _track,
+    ISearchResult fetchResource(
+        const std::string &_query,
+        const std::set<ISearchResult::SearchCategory> &categories = {},
+        const std::string &_market = "DE", unsigned int _limit = 0,
+        const std::string &_offset = "0");
+    void downloadResource(std::shared_ptr<ITrack> _track,
                           std::function<void(int)> _onProgress);
-    std::string downloadResource(std::vector<YouTube::Video> &&_videos,
+    std::string downloadResource(std::vector<std::shared_ptr<IVideo>> &&_videos,
                                  std::function<void(int)> _onProgress);
-    void deleteLocalTrack(std::shared_ptr<TrackInterface> _data);
+    void deleteLocalTrack(std::shared_ptr<ITrack> _data);
 };
 
 #endif // DOWNLOADER_H

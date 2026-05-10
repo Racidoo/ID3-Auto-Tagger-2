@@ -1,21 +1,44 @@
 #pragma once
 
+#include <wx/tglbtn.h>
 #include <wx/wx.h>
 
+#include "Interfaces/ISearchResult.hpp"
+#include "MediaWindow.hpp"
+
+class AlbumLabel;
+class ArtistLabel;
 class Downloader;
+class PlaylistLabel;
 class TrackPanel;
+
+using AlbumWindow = MediaWindow<AlbumLabel>;
+using ArtistWindow = MediaWindow<ArtistLabel>;
+using PlaylistWindow = MediaWindow<PlaylistLabel>;
 
 class DiscogsWindow : public wxScrolledWindow {
   private:
     Downloader *downloader;
-    TrackPanel * trackPanel;
+
+    wxStaticText *trackHeader;
+    wxStaticText *albumHeader;
+    wxStaticText *artistHeader;
+    wxStaticText *playlistHeader;
+    TrackPanel *trackPanel;
+    AlbumWindow *albumWindow;
+    ArtistWindow *artistWindow;
+    PlaylistWindow *playlistWindow;
+    wxBitmapToggleButton *trackButton;
+    wxBitmapToggleButton *albumButton;
+    wxBitmapToggleButton *artistButton;
+    wxBitmapToggleButton *playlistButton;
 
   public:
     DiscogsWindow(wxWindow *_parent, Downloader *_downloader);
     ~DiscogsWindow() = default;
 
     void search(const wxString &_searchText);
-    // void showSearchResults(Downloader::SearchResult result);
+    void showSearchResults(ISearchResult &result);
     // void loadAdditionalSearchResults(const wxString &_type);
     // void startDownload(wxCommandEvent &_event);
     // void verifyTags(wxCommandEvent &_event);

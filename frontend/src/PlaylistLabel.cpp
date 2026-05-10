@@ -1,8 +1,12 @@
-#include "../include/PlaylistLabel.h"
+#include "PlaylistLabel.h"
 
 PlaylistLabel::PlaylistLabel(wxWindow *_parent,
-                             const Spotify::Playlist &_playlist)
-    : MediaLabel(_parent,
-                 loadImage(_playlist.get_image(), wxSize(150, 150)),
-                 _playlist.get_name(), {_playlist.get_creator().get_name()}),
-      spotifyPlaylist(std::make_unique<Spotify::Playlist>(_playlist)) {}
+                             std::shared_ptr<IPlaylist> _playlist)
+    : MediaLabel(_parent, loadImage(_playlist->get_cover(), wxSize(150, 150)),
+                 _playlist->get_title(),
+                 {
+                     // _playlist.get_creator().get_name()
+                 }),
+      source(_playlist) {}
+
+std::shared_ptr<IPlaylist> PlaylistLabel::get_source() const { return source; }

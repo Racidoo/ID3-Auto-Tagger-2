@@ -9,7 +9,7 @@ using json = nlohmann::json;
 
 #include "Discogs/MasterRelease.h"
 #include "Discogs/Release.h"
-#include "Discogs/SearchResult.h"
+#include "Interfaces/ISearchResult.hpp"
 #include "Query.h"
 
 namespace Discogs {
@@ -43,13 +43,16 @@ class DiscogsAPI : public Query {
         std::optional<std::string> contributor;
     };
 
-    std::vector<Release> searchRelease(const SearchParams &_params);
-    std::vector<MasterRelease> searchMasterRelease(const SearchParams &_params);
+    std::vector<std::shared_ptr<Release>>
+    searchRelease(const SearchParams &_params);
+    std::vector<std::shared_ptr<MasterRelease>>
+    searchMasterRelease(const SearchParams &_params);
 
-    MasterRelease getMasterRelease(int _masterId);
-    Release getRelease(int _releaseId, const std::string &_currAbbr = "EUR");
+    std::shared_ptr<MasterRelease> getMasterRelease(int _masterId);
+    std::shared_ptr<Release> getRelease(int _releaseId,
+                                        const std::string &_currAbbr = "EUR");
 
-    std::vector<SearchResult> search(const SearchParams &_params);
+    ISearchResult search(const SearchParams &_params);
 
   protected:
     void prepareHeaders(struct curl_slist *&_headers) override;
@@ -59,16 +62,25 @@ class DiscogsAPI : public Query {
     std::string accessToken;
     inline static const std::string urlAPI = "https://api.discogs.com";
 
-    std::vector<Artist> createArtists(const json &_jsonArtists);
-    std::vector<Label> createLabels(const json &_jsonLabels);
-    MasterRelease createMasterRelease(const json &_jsonRelease);
-    Release createRelease(const json &_jsonRelease);
+    Artist createArtistFromRelease(const json &_jsonArtist, bool &_fallbackUsed);
+    Artist createArtistFromArtist(const json &_jsonArtist, bool &_fallbackUsed);
+    std::vector<Artist> createArtists(const json &_jsonArtists,
+                                      bool &_fallbackUsed);
+    std::vector<Label> createLabels(const json &_jsonLabels,
+                                    bool &_fallbackUsed);
+    std::shared_ptr<MasterRelease>
+    createMasterRelease(const json &_jsonRelease);
+    std::shared_ptr<Release> createRelease(const json &_jsonRelease);
 
-    static std::vector<std::string> parseGenres(const json &_j);
-    static std::vector<std::string> parseStyles(const json &_j);
-    static std::vector<Release::Track> parseTracklist(const json &_j);
-    static std::vector<Release::Video> parseVideos(const json &_j);
-    static std::string parseImageUrl(const json &_j);
+    static std::vector<std::string> parseGenres(const json &_j,
+                                                bool &_fallbackUsed);
+    static std::vector<std::string> parseStyles(const json &_j,
+                                                bool &_fallbackUsed);
+    static std::vector<Release::Track> parseTracklist(const json &_j,
+                                                      bool &_fallbackUsed);
+    static std::vector<Release::Video> parseVideos(const json &_j,
+                                                   bool &_fallbackUsed);
+    static std::string parseImageUrl(const json &_j, bool &_fallbackUsed);
 };
 
 } // namespace Discogs

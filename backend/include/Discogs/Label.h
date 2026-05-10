@@ -8,11 +8,10 @@ namespace Discogs {
 
 class Label : public QueryObject {
   public:
-    Label(int _id, const std::string &_name, const std::string &_imageUrl);
+    Label(int _id, const std::string &_name, MetadataState _state,
+          const std::string &_imageUrl);
     ~Label() = default;
 
-  private:
-    /* data */
 };
 
 } // namespace Discogs

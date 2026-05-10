@@ -1,7 +1,8 @@
-#include "../include/ArtistLabel.h"
+#include "ArtistLabel.h"
 
-ArtistLabel::ArtistLabel(wxWindow *_parent, const Spotify::Artist &_artist)
-    : MediaLabel(_parent,
-                 loadImage(_artist.get_image(), wxSize(150, 150)),
-                 _artist.get_name(), {wxT("Artist")}),
-      spotifyArtist(std::make_unique<Spotify::Artist>(_artist)) {}
+ArtistLabel::ArtistLabel(wxWindow *_parent, std::shared_ptr<IArtist> _artist)
+    : MediaLabel(_parent, loadImage(_artist->get_cover(), wxSize(150, 150)),
+                 _artist->get_title(), {wxT("Artist")}),
+      source(_artist) {}
+
+std::shared_ptr<IArtist> ArtistLabel::get_source() const { return source; }

@@ -4,22 +4,18 @@
 #include <memory>
 #include <wx/wx.h>
 
+#include "Interfaces/IPlaylist.h"
 #include "MediaLabel.h"
-#include "Spotify/Playlist.h"
 
 class PlaylistLabel : public MediaLabel {
-  private:
-    std::unique_ptr<Spotify::Playlist> spotifyPlaylist;
 
   public:
-    PlaylistLabel(wxWindow *_parent, const Spotify::Playlist &_playlist);
+    PlaylistLabel(wxWindow *_parent, std::shared_ptr<IPlaylist> _playlist);
 
-    inline const Spotify::Playlist *get_spotifyPlaylist() const {
-        return spotifyPlaylist.get();
-    }
-    inline const QueryObject *getObject() const override {
-        return spotifyPlaylist.get();
-    }
+    std::shared_ptr<IPlaylist> get_source() const;
+
+  private:
+    std::shared_ptr<IPlaylist> source;
 };
 
 #endif // PLAYLIST_LABEL_H

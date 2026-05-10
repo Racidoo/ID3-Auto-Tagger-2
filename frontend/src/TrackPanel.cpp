@@ -1,7 +1,7 @@
 #include "TrackPanel.h"
 #include "DownloadStatusRenderer.h"
 #include "Downloader.h"
-#include "TrackInterface.h"
+#include "Interfaces/ITrack.h"
 #include "TrackModel.h"
 #include "TrackModelRow.h"
 
@@ -76,7 +76,7 @@ Downloader *TrackPanel::get_downloader() const { return downloader; }
 void TrackPanel::Refresh() {}
 
 void TrackPanel::MergeTracks(
-    const std::vector<std::shared_ptr<TrackInterface>> &_batch) {
+    const std::vector<std::shared_ptr<ITrack>> &_batch) {
     model->MergeRows(_batch);
 }
 
@@ -94,9 +94,9 @@ std::vector<std::size_t> TrackPanel::GetSelectedRows() const {
     return selectedRows;
 }
 
-std::vector<std::shared_ptr<TrackInterface>>
+std::vector<std::shared_ptr<ITrack>>
 TrackPanel::GetTracksOfSelectedRows() const {
-    std::vector<std::shared_ptr<TrackInterface>> tracks;
+    std::vector<std::shared_ptr<ITrack>> tracks;
     for (auto &&row : GetSelectedRows()) {
         tracks.push_back(GetTrack(row));
     }
@@ -108,7 +108,7 @@ void TrackPanel::SetDownloadProgress(unsigned _row, int _progress) {
                                   {_progress, DownloadState::Downloading});
 }
 
-std::shared_ptr<TrackInterface> TrackPanel::GetTrack(std::size_t _row) const {
+std::shared_ptr<ITrack> TrackPanel::GetTrack(std::size_t _row) const {
     return model->GetTrack(model->GetRowByIndex(_row));
 }
 
@@ -208,7 +208,7 @@ void TrackPanel::OnActivated(wxDataViewEvent &event) {
         }
         return;
     } else if (column == TrackModel::COL_VERIFY) {
-        if (!TrackInterface::verify(track, downloader)) {
+        if (!ITrack::verify(track, downloader)) {
             wxMessageBox("Unable to retrieve meta data from SpotifyAPI");
             return;
         }

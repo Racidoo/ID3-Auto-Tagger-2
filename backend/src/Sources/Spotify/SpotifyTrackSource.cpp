@@ -1,4 +1,4 @@
-#include "TrackSource/SpotifyTrackSource.h"
+#include "Sources/Spotify/SpotifyTrackSource.h"
 
 std::string SpotifyTrackSource::get_id() const { return track->get_id(); }
 std::string SpotifyTrackSource::get_title() { return track->get_name(); }

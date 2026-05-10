@@ -8,7 +8,7 @@ class User : public QueryObject {
   private:
     /* data */
   public:
-    User(const std::string &_id, const std::string &_name,
+    User(const std::string &_id, const std::string &_name, MetadataState _state,
          const std::string &_imageURL);
     ~User();
 };

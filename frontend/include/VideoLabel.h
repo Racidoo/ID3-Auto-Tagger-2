@@ -5,24 +5,19 @@
 #include <wx/wx.h>
 
 #include "MediaLabel.h"
-#include "YouTube/Video.h"
 
-// wxDECLARE_EVENT(EVT_VIDEO_DOWNLOAD, wxCommandEvent);
+class IVideo;
 
 class VideoLabel : public MediaLabel {
-  private:
-    std::unique_ptr<YouTube::Video> youTubeVideo;
-
-    void onDownloadButtonClick(wxMouseEvent &event);
 
   public:
-    VideoLabel(wxWindow *_parent, std::unique_ptr<YouTube::Video> _video);
+    VideoLabel(wxWindow *_parent, std::shared_ptr<IVideo> _video);
 
-    inline const YouTube::Video *get_youTubeVideo() const {
-        return youTubeVideo.get();
-    }
-    inline const QueryObject *getObject() const override {
-        return youTubeVideo.get();
-    }
+    std::shared_ptr<IVideo> get_source() const;
+
+  private:
+    std::shared_ptr<IVideo> source;
+
+    void onDownloadButtonClick(wxMouseEvent &event);
 };
 #endif // VIDEO_LABEL_H

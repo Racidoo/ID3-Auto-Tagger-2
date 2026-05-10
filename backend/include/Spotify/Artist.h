@@ -13,11 +13,8 @@ class Artist : public QueryObject {
   private:
   public:
     Artist(const std::string &_id, const std::string &_name,
-           const std::string &_imageURL);
-    ~Artist();
-
-    static std::string vecToStr(const std::vector<Artist> &_artists,
-                                const std::string &_sep = ", ");
+           MetadataState _state, const std::string &_imageURL);
+    ~Artist() = default;
 };
 
 } // namespace Spotify

@@ -1,7 +1,7 @@
 #include "TrackEditWindow.h"
+#include "Interfaces/ITrack.h"
 #include "LabeledTextCtrl.h"
 #include "MediaLabel.h"
-#include "TrackInterface.h"
 
 TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                                  const wxPoint &_pos, const wxSize &_size)
@@ -98,7 +98,7 @@ TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
 TrackEditWindow::~TrackEditWindow() {}
 
 void TrackEditWindow::set_selected(
-    const std::vector<std::shared_ptr<TrackInterface>> &_selected) {
+    const std::vector<std::shared_ptr<ITrack>> &_selected) {
     selected = _selected;
 }
 

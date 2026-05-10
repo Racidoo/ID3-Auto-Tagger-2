@@ -2,8 +2,8 @@
 
 namespace Spotify {
 User::User(const std::string &_id, const std::string &_name,
-           const std::string &_imageURL)
-    : QueryObject(_id, _name, "user", _imageURL) {}
+           MetadataState _state, const std::string &_imageURL)
+    : QueryObject(_id, _name, _state, _imageURL) {}
 
 User::~User() {}
 

@@ -22,8 +22,9 @@ namespace Spotify {
 class Track : public QueryObject {
   public:
     Track(const std::string &_id, const std::string &_name,
-          unsigned int _discNumber, unsigned long _durationMs,
-          bool _explicitContent, unsigned int _trackNumber, const Album &_album,
+          MetadataState _state, unsigned int _discNumber,
+          unsigned long _durationMs, bool _explicitContent,
+          unsigned int _trackNumber, const Album &_album,
           const std::vector<Artist> &_artists);
     ~Track() = default;
 

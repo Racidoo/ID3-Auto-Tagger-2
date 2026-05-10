@@ -4,16 +4,17 @@
 #include <exception>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <regex>
 #include <sstream>
 #include <string>
 
-#include "Album.h"
-#include "Artist.h"
-#include "Playlist.h"
+#include "Interfaces/ITrack.h"
 #include "Query.h"
-#include "Track.h"
-#include "TrackInterface.h"
-#include "User.h"
+#include "Spotify/Album.h"
+#include "Spotify/Artist.h"
+#include "Spotify/Playlist.h"
+#include "Spotify/Track.h"
+#include "Spotify/User.h"
 
 using json = nlohmann::json;
 
@@ -65,12 +66,10 @@ class SpotifyAPI : public Query {
     Track getTrack(const std::string &_id);
     std::vector<Track> getAlbumTracks(const std::string &_id);
     std::vector<Track> getPlaylistTracks(const std::string &_id);
-    std::string searchId(std::shared_ptr<TrackInterface> _trackInterface);
+    std::string searchId(std::shared_ptr<ITrack> _trackInterface);
     void loadAdditionalData(Track &_track);
-    void
-    loadAdditionalData(std::shared_ptr<TrackInterface> _spotifyTrackInterface);
-    std::shared_ptr<TrackInterface>
-    researchTags(std::shared_ptr<TrackInterface> _localData);
+    void loadAdditionalData(std::shared_ptr<ITrack> _spotifyITrack);
+    std::shared_ptr<ITrack> researchTags(std::shared_ptr<ITrack> _localData);
 
     static bool isValidIdFormat(const std::string &_id);
 

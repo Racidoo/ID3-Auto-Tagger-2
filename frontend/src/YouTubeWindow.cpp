@@ -1,6 +1,7 @@
-#include "../include/YouTubeWindow.h"
-#include "../include/Downloader.h"
-#include "../include/VideoLabel.h"
+#include "YouTubeWindow.h"
+#include "Downloader.h"
+#include "Interfaces/IVideo.h"
+#include "VideoLabel.h"
 
 YouTubeWindow::YouTubeWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent), downloader(_downloader) {
@@ -50,16 +51,15 @@ void YouTubeWindow::search(const wxString &_searchText) {
         std::cerr << "Downloader/YouTube not fully initialized" << std::endl;
         return;
     }
-    Downloader::SearchResult result = downloader->fetchResource(
-        _searchText.ToStdString(), {Downloader::SearchCategory::Video});
+    ISearchResult result = downloader->fetchResource(
+        _searchText.ToStdString(), {ISearchResult::SearchCategory::Video});
     showSearchResults(std::move(result));
 }
 
-void YouTubeWindow::showSearchResults(Downloader::SearchResult result) {
+void YouTubeWindow::showSearchResults(ISearchResult result) {
     videoWindow->deleteChildren();
     for (auto &video : result.videos)
-        videoWindow->appendChildren(
-            new VideoLabel(videoWindow, std::move(video)));
+        videoWindow->appendChildren(new VideoLabel(videoWindow, video));
 
     FitInside();
     Layout();
@@ -71,15 +71,12 @@ void YouTubeWindow::startDownload(wxCommandEvent &_event) {
         return;
     }
 
-    auto *label = dynamic_cast<MediaLabel *>(_event.GetEventObject());
+    auto *label = dynamic_cast<VideoLabel *>(_event.GetEventObject());
     if (!label)
         return;
-    const QueryObject *obj = label->getObject();
-    if (!obj)
-        return;
 
-    std::string id = obj->get_id();
-    std::string type = obj->get_type();
+    std::string id = label->get_source()->get_id();
+    std::string type = "<removed for now, fix later>";
 
     std::cout << "Clicked object ID: " << id << ", Type: " << type << std::endl;
     // track search for artist not supported
@@ -93,13 +90,13 @@ void YouTubeWindow::startDownload(wxCommandEvent &_event) {
         return;
     }
 
-    const YouTube::Video *chosenVideo = chosenVideoLabel->get_youTubeVideo();
+    auto chosenVideo = chosenVideoLabel->get_source();
     if (!chosenVideo) {
         wxLogDebug("invalid video");
         return;
     }
     downloader->downloadResource(
-        {*chosenVideo}, [chosenVideoLabel](int progress) {
+        {chosenVideo}, [chosenVideoLabel](int progress) {
             wxLogDebug(wxString(std::to_string(progress)));
             // chosenVideoLabel->get_ProgressBar()->SetProgress(progress);
         });

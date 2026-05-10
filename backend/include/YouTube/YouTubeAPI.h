@@ -27,8 +27,8 @@ class YouTubeAPI : public Query {
 
     std::string findBestMatch(const Spotify::Track &_track,
                               std::function<void(int)> _onProgress);
-    std::unique_ptr<Video> getVideo(const std::string &_id);
-    std::vector<std::unique_ptr<Video>>
+    std::shared_ptr<Video> getVideo(const std::string &_id);
+    std::vector<std::shared_ptr<Video>>
     searchVideo(const std::string &_query,
                 std::string *_nextPageToken = nullptr, unsigned int _limit = 0);
 
@@ -45,7 +45,7 @@ class YouTubeAPI : public Query {
     void prepareHeaders(struct curl_slist *&_headers) override;
     std::string prepareUrl(const std::string &_url) override;
 
-    std::unique_ptr<Video> createVideo(const json &_jsonVideo) const;
+    std::shared_ptr<Video> createVideo(const json &_jsonVideo) const;
     json searchList(const std::string &_query, std::string *_nextPageToken,
                     unsigned int _maxResults = 0,
                     const std::string &_type = "video");

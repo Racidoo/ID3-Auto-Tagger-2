@@ -10,6 +10,24 @@
 namespace Spotify {
 
 class Album : public QueryObject {
+  public:
+    Album(const std::string &_id, const std::string &_name,
+          MetadataState _state, const std::string &_albumType,
+          unsigned int _totalTracks, const std::string &_releaseDate,
+          const std::string &_imageURL, const std::vector<Artist> &_artists);
+    ~Album() = default;
+
+    const std::string &get_albumType() const;
+    unsigned int get_totalTracks() const;
+    const std::string get_releaseDate() const;
+    std::string get_releaseYear() const;
+    const std::string &get_label() const;
+    const std::string &get_copyright() const;
+    std::string get_artists() const;
+
+    void set_label(const std::string &_label);
+    void set_copyright(const std::string &_copyright);
+
   private:
     std::string albumType;
     unsigned int totalTracks;
@@ -19,26 +37,6 @@ class Album : public QueryObject {
     // optional attributes
     std::string label;
     std::string copyright;
-
-  public:
-    Album(const std::string &_id, const std::string &_name,
-          const std::string &_albumType, unsigned int _totalTracks,
-          const std::string &_releaseDate, const std::string &_imageURL,
-          const std::vector<Artist> &_artists);
-    ~Album();
-
-    inline const std::string get_releaseDate() const { return releaseDate; }
-    std::string get_releaseYear() const {
-        return get_releaseDate().substr(0, 4);
-    }
-    inline const std::string &get_label() const { return label; }
-    inline const std::string &get_copyright() const { return copyright; }
-    inline std::string get_artists() const { return Artist::vecToStr(artists); }
-
-    inline void set_label(const std::string &_label) { label = _label; }
-    inline void set_copyright(const std::string &_copyright) {
-        copyright = _copyright;
-    }
 };
 
 } // namespace Spotify

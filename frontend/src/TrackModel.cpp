@@ -1,12 +1,12 @@
 #include "TrackModel.h"
 #include "DownloadStatusRenderer.h"
-#include "TrackInterface.h"
+#include "Interfaces/ITrack.h"
 #include "TrackModelRow.h"
 
 TrackModel::TrackModel()
     : wxDataViewVirtualListModel(0), filterState{true, true, ""} {}
 
-std::shared_ptr<TrackInterface>
+std::shared_ptr<ITrack>
 TrackModel::GetTrack(std::shared_ptr<TrackModelRow> _row) {
     return _row->get_track();
 }
@@ -29,8 +29,7 @@ void TrackModel::AddRows(
     SortByHeader(Columns::COL_TITLE, true);
 }
 
-void TrackModel::MergeRows(
-    const std::vector<std::shared_ptr<TrackInterface>> &_batch) {
+void TrackModel::MergeRows(const std::vector<std::shared_ptr<ITrack>> &_batch) {
 
     bool changed = false;
 

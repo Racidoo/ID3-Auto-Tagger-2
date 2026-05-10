@@ -95,7 +95,7 @@ json YouTubeAPI::fetchContentDetails(const std::string &_id) {
     return response["items"].front()["contentDetails"];
 }
 
-std::unique_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
+std::shared_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
     auto safe_get = [](const json &j, const std::string &key) -> const json * {
         if (j.contains(key)) {
             return &j.at(key);
@@ -176,11 +176,12 @@ std::unique_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
             duration = d->get<unsigned int>();
     }
 
-    return std::make_unique<Video>(id, title, channel, uploadDate, thumbnail,
-                                   duration, licensed);
+    return std::make_shared<Video>(id, title, Video::MetadataState::Full,
+                                   channel, uploadDate, thumbnail, duration,
+                                   licensed);
 }
 
-std::unique_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
+std::shared_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
     return createVideo(
         performRequest(
             "/videos?part=snippet,contentDetails,statistics&id=" + _id +
@@ -191,11 +192,11 @@ std::unique_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
             .front());
 }
 
-std::vector<std::unique_ptr<Video>>
+std::vector<std::shared_ptr<Video>>
 YouTubeAPI::searchVideo(const std::string &_query, std::string *_nextPageToken,
                         unsigned int _limit) {
 
-    std::vector<std::unique_ptr<Video>> results;
+    std::vector<std::shared_ptr<Video>> results;
     json list = searchList(_query, _nextPageToken, _limit, "video");
 
     for (auto &item : list.at("items")) {
@@ -275,7 +276,7 @@ std::string YouTubeAPI::findBestMatch(const Spotify::Track &_track,
 
     for (int page = 0; page < maxPages; ++page) {
         _onProgress(1);
-        std::vector<std::unique_ptr<Video>> videos =
+        std::vector<std::shared_ptr<Video>> videos =
             searchVideo(searchQuery, &nextPageToken, 5);
 
         _onProgress(5);

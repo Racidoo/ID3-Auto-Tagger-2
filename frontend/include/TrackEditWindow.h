@@ -2,14 +2,15 @@
 #define TRACK_EDIT_WINDOW_H
 
 #include <functional> // for std::hash
-#include <string>     // for std::string
+#include <memory>
+#include <string> // for std::string
 #include <vector>
 #include <wx/wx.h>
 
 #include "MediaLabel.h"
 
 class LabeledTextCtrl;
-class TrackInterface;
+class ITrack;
 
 class TrackEditWindow : public wxPanel {
   private:
@@ -29,7 +30,7 @@ class TrackEditWindow : public wxPanel {
     LabeledTextCtrl *channelsText;
     LabeledTextCtrl *sampleRateText;
 
-    std::vector<std::shared_ptr<TrackInterface>> selected;
+    std::vector<std::shared_ptr<ITrack>> selected;
 
   public:
     TrackEditWindow(wxWindow *_parent, wxWindowID _winid = wxID_ANY,
@@ -37,8 +38,7 @@ class TrackEditWindow : public wxPanel {
                     const wxSize &_size = wxDefaultSize);
     ~TrackEditWindow();
 
-    void
-    set_selected(const std::vector<std::shared_ptr<TrackInterface>> &_selected);
+    void set_selected(const std::vector<std::shared_ptr<ITrack>> &_selected);
 
     void Update();
 

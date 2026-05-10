@@ -9,8 +9,13 @@ set(SOURCES
     src/Discogs/Label.cpp
     src/Discogs/MasterRelease.cpp
     src/Discogs/Release.cpp
-    src/Discogs/SearchResult.cpp
+    src/Discogs/ReleaseTrack.cpp
     src/Downloader.cpp
+    src/Interfaces/IAlbum.cpp
+    src/Interfaces/IArtist.cpp
+    src/Interfaces/ITrack.cpp
+    src/Interfaces/IPlaylist.cpp
+    src/Interfaces/IVideo.cpp
     src/LocalTrack.cpp
     src/LocalTrackService.cpp
     src/Query.cpp
@@ -21,11 +26,16 @@ set(SOURCES
     src/Spotify/SpotifyAPI.cpp
     src/Spotify/Track.cpp
     src/Spotify/User.cpp
-    src/TrackInterface.cpp
-    include/TrackSource/ITrackSource.hpp
-    src/TrackSource/DiscogsTrackSource.cpp
-    src/TrackSource/LocalTrackSource.cpp
-    src/TrackSource/SpotifyTrackSource.cpp
+    src/Sources/Discogs/DiscogsArtistSource.cpp
+    src/Sources/Discogs/DiscogsReleaseSource.cpp
+    src/Sources/Discogs/DiscogsMasterReleaseSource.cpp
+    src/Sources/Discogs/DiscogsTrackSource.cpp
+    src/Sources/LocalTrackSource.cpp
+    src/Sources/Spotify/SpotifyAlbumSource.cpp
+    src/Sources/Spotify/SpotifyArtistSource.cpp
+    src/Sources/Spotify/SpotifyPlaylistSource.cpp
+    src/Sources/Spotify/SpotifyTrackSource.cpp
+    src/Sources/YouTube/YouTubeVideoSource.cpp
     src/YouTube/Video.cpp
     src/YouTube/YouTubeAPI.cpp
     # Add more source files here

@@ -1,19 +1,16 @@
 #include "TrackModelRow.h"
 #include "IconProvider.h"
+#include "Interfaces/ITrack.h"
 #include "MediaLabel.h"
-#include "TrackInterface.h"
 
-TrackModelRow::TrackModelRow(
-    const std::shared_ptr<TrackInterface> &_trackInterface)
+TrackModelRow::TrackModelRow(const std::shared_ptr<ITrack> &_trackInterface)
     : track(_trackInterface) {
     RebuildSortCache();
 }
 
 TrackModelRow::~TrackModelRow() {}
 
-std::shared_ptr<TrackInterface> TrackModelRow::get_track() const {
-    return track;
-}
+std::shared_ptr<ITrack> TrackModelRow::get_track() const { return track; }
 
 const DownloadStatus &TrackModelRow::get_status() const { return status; }
 const wxBitmap &TrackModelRow::get_cover() const { return cover; }

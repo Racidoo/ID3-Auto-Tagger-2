@@ -3,12 +3,14 @@
 #include <string>
 #include <vector>
 
-class ITrackSource {
+#include "IMediaSource.hpp"
+
+class ITrackSource : public IMediaSource {
   public:
     virtual ~ITrackSource() = default;
 
-    virtual std::string get_id() const = 0;
-    virtual std::string get_title() = 0;
+    // virtual std::string get_id() const = 0;
+    // virtual std::string get_title() = 0;
     virtual std::string get_artist() = 0;
     virtual std::string get_album() = 0;
     virtual std::string get_albumArtist() = 0;
@@ -19,9 +21,9 @@ class ITrackSource {
     virtual std::string get_trackNumber() = 0;
     virtual std::string get_discNumber() = 0;
     virtual std::size_t get_length() = 0;
-    virtual std::vector<std::byte> get_cover() = 0;
+    // virtual std::vector<std::byte> get_cover() = 0;
 
-    virtual void set_title(const std::string &_title) = 0;
+    // virtual void set_title(const std::string &_title) = 0;
     virtual void set_artist(const std::string &_artist) = 0;
     virtual void set_album(const std::string &_album) = 0;
     virtual void set_albumArtist(const std::string &_albumArtist) = 0;
@@ -31,5 +33,5 @@ class ITrackSource {
     virtual void set_label(const std::string &_label) = 0;
     virtual void set_trackNumber(const std::string &_track) = 0;
     virtual void set_discNumber(const std::string &_disc) = 0;
-    virtual void set_cover(const std::vector<std::byte> &_imageData) = 0;
+    // virtual void set_cover(const std::vector<std::byte> &_imageData) = 0;
 };

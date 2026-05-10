@@ -65,7 +65,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
 
     size_t currentGen = trackService.getGeneration();
     trackService.onBatch =
-        [this, currentGen](std::vector<std::shared_ptr<TrackInterface>> _batch,
+        [this, currentGen](std::vector<std::shared_ptr<ITrack>> _batch,
                            size_t _gen) {
             wxTheApp->CallAfter(
                 [this, batch = std::move(_batch), _gen]() mutable {

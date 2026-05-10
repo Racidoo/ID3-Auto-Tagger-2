@@ -8,6 +8,7 @@
 #include <wx/wx.h>
 
 #include "Downloader.h"
+#include "Interfaces/ISearchResult.hpp"
 #include "MediaWindow.hpp"
 
 class VideoLabel;
@@ -25,7 +26,7 @@ class YouTubeWindow : public wxScrolledWindow {
     ~YouTubeWindow();
 
     void search(const wxString &_searchText);
-    void showSearchResults(Downloader::SearchResult result);
+    void showSearchResults(ISearchResult result);
     void loadAdditionalSearchResults(const wxString &_type);
     void startDownload(wxCommandEvent &_event);
     void verifyTags(wxCommandEvent &_event);

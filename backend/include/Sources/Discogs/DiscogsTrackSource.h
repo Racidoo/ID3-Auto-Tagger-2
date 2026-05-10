@@ -1,14 +1,13 @@
 #pragma once
 
-#include "ITrackSource.hpp"
-#include "Spotify/Track.h"
+#include <memory>
 
-class SpotifyTrackSource : public ITrackSource {
-  private:
-    std::shared_ptr<Spotify::Track> track;
+#include "Discogs/ReleaseTrack.h"
+#include "Sources/ITrackSource.hpp"
 
+class DiscogsTrackSource : public ITrackSource {
   public:
-    explicit SpotifyTrackSource(std::shared_ptr<Spotify::Track> _track)
+    explicit DiscogsTrackSource(std::shared_ptr<Discogs::ReleaseTrack> _track)
         : track(std::move(_track)) {}
 
     std::string get_id() const override;
@@ -25,7 +24,7 @@ class SpotifyTrackSource : public ITrackSource {
     std::size_t get_length() override;
     std::vector<std::byte> get_cover() override;
 
-    // Spotify object should only be mutated by SpotifyAPI
+    // Discogs object should only be mutated by DiscogsAPI
     void set_title(const std::string &_title) override;
     void set_artist(const std::string &_artist) override;
     void set_album(const std::string &_album) override;
@@ -38,5 +37,8 @@ class SpotifyTrackSource : public ITrackSource {
     void set_discNumber(const std::string &_disc) override;
     void set_cover(const std::vector<std::byte> &_imageData) override;
 
-    std::shared_ptr<Spotify::Track> get_track() const;
+    std::shared_ptr<Discogs::ReleaseTrack> get_track() const;
+
+  private:
+    std::shared_ptr<Discogs::ReleaseTrack> track;
 };

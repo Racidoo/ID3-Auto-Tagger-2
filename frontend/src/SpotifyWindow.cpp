@@ -82,26 +82,27 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
     this->Bind(EVT_TRACK_DOWNLOAD, &SpotifyWindow::startDownload, this);
     // this->Bind(EVT_TRACK_VERIFY, &SpotifyWindow::verifyTags, this);
     this->Bind(EVT_MEDIA_LABEL_CLICKED, [this](wxCommandEvent &event) {
-        auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
-        if (!label)
-            return;
-        const QueryObject *obj = label->getObject();
-        if (!obj)
-            return;
+        wxLogInfo(wxT("Temporarily disabled!"));
+        // auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
+        // if (!label)
+        //     return;
+        // const QueryObject *obj = label->getObject();
+        // if (!obj)
+        //     return;
 
-        std::string id = obj->get_id();
-        std::string type = obj->get_type();
+        // std::string id = obj->get_id();
+        // std::string type = obj->get_type();
 
-        std::cout << "Clicked object ID: " << id << ", Type: " << type
-                  << std::endl;
-        // track search for artist not supported
-        if (type == "artist") {
-            return;
-        }
+        // std::cout << "Clicked object ID: " << id << ", Type: " << type
+        //           << std::endl;
+        // // track search for artist not supported
+        // if (type == "artist") {
+        //     return;
+        // }
 
-        std::string url("https://open.spotify.com/intl-de/" + type + "/" + id);
-        auto searchResults = downloader->fetchResource(url);
-        showSearchResults(searchResults);
+        // std::string url("https://open.spotify.com/intl-de/" + type + "/" +
+        // id); auto searchResults = downloader->fetchResource(url);
+        // showSearchResults(searchResults);
     });
     this->Bind(EVT_MEDIA_WINDOW_EXPAND_CLICKED, [this](wxCommandEvent event) {
         wxLogDebug("MediaWindow expand clicked. type: " + event.GetString());
@@ -115,23 +116,23 @@ void SpotifyWindow::search(const wxString &_searchText) {
         std::cerr << "Downloader not fully initialized" << std::endl;
         return;
     }
-    std::set<Downloader::SearchCategory> activeCategories;
+    std::set<ISearchResult::SearchCategory> activeCategories;
 
     if (trackButton->GetValue())
-        activeCategories.insert(Downloader::SearchCategory::Track);
+        activeCategories.insert(ISearchResult::SearchCategory::Track);
     if (albumButton->GetValue())
-        activeCategories.insert(Downloader::SearchCategory::Album);
+        activeCategories.insert(ISearchResult::SearchCategory::Album);
     if (artistButton->GetValue())
-        activeCategories.insert(Downloader::SearchCategory::Artist);
+        activeCategories.insert(ISearchResult::SearchCategory::Artist);
     if (playlistButton->GetValue())
-        activeCategories.insert(Downloader::SearchCategory::Playlist);
+        activeCategories.insert(ISearchResult::SearchCategory::Playlist);
 
-    Downloader::SearchResult result =
+    ISearchResult result =
         downloader->fetchResource(_searchText.ToStdString(), activeCategories);
     showSearchResults(result);
 }
 
-void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
+void SpotifyWindow::showSearchResults(ISearchResult &result) {
 
     albumWindow->deleteChildren();
     trackPanel->MergeTracks({});
@@ -174,16 +175,16 @@ void SpotifyWindow::showSearchResults(Downloader::SearchResult &result) {
 }
 
 void SpotifyWindow::loadAdditionalSearchResults(const wxString &_type) {
-    std::set<Downloader::SearchCategory> activeCategories;
+    std::set<ISearchResult::SearchCategory> activeCategories;
 
     if (_type == "track")
-        activeCategories.insert(Downloader::SearchCategory::Track);
+        activeCategories.insert(ISearchResult::SearchCategory::Track);
     if (_type == "album")
-        activeCategories.insert(Downloader::SearchCategory::Album);
+        activeCategories.insert(ISearchResult::SearchCategory::Album);
     if (_type == "artist")
-        activeCategories.insert(Downloader::SearchCategory::Artist);
+        activeCategories.insert(ISearchResult::SearchCategory::Artist);
     if (_type == "playlist")
-        activeCategories.insert(Downloader::SearchCategory::Playlist);
+        activeCategories.insert(ISearchResult::SearchCategory::Playlist);
 }
 
 void SpotifyWindow::startDownload(wxCommandEvent &_event) {

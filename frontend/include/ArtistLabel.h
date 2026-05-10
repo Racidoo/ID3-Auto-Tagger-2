@@ -4,22 +4,18 @@
 #include <memory>
 #include <wx/wx.h>
 
+#include "Interfaces/IArtist.h"
 #include "MediaLabel.h"
-#include "Spotify/Artist.h"
 
 class ArtistLabel : public MediaLabel {
-  private:
-    std::unique_ptr<Spotify::Artist> spotifyArtist;
 
   public:
-    ArtistLabel(wxWindow *_parent, const Spotify::Artist &_artist);
+    ArtistLabel(wxWindow *_parent, std::shared_ptr<IArtist> _artist);
 
-    inline const Spotify::Artist *get_spotifyArtist() const {
-        return spotifyArtist.get();
-    }
-    inline const QueryObject *getObject() const override {
-        return spotifyArtist.get();
-    }
+    std::shared_ptr<IArtist> get_source() const;
+
+  private:
+    std::shared_ptr<IArtist> source;
 };
 
 #endif // ARTISTLABEL_H

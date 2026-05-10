@@ -11,7 +11,8 @@ class Playlist : public QueryObject {
 
   public:
     Playlist(const std::string &_id, const std::string &_name,
-             const std::string &_imageURL, const User &_creator);
+             MetadataState _state, const std::string &_imageURL,
+             const User &_creator);
     ~Playlist();
 
     inline User get_creator() const { return creator; }

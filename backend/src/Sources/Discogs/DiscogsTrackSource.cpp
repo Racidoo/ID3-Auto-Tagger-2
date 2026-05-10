@@ -1,21 +1,33 @@
-#include "TrackSource/DiscogsTrackSource.h"
+#include "Sources/Discogs/DiscogsTrackSource.h"
 
 std::string DiscogsTrackSource::get_id() const { return track->get_id(); }
-std::string DiscogsTrackSource::get_title() { return track->get_name(); }
-std::string DiscogsTrackSource::get_artist() { return {}; }
-std::string DiscogsTrackSource::get_album() { return {}; }
-std::string DiscogsTrackSource::get_albumArtist() { return {}; }
+std::string DiscogsTrackSource::get_title() { return track->get_title(); }
+std::string DiscogsTrackSource::get_artist() {
+    return track->get_stringArtists();
+}
+std::string DiscogsTrackSource::get_album() {
+    return track->get_release().get_name();
+}
+std::string DiscogsTrackSource::get_albumArtist() {
+    return track->get_release().get_stringArtists();
+}
 std::string DiscogsTrackSource::get_copyright() { return {}; }
-std::string DiscogsTrackSource::get_genre() { return track->genres; }
-std::string DiscogsTrackSource::get_year() { return track->year; }
-std::string DiscogsTrackSource::get_label() { return {}; }
+std::string DiscogsTrackSource::get_genre() {
+    return track->get_stringGenres();
+}
+std::string DiscogsTrackSource::get_year() {
+    return std::to_string(track->get_year());
+}
+std::string DiscogsTrackSource::get_label() {
+    return track->get_stringLabels();
+}
 std::string DiscogsTrackSource::get_trackNumber() { return {}; }
 std::string DiscogsTrackSource::get_discNumber() { return {}; }
-std::size_t DiscogsTrackSource::get_length() { return {}; }
+std::size_t DiscogsTrackSource::get_length() { return track->get_duration(); }
 std::vector<std::byte> DiscogsTrackSource::get_cover() {
     return track->get_image();
 }
-std::shared_ptr<Discogs::SearchResult> DiscogsTrackSource::get_track() const {
+std::shared_ptr<Discogs::ReleaseTrack> DiscogsTrackSource::get_track() const {
     return track;
 }
 

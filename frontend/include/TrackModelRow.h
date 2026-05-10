@@ -5,11 +5,11 @@
 
 #include "DownloadStatusRenderer.h"
 
-class TrackInterface;
+class ITrack;
 
 class TrackModelRow {
   private:
-    std::shared_ptr<TrackInterface> track;
+    std::shared_ptr<ITrack> track;
 
     wxBitmap cover;
     wxString title;
@@ -27,7 +27,7 @@ class TrackModelRow {
     std::size_t sortLength;
 
   public:
-    TrackModelRow(const std::shared_ptr<TrackInterface> &_trackInterface);
+    TrackModelRow(const std::shared_ptr<ITrack> &_trackInterface);
     // wxWidgets don't support copy operations correctly
     TrackModelRow(const TrackModelRow &) = delete;
     TrackModelRow(TrackModelRow &) = delete;
@@ -35,7 +35,7 @@ class TrackModelRow {
 
     ~TrackModelRow();
 
-    std::shared_ptr<TrackInterface> get_track() const;
+    std::shared_ptr<ITrack> get_track() const;
     const DownloadStatus &get_status() const;
     const wxBitmap &get_cover() const;
     const wxString &get_title() const;

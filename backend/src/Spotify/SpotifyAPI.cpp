@@ -108,6 +108,7 @@ std::string SpotifyAPI::prepareUrl(const std::string &_url) {
 Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
     Album album(_jsonAlbum.at("id").get<std::string>(),
                 _jsonAlbum.at("name").get<std::string>(),
+                Album::MetadataState::Partial,
                 _jsonAlbum.at("album_type").get<std::string>(),
                 _jsonAlbum.at("total_tracks").get<unsigned int>(),
                 _jsonAlbum.at("release_date").get<std::string>(),
@@ -119,6 +120,7 @@ Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
 Artist SpotifyAPI::createArtist(const json &_jsonArtist) const {
     return Artist(_jsonArtist.at("id").get<std::string>(),
                   _jsonArtist.at("name").get<std::string>(),
+                  Artist::MetadataState::Partial,
                   _jsonArtist.contains("images") &&
                           !_jsonArtist.at("images").empty()
                       ? _jsonArtist.at("images")[1].at("url").get<std::string>()
@@ -136,6 +138,7 @@ std::vector<Artist> SpotifyAPI::createArtists(const json &_jsonArtists) const {
 Playlist SpotifyAPI::createPlaylist(const json &_jsonPlaylist) const {
     return Playlist(_jsonPlaylist.at("id").get<std::string>(),
                     _jsonPlaylist.at("name").get<std::string>(),
+                    Playlist::MetadataState::Partial,
                     _jsonPlaylist.at("images")[0].at("url").get<std::string>(),
                     createUser(_jsonPlaylist.at("owner")));
 }
@@ -144,6 +147,7 @@ Track SpotifyAPI::createTrack(const json &_jsonTrack,
                               const Album &_album) const {
     return Track(_jsonTrack.at("id").get<std::string>(),
                  _jsonTrack.at("name").get<std::string>(),
+                 Track::MetadataState::Partial,
                  _jsonTrack.at("disc_number").get<unsigned int>(),
                  _jsonTrack.at("duration_ms").get<unsigned long>(),
                  _jsonTrack.at("explicit").get<bool>(),
@@ -154,6 +158,7 @@ Track SpotifyAPI::createTrack(const json &_jsonTrack,
 User SpotifyAPI::createUser(const json &_jsonUser) const {
     return User(_jsonUser.at("id").get<std::string>(),
                 _jsonUser.at("display_name").get<std::string>(),
+                User::MetadataState::Partial,
                 _jsonUser.contains("images")
                     ? _jsonUser.at("images")[1].at("url").get<std::string>()
                     : "");
@@ -305,7 +310,7 @@ std::vector<Playlist> SpotifyAPI::searchPlaylist(const std::string &_query,
  * @param _filename
  * @return std::string
  */
-std::string SpotifyAPI::searchId(std::shared_ptr<TrackInterface> _localData) {
+std::string SpotifyAPI::searchId(std::shared_ptr<ITrack> _localData) {
     if (!_localData) {
         return {};
     }
@@ -362,7 +367,7 @@ std::string SpotifyAPI::searchId(std::shared_ptr<TrackInterface> _localData) {
         score += similarityScore(_localData->get_length(),
                                  track.get_durationMs() / 1000);
         // Bonus, if album is single
-        if (track.get_album().get_type() == "single") {
+        if (track.get_album().get_albumType() == "single") {
             score += 1;
         }
         std::cout << track.get_id() << "\tscore: " << score << std::endl;
@@ -410,31 +415,30 @@ void SpotifyAPI::loadAdditionalData(Track &_track) {
         performRequest("/albums/" + _track.get_album().get_id());
     _track.get_album().set_copyright(jsonFullAlbum.at("copyrights")[0]["text"]);
     _track.get_album().set_label(jsonFullAlbum.at("label"));
+    _track.get_album().set_state(Album::MetadataState::Full);
 }
 
-void SpotifyAPI::loadAdditionalData(
-    std::shared_ptr<TrackInterface> _spotifyTrackInterface) {
+void SpotifyAPI::loadAdditionalData(std::shared_ptr<ITrack> _spotifyITrack) {
 
     json jsonFullAlbum = performRequest(
-        "/albums/" +
-        _spotifyTrackInterface->get_spotifyTrack()->get_album().get_id());
+        "/albums/" + _spotifyITrack->get_spotifyTrack()->get_album().get_id());
     if (!jsonFullAlbum.at("copyrights").empty()) {
-        _spotifyTrackInterface->set_copyright(
+        _spotifyITrack->set_copyright(
             jsonFullAlbum.at("copyrights")[0]["text"]);
     }
 
-    _spotifyTrackInterface->set_label(jsonFullAlbum.at("label"));
+    _spotifyITrack->set_label(jsonFullAlbum.at("label"));
 }
 
-std::shared_ptr<TrackInterface>
-SpotifyAPI::researchTags(std::shared_ptr<TrackInterface> _localData) {
+std::shared_ptr<ITrack>
+SpotifyAPI::researchTags(std::shared_ptr<ITrack> _localData) {
     std::string trackUuid = searchId(_localData);
     if (trackUuid.empty()) {
         return nullptr;
     }
     auto track = getTrack(trackUuid);
     loadAdditionalData(track);
-    return TrackInterface::fromSpotify(std::make_shared<Spotify::Track>(track));
+    return ITrack::fromSpotify(std::make_shared<Spotify::Track>(track));
 }
 
 bool SpotifyAPI::isValidIdFormat(const std::string &_id) {

@@ -1,5 +1,11 @@
-#include "../include/Downloader.h"
-#include "../include/LocalTrack.h"
+#include "Downloader.h"
+#include "Interfaces/IAlbum.h"
+#include "Interfaces/IArtist.h"
+#include "Interfaces/IPlaylist.h"
+#include "Interfaces/ISearchResult.hpp"
+#include "Interfaces/ITrack.h"
+#include "Interfaces/IVideo.h"
+#include "LocalTrack.h"
 
 Downloader::Downloader()
     : trackPath(std::filesystem::current_path() / "music/"), spotify(nullptr),
@@ -172,11 +178,11 @@ bool Downloader::writeConfig() const {
  * @param categories
  * @return Downloader::SearchResult
  */
-Downloader::SearchResult
-Downloader::fetchResource(const std::string &_query,
-                          const std::set<SearchCategory> &categories,
-                          const std::string &_market, unsigned int _limit,
-                          const std::string &_offset) {
+ISearchResult Downloader::fetchResource(
+    const std::string &_query,
+    const std::set<ISearchResult::SearchCategory> &categories,
+    const std::string &_market, unsigned int _limit,
+    const std::string &_offset) {
 
     std::regex spotifyUrlPattern(
         R"(https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(playlist|album|track)\/([\w]+))");
@@ -184,7 +190,7 @@ Downloader::fetchResource(const std::string &_query,
         R"(youtu(?:\.be\/|be\.com\/watch\?v=)([A-Za-z0-9_-]{11}))");
 
     // std::string urlType;
-    SearchResult result;
+    ISearchResult result;
     std::smatch matches;
     std::string type, id;
     if (std::regex_search(_query, matches, spotifyUrlPattern)) {
@@ -203,69 +209,72 @@ Downloader::fetchResource(const std::string &_query,
 
     if (type == "track") {
         auto track = spotify->getTrack(id);
-        result.tracks.push_back(TrackInterface::fromSpotify(
-            std::make_shared<Spotify::Track>(track)));
+        result.tracks.push_back(
+            ITrack::fromSpotify(std::make_shared<Spotify::Track>(track)));
         track.set_downloaded(isBlocked(track.get_id()));
     } else if (type == "album") {
         auto tracks = spotify->getAlbumTracks(id);
         for (auto &&track : tracks) {
             track.set_downloaded(isBlocked(track.get_id()));
-            result.tracks.push_back(TrackInterface::fromSpotify(
-                std::make_shared<Spotify::Track>(track)));
+            result.tracks.push_back(
+                ITrack::fromSpotify(std::make_shared<Spotify::Track>(track)));
         }
     } else if (type == "playlist") {
         auto tracks = spotify->getPlaylistTracks(id);
         for (auto &&track : tracks) {
             track.set_downloaded(isBlocked(track.get_id()));
-            result.tracks.push_back(TrackInterface::fromSpotify(
-                std::make_shared<Spotify::Track>(track)));
+            result.tracks.push_back(
+                ITrack::fromSpotify(std::make_shared<Spotify::Track>(track)));
         }
     } else if (type == "video") {
         auto video = youTube->getVideo(id);
-        result.videos.push_back(std::move(video));
+        result.videos.push_back(IVideo::fromYouTube(video));
 
     } else {
 
         for (auto &&cat : categories) {
             switch (cat) {
-            case SearchCategory::Track: {
+            case ISearchResult::SearchCategory::Track: {
                 auto tracks =
                     spotify->searchTrack(_query, _market, _limit, _offset);
                 for (auto &track : tracks) {
                     track.set_downloaded(isBlocked(track.get_id()));
-                    result.tracks.push_back(TrackInterface::fromSpotify(
+                    result.tracks.push_back(ITrack::fromSpotify(
                         std::make_shared<Spotify::Track>(track)));
                 }
                 break;
             }
-            case SearchCategory::Album: {
+            case ISearchResult::SearchCategory::Album: {
                 auto albums =
                     spotify->searchAlbum(_query, _market, _limit, _offset);
-                for (auto &a : albums) {
-                    result.albums.push_back(std::move(a));
+                for (auto &album : albums) {
+                    result.albums.push_back(IAlbum::fromSpotify(
+                        std::make_shared<Spotify::Album>(album)));
                 }
                 break;
             }
-            case SearchCategory::Artist: {
+            case ISearchResult::SearchCategory::Artist: {
                 auto artists =
                     spotify->searchArtist(_query, _market, _limit, _offset);
-                for (auto &a : artists) {
-                    result.artists.push_back(std::move(a));
+                for (auto &artist : artists) {
+                    result.artists.push_back(IArtist::fromSpotify(
+                        std::make_shared<Spotify::Artist>(artist)));
                 }
                 break;
             }
-            case SearchCategory::Playlist: {
+            case ISearchResult::SearchCategory::Playlist: {
                 auto playlists =
                     spotify->searchPlaylist(_query, _market, _limit, _offset);
-                for (auto &p : playlists) {
-                    result.playlists.push_back(std::move(p));
+                for (auto &playlist : playlists) {
+                    result.playlists.push_back(IPlaylist::fromSpotify(
+                        std::make_shared<Spotify::Playlist>(playlist)));
                 }
                 break;
             }
-            case SearchCategory::Video: {
+            case ISearchResult::SearchCategory::Video: {
                 auto videos = youTube->searchVideo(_query, nullptr, _limit);
-                for (auto &&v : videos) {
-                    result.videos.push_back(std::move(v));
+                for (auto &&video : videos) {
+                    result.videos.push_back(IVideo::fromYouTube(video));
                 }
                 break;
             }
@@ -275,8 +284,9 @@ Downloader::fetchResource(const std::string &_query,
     return std::move(result);
 }
 
-std::string Downloader::downloadResource(std::vector<YouTube::Video> &&_videos,
-                                         std::function<void(int)> _onProgress) {
+std::string
+Downloader::downloadResource(std::vector<std::shared_ptr<IVideo>> &&_videos,
+                             std::function<void(int)> _onProgress) {
     std::string result;
     for (auto &&video : _videos) {
         downloadAndTag(video, _onProgress);
@@ -284,7 +294,7 @@ std::string Downloader::downloadResource(std::vector<YouTube::Video> &&_videos,
     return result;
 }
 
-void Downloader::downloadResource(std::shared_ptr<TrackInterface> _track,
+void Downloader::downloadResource(std::shared_ptr<ITrack> _track,
                                   std::function<void(int)> _onProgress) {
     downloadAndTag(_track, _onProgress);
 }
@@ -299,7 +309,7 @@ void Downloader::makeBlocked(const Spotify::Track &_track) {
         _track.get_stringArtists();
 }
 
-void Downloader::makeBlocked(std::shared_ptr<TrackInterface> _data) {
+void Downloader::makeBlocked(std::shared_ptr<ITrack> _data) {
     if (!_data || !_data->get_localTrack())
         return;
     const auto &filename = _data->get_id();
@@ -312,7 +322,7 @@ void Downloader::makeBlocked(std::shared_ptr<TrackInterface> _data) {
     _data->set_verified(true);
 }
 
-void Downloader::removeBlocked(std::shared_ptr<TrackInterface> _data) {
+void Downloader::removeBlocked(std::shared_ptr<ITrack> _data) {
 
     if (!_data || !_data->get_localTrack())
         return;
@@ -324,7 +334,7 @@ void Downloader::removeBlocked(std::shared_ptr<TrackInterface> _data) {
     }
 }
 
-void Downloader::downloadAndTag(std::shared_ptr<TrackInterface> _track,
+void Downloader::downloadAndTag(std::shared_ptr<ITrack> _track,
                                 std::function<void(int)> _onProgress) {
 
     if (!_track || !_track->get_spotifyTrack()) {
@@ -403,7 +413,7 @@ void Downloader::downloadAndTag(std::shared_ptr<TrackInterface> _track,
         }
 
         auto localTrack(
-            TrackInterface::fromLocal(std::make_shared<LocalTrack>(trackName)));
+            ITrack::fromLocal(std::make_shared<LocalTrack>(trackName)));
         // get additianl tags that are not relevant in normal search
         spotify->loadAdditionalData(_track);
         localTrack->verifyTags(_track);
@@ -414,7 +424,7 @@ void Downloader::downloadAndTag(std::shared_ptr<TrackInterface> _track,
     }).detach();
 }
 
-void Downloader::downloadAndTag(YouTube::Video &_video,
+void Downloader::downloadAndTag(std::shared_ptr<IVideo> &_video,
                                 std::function<void(int)> _onProgress) {
 
     std::thread([this, _onProgress, _video]() mutable {
@@ -427,14 +437,14 @@ void Downloader::downloadAndTag(YouTube::Video &_video,
         _onProgress(10);
 
         std::filesystem::path trackName =
-            trackPath / (_video.get_id() + ".mp3");
+            trackPath / (_video->get_id() + ".mp3");
 
         // download resource
         std::string command =
             "yt-dlp -f bestaudio --extract-audio --audio-format mp3 "
             "--audio-quality 0 -o '" +
             trackName.string() +
-            "' https://www.youtube.com/watch?v=" + _video.get_id() + " 2>&1";
+            "' https://www.youtube.com/watch?v=" + _video->get_id() + " 2>&1";
 
         FILE *pipe = popen(command.c_str(), "r");
         if (!pipe) {
@@ -501,7 +511,7 @@ void Downloader::downloadAndTag(YouTube::Video &_video,
     }).detach();
 }
 
-void Downloader::deleteLocalTrack(std::shared_ptr<TrackInterface> _data) {
+void Downloader::deleteLocalTrack(std::shared_ptr<ITrack> _data) {
     if (!_data || !_data->get_localTrack()) {
         std::cerr << "invalid reference to localTrack!" << std::endl;
         return;

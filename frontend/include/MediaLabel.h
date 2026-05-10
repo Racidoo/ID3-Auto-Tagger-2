@@ -21,7 +21,7 @@ class MediaLabel : public wxPanel {
 
     void onClick(wxMouseEvent &_event);
 
-    virtual const QueryObject *getObject() const = 0;
+    // virtual const IMediaEntity *getObject() const = 0;
 
     static wxBitmap loadImage(const std::vector<std::byte> &_imageData,
                               const wxSize &_size);

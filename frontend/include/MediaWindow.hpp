@@ -33,16 +33,16 @@ template <typename LabelT> class MediaWindow : public wxScrolledWindow {
                 wxCommandEvent notifyEvent(EVT_MEDIA_WINDOW_EXPAND_CLICKED,
                                            GetId());
                 notifyEvent.SetEventObject(this);
-                notifyEvent.SetString(_label->getObject()->get_type());
+                // notifyEvent.SetString(_label->get_source()->get_type());
                 wxPostEvent(GetParent(), notifyEvent);
             });
             contentSizer->Add(loadMore, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM,
                               5);
-            header->SetLabel(_label->getObject()->get_type() + 's');
+            // header->SetLabel(_label->getObject()->get_type() + 's');
         }
         contentSizer->Prepend(_label, 0, wxSHRINK, 5);
-        const QueryObject *obj = _label->getObject();
-        labelMap[obj->get_id()] = _label;
+        // const QueryObject *obj = _label->getObject();
+        labelMap[_label->get_source()->get_id()] = _label;
     }
 
     LabelT *getLabel(const std::string &id) {

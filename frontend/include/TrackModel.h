@@ -7,7 +7,7 @@
 
 #include "DownloadStatusRenderer.h"
 
-class TrackInterface;
+class ITrack;
 class TrackModelRow;
 
 class TrackModel : public wxDataViewVirtualListModel {
@@ -34,14 +34,14 @@ class TrackModel : public wxDataViewVirtualListModel {
 
     explicit TrackModel();
 
-    std::shared_ptr<TrackInterface>
+    std::shared_ptr<ITrack>
     GetTrack(std::shared_ptr<TrackModelRow> _row);
     std::shared_ptr<TrackModelRow> GetRowByIndex(std::size_t _index) const;
 
     void SetFilterState(const FilterState &_state);
 
     void AddRows(const std::vector<std::shared_ptr<TrackModelRow>> &_batch);
-    void MergeRows(const std::vector<std::shared_ptr<TrackInterface>> &_batch);
+    void MergeRows(const std::vector<std::shared_ptr<ITrack>> &_batch);
     void RemoveRow(std::size_t _rowIndex);
     void RebuildVisibleTracks();
     bool MatchesSearch(const std::shared_ptr<TrackModelRow> &_row) const;

@@ -1,29 +1,60 @@
-#if !defined(QUERY_OBJECT_H)
-#define QUERY_OBJECT_H
+#pragma once
 
-#include <regex>
+#include <nlohmann/json.hpp>
+#include <sstream>
 #include <string>
+#include <vector>
+
+using json = nlohmann::json;
 
 class QueryObject {
-  protected:
-    const std::string id;
-    const std::string name;
-    const std::string type;
-    const std::string imageURL;
-
   public:
+    enum class MetadataState { Preview, Partial, Full };
+
     QueryObject(const std::string &_id, const std::string &_name,
-                const std::string &_type, const std::string &_imageURL);
+                MetadataState _state, const std::string &_imageURL);
     ~QueryObject();
 
-    inline const std::string &get_id() const { return id; }
-    inline const std::string &get_name() const { return name; }
-    inline const std::string &get_type() const { return type; }
-    inline const std::string &get_imageUrl() const { return imageURL; }
+    const std::string &get_id() const;
+    const std::string &get_name() const;
+    MetadataState get_state() const;
+    const std::string &get_imageUrl() const;
     std::vector<std::byte> get_image() const;
 
-    // static bool isValidIdFormat(const std::string &_id);
+    void set_state(MetadataState _state);
 
+    template <typename T>
+    static std::string vecToStr(const std::vector<T> &_object,
+                                const std::string &_sep = ",") {
+        static_assert(std::is_base_of<QueryObject, T>::value,
+                      "T must derive from QueryObject");
+
+        std::stringstream ss;
+        for (size_t i = 0; i < _object.size(); ++i) {
+            if (i != 0)
+                ss << _sep;
+            ss << _object[i].get_name();
+        }
+        return ss.str();
+    }
+
+    template <typename T>
+    static T getOptional(const json &j, const char *key, T fallback,
+                         bool &_fallbackUsed) {
+
+        auto it = j.find(key);
+
+        if (it == j.end() || it->is_null()) {
+            _fallbackUsed = true;
+            return fallback;
+        }
+
+        return it->get<T>();
+    }
+
+  protected:
+    std::string id;
+    std::string name;
+    MetadataState state;
+    std::string imageURL;
 };
-
-#endif // QUERY_OBJECT_H

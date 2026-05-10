@@ -1,31 +1,31 @@
-#if !defined(TRACK_INTERFACE_H)
-#define TRACK_INTERFACE_H
+#pragma once
 
 #include <functional>
 #include <memory>
-#include <string>
 
-#include "TrackSource/ITrackSource.hpp"
-
-#include "Discogs/SearchResult.h"
-#include "LocalTrack.h"
-#include "Spotify/Track.h"
+#include "IMediaEntity.hpp"
 
 class Downloader;
+class LocalTrack;
+class ITrackSource;
 
-class TrackInterface {
-  private:
-    bool verified = false;
+namespace Discogs {
+class ReleaseTrack;
+} // namespace Discogs
 
-    std::shared_ptr<ITrackSource> source;
+namespace Spotify {
+class Track;
+} // namespace Spotify
+
+class ITrack : public IMediaEntity {
 
   public:
-    explicit TrackInterface(std::shared_ptr<ITrackSource> _source)
+    explicit ITrack(std::shared_ptr<ITrackSource> _source)
         : source(std::move(_source)) {}
-    ~TrackInterface() = default;
+    ~ITrack() = default;
 
-    std::string get_id() const;
-    std::string get_title();
+    std::string get_id() const override;
+    std::string get_title() override;
     std::string get_artist();
     std::string get_album();
     std::string get_albumArtist();
@@ -36,11 +36,11 @@ class TrackInterface {
     std::string get_trackNumber();
     std::string get_discNumber();
     std::size_t get_length();
-    std::vector<std::byte> get_cover();
+    std::vector<std::byte> get_cover() override;
 
     bool is_verified() const;
 
-    void set_title(const std::string &_title);
+    void set_title(const std::string &_title) override;
     void set_artist(const std::string &_artist);
     void set_album(const std::string &_album);
     void set_albumArtist(const std::string &_albumArtist);
@@ -50,24 +50,26 @@ class TrackInterface {
     void set_label(const std::string &_label);
     void set_trackNumber(const std::string &_track);
     void set_discNumber(const std::string &_disc);
-    void set_cover(const std::vector<std::byte> &_imageData);
+    void set_cover(const std::vector<std::byte> &_imageData) override;
 
     void set_verified(bool _verified);
 
     std::shared_ptr<Spotify::Track> get_spotifyTrack() const;
     std::shared_ptr<LocalTrack> get_localTrack() const;
+    std::shared_ptr<Discogs::ReleaseTrack> get_discogsTrack() const;
 
-    void verifyTags(std::shared_ptr<TrackInterface> _template);
+    void verifyTags(std::shared_ptr<ITrack> _template);
 
-    static std::shared_ptr<TrackInterface>
+    static std::shared_ptr<ITrack>
     fromLocal(std::shared_ptr<LocalTrack> _track);
-    static std::shared_ptr<TrackInterface>
+    static std::shared_ptr<ITrack>
     fromSpotify(std::shared_ptr<Spotify::Track> _track);
-    static std::shared_ptr<TrackInterface>
-    fromDiscogs(std::shared_ptr<Discogs::SearchResult> _track);
+    static std::shared_ptr<ITrack>
+    fromDiscogs(std::shared_ptr<Discogs::ReleaseTrack> _track);
 
-    static bool verify(std::shared_ptr<TrackInterface> _data,
-                       Downloader *_downloader);
+    static bool verify(std::shared_ptr<ITrack> _data, Downloader *_downloader);
+
+  private:
+    bool verified = false;
+    std::shared_ptr<ITrackSource> source;
 };
-
-#endif // TRACK_INTERFACE_H

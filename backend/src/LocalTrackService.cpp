@@ -22,7 +22,7 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
     size_t myGen = ++generation;
 
     worker = std::thread([this, myGen, _downloader, _path, recursiveSearch]() {
-        std::vector<std::shared_ptr<TrackInterface>> batch;
+        std::vector<std::shared_ptr<ITrack>> batch;
         batch.reserve(128);
 
         std::error_code ec;
@@ -49,8 +49,7 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
             if (!file.is_regular_file() || file.path().extension() != ".mp3")
                 continue;
 
-            auto track =
-                TrackInterface::fromLocal(std::make_shared<LocalTrack>(file));
+            auto track = ITrack::fromLocal(std::make_shared<LocalTrack>(file));
 
             track->set_verified(_downloader->isBlocked(track->get_id()));
 
@@ -66,7 +65,7 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
 }
 
 void LocalTrackService::dispatchBatch(
-    std::vector<std::shared_ptr<TrackInterface>> &_batch, size_t _gen) {
+    std::vector<std::shared_ptr<ITrack>> &_batch, size_t _gen) {
     if (!onBatch)
         return;
 
