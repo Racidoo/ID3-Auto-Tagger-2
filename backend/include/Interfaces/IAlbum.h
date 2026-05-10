@@ -8,7 +8,6 @@ class IAlbumSource;
 
 namespace Discogs {
 class Release;
-class MasterRelease;
 } // namespace Discogs
 
 namespace Spotify {
@@ -24,6 +23,8 @@ class IAlbum : public IMediaEntity {
     std::string get_id() const override;
     std::string get_title() override;
     std::vector<std::byte> get_cover() override;
+    std::string get_artist() const;
+    std::string get_year() const;
 
     void set_title(const std::string &_title) override;
     void set_cover(const std::vector<std::byte> &_imageData) override;
@@ -35,8 +36,6 @@ class IAlbum : public IMediaEntity {
     fromSpotify(std::shared_ptr<Spotify::Album> _album);
     static std::shared_ptr<IAlbum>
     fromDiscogs(std::shared_ptr<Discogs::Release> _release);
-    static std::shared_ptr<IAlbum>
-    fromDiscogs(std::shared_ptr<Discogs::MasterRelease> _release);
 
   private:
     std::shared_ptr<IAlbumSource> source;

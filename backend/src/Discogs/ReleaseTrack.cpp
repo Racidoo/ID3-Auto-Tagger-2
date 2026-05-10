@@ -9,12 +9,12 @@ ReleaseTrack::ReleaseTrack(const std::string &_id, const std::string &_title,
                            const std::vector<Artist> &_extraArtists,
                            const std::vector<std::string> &_genres,
                            const std::string &_imageUrl,
-                           const std::vector<Label> &_labels, int _masterId,
+                           const std::vector<Label> &_labels,
                            int _duration, const std::string &_position,
                            int _year)
     : id(_id), title(_title), release(_release), artists(_artists),
       extraArtists(_extraArtists), genres(_genres), imageUrl(_imageUrl),
-      labels(_labels), masterId(_masterId), duration(_duration),
+      labels(_labels), duration(_duration),
       position(_position), year(_year) {}
 
 const std::string &ReleaseTrack::get_id() const { return id; }
@@ -51,7 +51,6 @@ const std::vector<Label> &ReleaseTrack::get_labels() const { return labels; }
 std::string ReleaseTrack::get_stringLabels() const {
     return Label::vecToStr(labels);
 }
-int ReleaseTrack::get_masterId() const { return masterId; }
 int ReleaseTrack::get_duration() const { return duration; }
 const std::string &ReleaseTrack::get_position() const { return position; }
 int ReleaseTrack::get_year() const { return year; }

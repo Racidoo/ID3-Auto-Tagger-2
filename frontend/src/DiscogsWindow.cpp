@@ -1,52 +1,11 @@
 #include "DiscogsWindow.h"
-#include "AlbumLabel.h"
-#include "ArtistLabel.h"
 #include "Downloader.h"
 #include "IconProvider.h"
-#include "PlaylistLabel.h"
 #include "TrackPanel.h"
 
 DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent), downloader(_downloader) {
     this->SetScrollRate(15, 15);
-
-    // auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
-
-    // wxTextCtrl *searchBar =
-    //     new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition,
-    //                    wxDefaultSize, wxTE_PROCESS_ENTER);
-    // searchBar->Bind(wxEVT_TEXT_ENTER, [this, searchBar](wxCommandEvent
-    // &event) {
-    //     this->search(searchBar->GetValue());
-    // });
-    // wxBitmapButton *searchButton = new wxBitmapButton(
-    //     this, wxID_ANY, wxArtProvider::GetBitmap(wxART_SEARCH),
-    //     wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-    // searchButton->Bind(wxEVT_BUTTON, [this, searchBar](wxCommandEvent &event)
-    // {
-    //     this->search(searchBar->GetValue());
-    // });
-    // searchBar->SetFocus();
-
-    // auto searchSizer = new wxBoxSizer(wxHORIZONTAL);
-    // searchSizer->Add(searchBar, 1, wxEXPAND, 5);
-    // searchSizer->Add(searchButton, 0, wxEXPAND, 5);
-
-    // auto mainSizer = new wxBoxSizer(wxVERTICAL);
-    // trackPanel = new TrackPanel(this, downloader);
-
-    // mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
-    // mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
-    // mainSizer->Add(trackPanel, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
-
-    // SetSizerAndFit(mainSizer);
-
-    // this->Bind(EVT_MEDIA_LABEL_CLICKED, &DiscogsWindow::startDownload, this);
-
-    // this->Bind(EVT_MEDIA_WINDOW_EXPAND_CLICKED, [this](wxCommandEvent event)
-    // {
-    //     wxLogDebug("MediaWindow expand clicked. type: " + event.GetString());
-    // });
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -91,9 +50,9 @@ DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
 
     // trackWindow = new TrackWindow(this, downloader);
     trackPanel = new TrackPanel(this, downloader);
-    albumWindow = new AlbumWindow(this);
-    artistWindow = new ArtistWindow(this);
-    playlistWindow = new PlaylistWindow(this);
+    albumWindow = new MediaWindow<MediaLabel>(this);
+    artistWindow = new MediaWindow<MediaLabel>(this);
+    playlistWindow = new MediaWindow<MediaLabel>(this);
 
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
@@ -150,13 +109,17 @@ void DiscogsWindow::search(const wxString &_searchText) {
     Discogs::DiscogsAPI::SearchParams params{};
     params.query = _searchText.ToStdString();
 
-    auto results = downloader->get_discogs()->search(params);
-    // std::vector<std::shared_ptr<ITrack>> vec;
-    // for (auto &&result : results) {
-    //     vec.push_back(ITrack::fromDiscogs(
-    //         std::make_shared<Discogs::ReleaseTrack>(result)));
-    // }
+    if (trackButton->GetValue())
+        params.categories.insert(ISearchResult::SearchCategory::Track);
+    if (albumButton->GetValue())
+        params.categories.insert(ISearchResult::SearchCategory::Album);
+    if (artistButton->GetValue())
+        params.categories.insert(ISearchResult::SearchCategory::Artist);
+    if (playlistButton->GetValue())
+        params.categories.insert(ISearchResult::SearchCategory::Playlist);
 
+    auto results = downloader->get_discogs()->search(params);
+ 
     showSearchResults(results);
 }
 
@@ -177,15 +140,18 @@ void DiscogsWindow::showSearchResults(ISearchResult &result) {
 
     if (!result.albums.empty()) {
         albumWindow->Show();
-        for (const auto &album : result.albums)
-            albumWindow->appendChildren(new AlbumLabel(albumWindow, album));
+        for (auto album : result.albums)
+            albumWindow->appendChildren(new MediaLabel(
+                albumWindow, album,
+                {wxString(album->get_artist()), wxString(album->get_year())}));
     } else {
         albumWindow->Hide();
     }
     if (!result.artists.empty()) {
         artistWindow->Show();
         for (const auto &artist : result.artists)
-            artistWindow->appendChildren(new ArtistLabel(artistWindow, artist));
+            artistWindow->appendChildren(
+                new MediaLabel(artistWindow, artist, {wxT("Artist")}));
     } else {
         artistWindow->Hide();
     }
@@ -193,7 +159,7 @@ void DiscogsWindow::showSearchResults(ISearchResult &result) {
         playlistWindow->Show();
         for (const auto &playlist : result.playlists)
             playlistWindow->appendChildren(
-                new PlaylistLabel(playlistWindow, playlist));
+                new MediaLabel(playlistWindow, playlist, {wxT("Playlist")}));
     } else {
         playlistWindow->Hide();
     }

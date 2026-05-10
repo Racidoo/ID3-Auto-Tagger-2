@@ -5,11 +5,24 @@
 
 #include "Discogs/Artist.h"
 #include "Discogs/Label.h"
-#include "Discogs/MasterRelease.h"
+#include "QueryObject.h"
 
 namespace Discogs {
-class Release : public MasterRelease {
+class Release : public QueryObject {
   public:
+    struct Track {
+        std::string duration;
+        std::string position;
+        std::string title;
+        std::vector<Artist> extraArtists;
+    };
+    struct Video {
+        std::string description;
+        std::string title;
+        std::string uri;
+        int duration;
+    };
+
     Release(int _id, const std::string &_name, MetadataState _state,
             const std::string &_imageUrl, std::vector<Artist> _artists,
             int _masterId, const std::string &_country,
@@ -20,6 +33,15 @@ class Release : public MasterRelease {
             const std::vector<Video> &_videos, bool _verified);
     ~Release() = default;
 
+    const std::vector<Artist> &get_artists() const;
+    std::string get_stringArtists() const;
+    const std::vector<std::string> &get_genres() const;
+    std::string get_stringGenres() const;
+    const std::vector<std::string> &get_styles() const;
+    std::string get_stringStyles() const;
+    const std::vector<Track> &get_tracklist() const;
+    int get_year() const;
+    const std::vector<Video> &get_videos() const;
     int get_masterId() const;
     const std::string &get_country() const;
     const std::vector<Label> &get_labels() const;
@@ -28,6 +50,12 @@ class Release : public MasterRelease {
     bool isVerified() const;
 
   private:
+    std::vector<Artist> artists;
+    std::vector<std::string> genres;
+    std::vector<std::string> styles;
+    std::vector<Track> tracklist;
+    int year;
+    std::vector<Video> videos;
     int masterId;
     std::string country;
     std::vector<Label> labels;

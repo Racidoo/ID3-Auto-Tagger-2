@@ -9,17 +9,15 @@
 
 #include "Downloader.h"
 #include "Interfaces/ISearchResult.hpp"
+#include "MediaLabel.h"
 #include "MediaWindow.hpp"
 
-class VideoLabel;
-
-using VideoWindow = MediaWindow<VideoLabel>;
+class Downloader;
 
 class YouTubeWindow : public wxScrolledWindow {
   private:
     Downloader *downloader;
-
-    VideoWindow *videoWindow;
+    MediaWindow<MediaLabel> *videoWindow;
 
   public:
     YouTubeWindow(wxWindow *_parent, Downloader *_downloader);

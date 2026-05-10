@@ -2,12 +2,9 @@ project(ID3-Auto-Tagger_Backend)
 
 # Add source files
 set(SOURCES
-    # src/main.cpp
-    lib/base64/base64.cpp
     src/Discogs/Artist.cpp
     src/Discogs/DiscogsAPI.cpp
     src/Discogs/Label.cpp
-    src/Discogs/MasterRelease.cpp
     src/Discogs/Release.cpp
     src/Discogs/ReleaseTrack.cpp
     src/Downloader.cpp
@@ -28,7 +25,6 @@ set(SOURCES
     src/Spotify/User.cpp
     src/Sources/Discogs/DiscogsArtistSource.cpp
     src/Sources/Discogs/DiscogsReleaseSource.cpp
-    src/Sources/Discogs/DiscogsMasterReleaseSource.cpp
     src/Sources/Discogs/DiscogsTrackSource.cpp
     src/Sources/LocalTrackSource.cpp
     src/Sources/Spotify/SpotifyAlbumSource.cpp

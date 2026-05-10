@@ -5,16 +5,10 @@
 
 #include "Interfaces/ISearchResult.hpp"
 #include "MediaWindow.hpp"
+#include "MediaLabel.h"
 
-class AlbumLabel;
-class ArtistLabel;
 class Downloader;
-class PlaylistLabel;
 class TrackPanel;
-
-using AlbumWindow = MediaWindow<AlbumLabel>;
-using ArtistWindow = MediaWindow<ArtistLabel>;
-using PlaylistWindow = MediaWindow<PlaylistLabel>;
 
 class DiscogsWindow : public wxScrolledWindow {
   private:
@@ -25,9 +19,9 @@ class DiscogsWindow : public wxScrolledWindow {
     wxStaticText *artistHeader;
     wxStaticText *playlistHeader;
     TrackPanel *trackPanel;
-    AlbumWindow *albumWindow;
-    ArtistWindow *artistWindow;
-    PlaylistWindow *playlistWindow;
+    MediaWindow<MediaLabel> *albumWindow;
+    MediaWindow<MediaLabel> *artistWindow;
+    MediaWindow<MediaLabel> *playlistWindow;
     wxBitmapToggleButton *trackButton;
     wxBitmapToggleButton *albumButton;
     wxBitmapToggleButton *artistButton;

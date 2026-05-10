@@ -1,7 +1,5 @@
 #include "YouTubeWindow.h"
-#include "Downloader.h"
 #include "Interfaces/IVideo.h"
-#include "VideoLabel.h"
 
 YouTubeWindow::YouTubeWindow(wxWindow *_parent, Downloader *_downloader)
     : wxScrolledWindow(_parent), downloader(_downloader) {
@@ -29,7 +27,7 @@ YouTubeWindow::YouTubeWindow(wxWindow *_parent, Downloader *_downloader)
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    videoWindow = new VideoWindow(this);
+    videoWindow = new MediaWindow<MediaLabel>(this);
 
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
@@ -59,7 +57,7 @@ void YouTubeWindow::search(const wxString &_searchText) {
 void YouTubeWindow::showSearchResults(ISearchResult result) {
     videoWindow->deleteChildren();
     for (auto &video : result.videos)
-        videoWindow->appendChildren(new VideoLabel(videoWindow, video));
+        videoWindow->appendChildren(new MediaLabel(videoWindow, video, {}));
 
     FitInside();
     Layout();
@@ -71,33 +69,16 @@ void YouTubeWindow::startDownload(wxCommandEvent &_event) {
         return;
     }
 
-    auto *label = dynamic_cast<VideoLabel *>(_event.GetEventObject());
+    auto *label = dynamic_cast<MediaLabel *>(_event.GetEventObject());
     if (!label)
         return;
 
-    std::string id = label->get_source()->get_id();
-    std::string type = "<removed for now, fix later>";
+    auto source = label->get_source();
 
-    std::cout << "Clicked object ID: " << id << ", Type: " << type << std::endl;
-    // track search for artist not supported
-    if (type == "artist") {
-        return;
-    }
-
-    VideoLabel *chosenVideoLabel = videoWindow->getLabel(id);
-    if (!chosenVideoLabel) {
-        wxLogDebug("invalid videoLabel");
-        return;
-    }
-
-    auto chosenVideo = chosenVideoLabel->get_source();
-    if (!chosenVideo) {
-        wxLogDebug("invalid video");
-        return;
-    }
-    downloader->downloadResource(
-        {chosenVideo}, [chosenVideoLabel](int progress) {
+    if (auto video = std::dynamic_pointer_cast<IVideo>(source)) {
+        downloader->downloadResource({video}, [](int progress) {
             wxLogDebug(wxString(std::to_string(progress)));
             // chosenVideoLabel->get_ProgressBar()->SetProgress(progress);
         });
+    }
 }

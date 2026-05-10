@@ -239,8 +239,7 @@ json SpotifyAPI::search(searchItem_type _type, const std::string &_query,
     }
 
     std::stringstream url;
-    url << "/search?q=" << curl_escape(_query.c_str(), 0)
-        << "&type=" << typeStr;
+    url << "/search?q=" << Query::urlEncode(_query) << "&type=" << typeStr;
 
     if (!_market.empty())
         url << "&market=" << _market;
@@ -413,7 +412,12 @@ std::string SpotifyAPI::searchId(std::shared_ptr<ITrack> _localData) {
 void SpotifyAPI::loadAdditionalData(Track &_track) {
     json jsonFullAlbum =
         performRequest("/albums/" + _track.get_album().get_id());
-    _track.get_album().set_copyright(jsonFullAlbum.at("copyrights")[0]["text"]);
+    if (jsonFullAlbum.contains("copyrights") &&
+        !jsonFullAlbum["copyrights"].empty() &&
+        !jsonFullAlbum["copyrights"].contains("text")) {
+        _track.get_album().set_copyright(
+            jsonFullAlbum.at("copyrights")[0]["text"]);
+    }
     _track.get_album().set_label(jsonFullAlbum.at("label"));
     _track.get_album().set_state(Album::MetadataState::Full);
 }

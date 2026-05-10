@@ -1,8 +1,6 @@
 #if !defined(QUERY_H)
 #define QUERY_H
 
-#include "../lib/base64/base64.h"
-
 #include <chrono>
 #include <curl/curl.h>
 #include <filesystem>

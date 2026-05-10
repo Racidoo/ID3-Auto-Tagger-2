@@ -22,7 +22,6 @@ template <typename LabelT> class MediaWindow : public wxScrolledWindow {
 
     void deleteChildren() {
         contentSizer->Clear(true);
-        labelMap.clear();
     }
 
     void appendChildren(LabelT *_label) {
@@ -33,25 +32,15 @@ template <typename LabelT> class MediaWindow : public wxScrolledWindow {
                 wxCommandEvent notifyEvent(EVT_MEDIA_WINDOW_EXPAND_CLICKED,
                                            GetId());
                 notifyEvent.SetEventObject(this);
-                // notifyEvent.SetString(_label->get_source()->get_type());
                 wxPostEvent(GetParent(), notifyEvent);
             });
             contentSizer->Add(loadMore, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM,
                               5);
-            // header->SetLabel(_label->getObject()->get_type() + 's');
         }
-        contentSizer->Prepend(_label, 0, wxSHRINK, 5);
-        // const QueryObject *obj = _label->getObject();
-        labelMap[_label->get_source()->get_id()] = _label;
-    }
-
-    LabelT *getLabel(const std::string &id) {
-        auto it = labelMap.find(id);
-        return it != labelMap.end() ? it->second : nullptr;
+        contentSizer->Add(_label, 0, wxSHRINK, 5);
     }
 
   private:
-    std::unordered_map<std::string, LabelT *> labelMap;
     wxBoxSizer *mainSizer;
     wxBoxSizer *contentSizer;
     wxStaticText *header;

@@ -6,17 +6,18 @@
 #include <wx/wx.h>
 
 #include "Downloader.h"
-#include "MediaWindow.hpp"
 #include "Interfaces/ISearchResult.hpp"
+#include "MediaLabel.h"
+#include "MediaWindow.hpp"
 
-class AlbumLabel;
-class ArtistLabel;
-class PlaylistLabel;
+// class AlbumLabel;
+// class ArtistLabel;
+// class PlaylistLabel;
 class TrackPanel;
 
-using AlbumWindow = MediaWindow<AlbumLabel>;
-using ArtistWindow = MediaWindow<ArtistLabel>;
-using PlaylistWindow = MediaWindow<PlaylistLabel>;
+// using AlbumWindow = MediaWindow<AlbumLabel>;
+// using ArtistWindow = MediaWindow<ArtistLabel>;
+// using PlaylistWindow = MediaWindow<PlaylistLabel>;
 
 class SpotifyWindow : public wxScrolledWindow {
   private:
@@ -27,9 +28,9 @@ class SpotifyWindow : public wxScrolledWindow {
     wxStaticText *artistHeader;
     wxStaticText *playlistHeader;
     TrackPanel *trackPanel;
-    AlbumWindow *albumWindow;
-    ArtistWindow *artistWindow;
-    PlaylistWindow *playlistWindow;
+    MediaWindow<MediaLabel> *albumWindow;
+    MediaWindow<MediaLabel> *artistWindow;
+    MediaWindow<MediaLabel> *playlistWindow;
     wxBitmapToggleButton *trackButton;
     wxBitmapToggleButton *albumButton;
     wxBitmapToggleButton *artistButton;
@@ -40,7 +41,7 @@ class SpotifyWindow : public wxScrolledWindow {
     ~SpotifyWindow();
 
     // inline TrackWindow *get_trackWindow() const { return trackWindow; };
-    inline AlbumWindow *get_albumWindow() const { return albumWindow; };
+    // inline AlbumWindow *get_albumWindow() const { return albumWindow; };
 
     void search(const wxString &_searchText);
     void showSearchResults(ISearchResult &result);

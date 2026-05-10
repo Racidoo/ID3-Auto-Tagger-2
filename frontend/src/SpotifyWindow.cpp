@@ -1,9 +1,6 @@
 #include "SpotifyWindow.h"
-#include "AlbumLabel.h"
-#include "ArtistLabel.h"
 #include "CircleProgressBar.h"
 #include "IconProvider.h"
-#include "PlaylistLabel.h"
 #include "TrackPanel.h"
 
 enum {
@@ -57,21 +54,18 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // trackWindow = new TrackWindow(this, downloader);
     trackPanel = new TrackPanel(this, downloader);
-    albumWindow = new AlbumWindow(this);
-    artistWindow = new ArtistWindow(this);
-    playlistWindow = new PlaylistWindow(this);
+    albumWindow = new MediaWindow<MediaLabel>(this);
+    artistWindow = new MediaWindow<MediaLabel>(this);
+    playlistWindow = new MediaWindow<MediaLabel>(this);
 
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
     mainSizer->Add(trackPanel, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
-    // mainSizer->Add(trackWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(albumWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(artistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(playlistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
-    // trackWindow->Hide();
     trackPanel->Hide();
     albumWindow->Hide();
     artistWindow->Hide();
@@ -83,26 +77,18 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
     // this->Bind(EVT_TRACK_VERIFY, &SpotifyWindow::verifyTags, this);
     this->Bind(EVT_MEDIA_LABEL_CLICKED, [this](wxCommandEvent &event) {
         wxLogInfo(wxT("Temporarily disabled!"));
-        // auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
-        // if (!label)
-        //     return;
-        // const QueryObject *obj = label->getObject();
-        // if (!obj)
-        //     return;
+        auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
 
-        // std::string id = obj->get_id();
-        // std::string type = obj->get_type();
+        auto source = label->get_source();
 
-        // std::cout << "Clicked object ID: " << id << ", Type: " << type
-        //           << std::endl;
-        // // track search for artist not supported
-        // if (type == "artist") {
-        //     return;
-        // }
-
-        // std::string url("https://open.spotify.com/intl-de/" + type + "/" +
-        // id); auto searchResults = downloader->fetchResource(url);
-        // showSearchResults(searchResults);
+        if (auto artist = std::dynamic_pointer_cast<IArtist>(source)) {
+            wxLogDebug(wxT("artist"));
+        } else if (auto album = std::dynamic_pointer_cast<IAlbum>(source)) {
+            wxLogDebug(wxT("album"));
+        } else if (auto playlist =
+                       std::dynamic_pointer_cast<IPlaylist>(source)) {
+            wxLogDebug(wxT("playlist"));
+        }
     });
     this->Bind(EVT_MEDIA_WINDOW_EXPAND_CLICKED, [this](wxCommandEvent event) {
         wxLogDebug("MediaWindow expand clicked. type: " + event.GetString());
@@ -149,15 +135,18 @@ void SpotifyWindow::showSearchResults(ISearchResult &result) {
 
     if (!result.albums.empty()) {
         albumWindow->Show();
-        for (const auto &album : result.albums)
-            albumWindow->appendChildren(new AlbumLabel(albumWindow, album));
+        for (auto album : result.albums)
+            albumWindow->appendChildren(new MediaLabel(
+                albumWindow, album,
+                {wxString(album->get_artist()), wxString(album->get_year())}));
     } else {
         albumWindow->Hide();
     }
     if (!result.artists.empty()) {
         artistWindow->Show();
         for (const auto &artist : result.artists)
-            artistWindow->appendChildren(new ArtistLabel(artistWindow, artist));
+            artistWindow->appendChildren(
+                new MediaLabel(artistWindow, artist, {wxT("Artist")}));
     } else {
         artistWindow->Hide();
     }
@@ -165,7 +154,7 @@ void SpotifyWindow::showSearchResults(ISearchResult &result) {
         playlistWindow->Show();
         for (const auto &playlist : result.playlists)
             playlistWindow->appendChildren(
-                new PlaylistLabel(playlistWindow, playlist));
+                new MediaLabel(playlistWindow, playlist, {wxT("Playlist")}));
     } else {
         playlistWindow->Hide();
     }

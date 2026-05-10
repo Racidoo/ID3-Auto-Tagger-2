@@ -1,5 +1,4 @@
 #include "Interfaces/IAlbum.h"
-#include "Sources/Discogs/DiscogsMasterReleaseSource.h"
 #include "Sources/Discogs/DiscogsReleaseSource.h"
 #include "Sources/Spotify/SpotifyAlbumSource.h"
 
@@ -7,6 +6,12 @@ std::string IAlbum::get_id() const { return source ? source->get_id() : ""; }
 std::string IAlbum::get_title() { return source ? source->get_title() : ""; }
 std::vector<std::byte> IAlbum::get_cover() {
     return source ? source->get_cover() : std::vector<std::byte>{};
+}
+std::string IAlbum::get_artist() const {
+    return source ? source->get_artist() : "";
+}
+std::string IAlbum::get_year() const {
+    return source ? source->get_year() : "";
 }
 
 void IAlbum::set_title(const std::string &_title) {
@@ -37,10 +42,4 @@ std::shared_ptr<IAlbum>
 IAlbum::fromDiscogs(std::shared_ptr<Discogs::Release> _release) {
     return std::make_shared<IAlbum>(
         std::make_shared<DiscogsReleaseSource>(_release));
-}
-
-std::shared_ptr<IAlbum>
-IAlbum::fromDiscogs(std::shared_ptr<Discogs::MasterRelease> _release) {
-    return std::make_shared<IAlbum>(
-        std::make_shared<DiscogsMasterReleaseSource>(_release));
 }

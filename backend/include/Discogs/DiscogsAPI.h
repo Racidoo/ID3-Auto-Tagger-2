@@ -7,8 +7,8 @@
 
 using json = nlohmann::json;
 
-#include "Discogs/MasterRelease.h"
 #include "Discogs/Release.h"
+#include "Discogs/ReleaseTrack.h"
 #include "Interfaces/ISearchResult.hpp"
 #include "Query.h"
 
@@ -41,18 +41,18 @@ class DiscogsAPI : public Query {
         std::optional<std::string> track;
         std::optional<std::string> submitter;
         std::optional<std::string> contributor;
+        std::unordered_set<ISearchResult::SearchCategory> categories;
     };
 
     std::vector<std::shared_ptr<Release>>
     searchRelease(const SearchParams &_params);
-    std::vector<std::shared_ptr<MasterRelease>>
-    searchMasterRelease(const SearchParams &_params);
+    ISearchResult search(const SearchParams &_params);
 
-    std::shared_ptr<MasterRelease> getMasterRelease(int _masterId);
+    std::shared_ptr<Release> getMasterRelease(int _masterId);
     std::shared_ptr<Release> getRelease(int _releaseId,
                                         const std::string &_currAbbr = "EUR");
-
-    ISearchResult search(const SearchParams &_params);
+    std::vector<std::shared_ptr<ReleaseTrack>>
+    getReleaseTracks(std::shared_ptr<Release> _release);
 
   protected:
     void prepareHeaders(struct curl_slist *&_headers) override;
@@ -62,16 +62,21 @@ class DiscogsAPI : public Query {
     std::string accessToken;
     inline static const std::string urlAPI = "https://api.discogs.com";
 
-    Artist createArtistFromRelease(const json &_jsonArtist, bool &_fallbackUsed);
+    Artist createArtistFromRelease(const json &_jsonArtist,
+                                   bool &_fallbackUsed);
     Artist createArtistFromArtist(const json &_jsonArtist, bool &_fallbackUsed);
     std::vector<Artist> createArtists(const json &_jsonArtists,
                                       bool &_fallbackUsed);
     std::vector<Label> createLabels(const json &_jsonLabels,
                                     bool &_fallbackUsed);
-    std::shared_ptr<MasterRelease>
-    createMasterRelease(const json &_jsonRelease);
+
+    std::shared_ptr<Release> createReleaseFromSearch(const json &_jsonRelease);
     std::shared_ptr<Release> createRelease(const json &_jsonRelease);
 
+    static std::vector<std::string> parseGenresFromSearch(const json &_j,
+                                                          bool &_fallbackUsed);
+    static std::vector<std::string> parseStylesFromSearch(const json &_j,
+                                                          bool &_fallbackUsed);
     static std::vector<std::string> parseGenres(const json &_j,
                                                 bool &_fallbackUsed);
     static std::vector<std::string> parseStyles(const json &_j,

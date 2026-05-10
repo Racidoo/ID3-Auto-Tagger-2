@@ -135,7 +135,7 @@ bool ITrack::verify(std::shared_ptr<ITrack> _data, Downloader *_downloader) {
         return false;
     }
 
-    if (!_downloader->initializeDiscogs()) {
+    if (_downloader->initializeDiscogs()) {
         Discogs::DiscogsAPI::SearchParams params{};
 
         params.releaseTitle = spotifyTrackData->get_album();
@@ -146,20 +146,20 @@ bool ITrack::verify(std::shared_ptr<ITrack> _data, Downloader *_downloader) {
         if (releases.empty()) {
             std::cerr << "Could not locate track details using DicogsAPI!"
                       << std::endl;
-        }
-
-        std::unordered_set<std::string> styles;
-        for (auto &&release : releases) {
-            for (auto &&style : release->get_styles()) {
-                styles.insert(style);
-            }
-        }
-        if (styles.size() == 1) {
-            spotifyTrackData->set_genre(*styles.begin());
         } else {
-            std::cout << "Cannot determine correct genre:" << std::endl;
-            for (auto &&style : styles) {
-                std::cout << style << std::endl;
+            std::unordered_set<std::string> styles;
+            for (auto &&release : releases) {
+                for (auto &&style : release->get_styles()) {
+                    styles.insert(style);
+                }
+            }
+            if (styles.size() == 1) {
+                spotifyTrackData->set_genre(*styles.begin());
+            } else {
+                std::cout << "Cannot determine correct genre:" << std::endl;
+                for (auto &&style : styles) {
+                    std::cout << style << std::endl;
+                }
             }
         }
     } else {

@@ -25,7 +25,7 @@ class QueryObject {
 
     template <typename T>
     static std::string vecToStr(const std::vector<T> &_object,
-                                const std::string &_sep = ",") {
+                                const std::string &_sep = ", ") {
         static_assert(std::is_base_of<QueryObject, T>::value,
                       "T must derive from QueryObject");
 
