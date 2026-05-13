@@ -186,32 +186,32 @@ std::shared_ptr<Release> DiscogsAPI::getMasterRelease(int _masterId) {
         performRequest("/masters/" + std::to_string(_masterId)));
 }
 
-std::vector<std::shared_ptr<ReleaseTrack>>
-DiscogsAPI::getReleaseTracks(std::shared_ptr<Release> _release) {
-    std::vector<std::shared_ptr<ReleaseTrack>> releaseTracks;
-    std::shared_ptr<Release> newRelease = nullptr;
-    if (_release->get_tracklist().empty()) {
-        int id = std::stoi(_release->get_id());
-        if (id == _release->get_masterId()) {
-            newRelease = getMasterRelease(_release->get_masterId());
-        } else {
-            newRelease = getRelease(id);
-        }
-    } else {
-        newRelease = _release;
-    }
+// std::vector<::shared_ptr<ReleaseTrack>>
+// DiscogsAPI::getReleaseTracks(std::shared_ptr<Release> _release) {
+//     std::vector<std::shared_ptr<ReleaseTrack>> releaseTracks;
+//     std::shared_ptr<Release> newRelease = nullptr;
+//     if (_release->get_tracklist().empty()) {
+//         int id = std::stoi(_release->get_id());
+//         if (id == _release->get_masterId()) {
+//             newRelease = getMasterRelease(_release->get_masterId());
+//         } else {
+//             newRelease = getRelease(id);
+//         }
+//     } else {
+//         newRelease = _release;
+//     }
 
-    for (auto &&track : newRelease->get_tracklist()) {
-        releaseTracks.push_back(std::make_shared<ReleaseTrack>(
-            newRelease->get_id(), track.title, *newRelease,
-            newRelease->get_artists(), track.extraArtists,
-            newRelease->get_genres(), newRelease->get_imageUrl(),
-            newRelease->get_labels(),
-            ReleaseTrack::parseDuration(track.duration), track.position,
-            newRelease->get_year()));
-    }
-    return releaseTracks;
-}
+//     // for (auto &&track : newRelease->get_tracklist()) {
+//     //     releaseTracks.push_back(std::make_shared<ReleaseTrack>(
+//     //         newRelease->get_id(), track.title, *newRelease,
+//     //         newRelease->get_artists(), track.extraArtists,
+//     //         newRelease->get_genres(), newRelease->get_imageUrl(),
+//     //         newRelease->get_labels(),
+//     //         ReleaseTrack::parseDuration(track.duration), track.position,
+//     //         newRelease->get_year()));
+//     // }
+//     return releaseTracks;
+// }
 
 Artist DiscogsAPI::createArtistFromArtist(const json &_jsonArtist,
                                           bool &_fallbackUsed) {
@@ -255,7 +255,7 @@ std::vector<Label> DiscogsAPI::createLabels(const json &_jsonLabels,
 std::shared_ptr<Release>
 DiscogsAPI::createReleaseFromSearch(const json &_jsonRelease) {
     bool fallbackUsed(false);
-    auto release = std::make_shared<Release>(
+    Release release(
         _jsonRelease.at("id").get<int>(),
         _jsonRelease.at("title").get<std::string>(),
         Release::MetadataState::Full,
@@ -274,21 +274,21 @@ DiscogsAPI::createReleaseFromSearch(const json &_jsonRelease) {
         Release::getOptional<std::string>(_jsonRelease, "released", "",
                                           fallbackUsed),
         parseStylesFromSearch(_jsonRelease, fallbackUsed),
-        parseTracklist(_jsonRelease, fallbackUsed),
         std::stoi(Release::getOptional<std::string>(_jsonRelease, "year", "0",
                                                     fallbackUsed)),
         parseVideos(_jsonRelease, fallbackUsed),
         Release::getOptional<std::string>(_jsonRelease, "data_quality", "",
                                           fallbackUsed) == "Correct");
+    release.set_tracklist(parseTracklist(_jsonRelease, release, fallbackUsed));
     if (fallbackUsed) {
-        release->set_state(Release::MetadataState::Partial);
+        release.set_state(Release::MetadataState::Partial);
     }
-    return release;
+    return std::make_shared<Release>(release);
 }
 
 std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
     bool fallbackUsed(false);
-    auto release = std::make_shared<Release>(
+    Release release(
         _jsonRelease.at("id").get<int>(),
         _jsonRelease.at("title").get<std::string>(),
         Release::MetadataState::Full,
@@ -307,15 +307,15 @@ std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
         Release::getOptional<std::string>(_jsonRelease, "released", "",
                                           fallbackUsed),
         parseStyles(_jsonRelease, fallbackUsed),
-        parseTracklist(_jsonRelease, fallbackUsed),
         Release::getOptional<int>(_jsonRelease, "year", 0, fallbackUsed),
         parseVideos(_jsonRelease, fallbackUsed),
         Release::getOptional<std::string>(_jsonRelease, "data_quality", "",
                                           fallbackUsed) == "Correct");
+    release.set_tracklist(parseTracklist(_jsonRelease, release, fallbackUsed));
     if (fallbackUsed) {
-        release->set_state(Release::MetadataState::Partial);
+        release.set_state(Release::MetadataState::Partial);
     }
-    return release;
+    return std::make_shared<Release>(release);
 }
 
 std::vector<std::string>
@@ -358,17 +358,28 @@ std::vector<std::string> DiscogsAPI::parseStyles(const json &_j,
     return styles;
 }
 
-std::vector<Release::Track> DiscogsAPI::parseTracklist(const json &_j,
-                                                       bool &_fallbackUsed) {
-    std::vector<Release::Track> tracklist;
+std::vector<ReleaseTrack> DiscogsAPI::parseTracklist(const json &_j,
+                                                     const Release &_release,
+                                                     bool &_fallbackUsed) {
+    std::vector<ReleaseTrack> tracklist;
     for (auto &&jsonTrack :
          Release::getOptional<json>(_j, "tracklist", {}, _fallbackUsed)) {
-        tracklist.push_back({Release::getOptional<std::string>(
-                                 jsonTrack, "duration", {}, _fallbackUsed),
-                             Release::getOptional<std::string>(
-                                 jsonTrack, "position", {}, _fallbackUsed),
-                             Release::getOptional<std::string>(
-                                 jsonTrack, "title", {}, _fallbackUsed)});
+        json extraArtists = Release::getOptional<json>(
+            jsonTrack, "extraartists", {}, _fallbackUsed);
+
+        tracklist.emplace_back(
+            _release.get_id(),
+            Release::getOptional<std::string>(jsonTrack, "title", {},
+                                              _fallbackUsed),
+            _release, _release.get_artists(), std::vector<Artist>{},
+            // createArtists(extraArtists, _fallbackUsed),
+            _release.get_genres(), _release.get_imageUrl(),
+            _release.get_labels(),
+            ReleaseTrack::parseDuration(Release::getOptional<std::string>(
+                jsonTrack, "duration", {}, _fallbackUsed)),
+            Release::getOptional<std::string>(jsonTrack, "position", {},
+                                              _fallbackUsed),
+            _release.get_year());
     }
     return tracklist;
 }

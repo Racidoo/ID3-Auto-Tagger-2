@@ -8,14 +8,15 @@
 #include "QueryObject.h"
 
 namespace Discogs {
+class ReleaseTrack;
 class Release : public QueryObject {
   public:
-    struct Track {
-        std::string duration;
-        std::string position;
-        std::string title;
-        std::vector<Artist> extraArtists;
-    };
+    // struct Track {
+    //     std::string duration;
+    //     std::string position;
+    //     std::string title;
+    //     std::vector<Artist> extraArtists;
+    // };
     struct Video {
         std::string description;
         std::string title;
@@ -28,8 +29,7 @@ class Release : public QueryObject {
             int _masterId, const std::string &_country,
             const std::vector<std::string> &_genres,
             const std::vector<Label> &_labels, const std::string &_releaseDate,
-            const std::vector<std::string> &_styles,
-            const std::vector<Track> &_tracklist, int _year,
+            const std::vector<std::string> &_styles, int _year,
             const std::vector<Video> &_videos, bool _verified);
     ~Release() = default;
 
@@ -39,7 +39,7 @@ class Release : public QueryObject {
     std::string get_stringGenres() const;
     const std::vector<std::string> &get_styles() const;
     std::string get_stringStyles() const;
-    const std::vector<Track> &get_tracklist() const;
+    const std::vector<ReleaseTrack> &get_tracklist() const;
     int get_year() const;
     const std::vector<Video> &get_videos() const;
     int get_masterId() const;
@@ -49,11 +49,13 @@ class Release : public QueryObject {
     const std::string &get_releaseDate() const;
     bool isVerified() const;
 
+    void set_tracklist(const std::vector<ReleaseTrack> &_tracklist);
+
   private:
     std::vector<Artist> artists;
     std::vector<std::string> genres;
     std::vector<std::string> styles;
-    std::vector<Track> tracklist;
+    std::vector<ReleaseTrack> tracklist;
     int year;
     std::vector<Video> videos;
     int masterId;

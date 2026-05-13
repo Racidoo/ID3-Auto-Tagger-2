@@ -3,7 +3,12 @@
 #include <memory>
 
 #include "Sources/IAlbumSource.hpp"
-#include "Spotify/Album.h"
+
+namespace Spotify {
+class Album;
+} // namespace Spotify
+
+class ITrack;
 
 class SpotifyAlbumSource : public IAlbumSource {
   public:
@@ -19,6 +24,11 @@ class SpotifyAlbumSource : public IAlbumSource {
     std::string get_genre() override;
     std::string get_year() override;
     std::string get_label() override;
+
+    std::string get_type() const override;
+    std::vector<std::byte> get_artistCover() const override;
+    std::vector<std::shared_ptr<ITrack>> get_tracklist() const override;
+    bool isMetaDataComplete() const override;
 
     void set_title(const std::string &_title) override;
     void set_cover(const std::vector<std::byte> &_imageData) override;

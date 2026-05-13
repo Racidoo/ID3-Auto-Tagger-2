@@ -1,4 +1,5 @@
 #include "Interfaces/IAlbum.h"
+#include "Interfaces/ITrack.h"
 #include "Sources/Discogs/DiscogsReleaseSource.h"
 #include "Sources/Spotify/SpotifyAlbumSource.h"
 
@@ -12,6 +13,19 @@ std::string IAlbum::get_artist() const {
 }
 std::string IAlbum::get_year() const {
     return source ? source->get_year() : "";
+}
+std::string IAlbum::get_type() const {
+    return source ? source->get_type() : "";
+}
+std::vector<std::byte> IAlbum::get_artistCover() const {
+    return source ? source->get_artistCover() : std::vector<std::byte>{};
+}
+std::vector<std::shared_ptr<ITrack>> IAlbum::get_tracklist() const {
+    return source ? source->get_tracklist()
+                  : std::vector<std::shared_ptr<ITrack>>{};
+}
+bool IAlbum::isMetaDataComplete() const {
+    return source ? source->isMetaDataComplete() : false;
 }
 
 void IAlbum::set_title(const std::string &_title) {

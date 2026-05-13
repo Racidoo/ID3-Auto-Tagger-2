@@ -1,4 +1,5 @@
 #include "../include/Spotify/Album.h"
+#include "../include/Spotify/Track.h"
 
 namespace Spotify {
 
@@ -8,7 +9,7 @@ Album::Album(const std::string &_id, const std::string &_name,
              const std::string &_imageURL, const std::vector<Artist> &_artists)
     : QueryObject(_id, _name, _state, _imageURL), albumType(_albumType),
       totalTracks(_totalTracks), releaseDate(_releaseDate), label(""),
-      copyright(""), artists(_artists) {}
+      copyright(""), artists(_artists), tracklist{} {}
 
 const std::string &Album::get_albumType() const { return albumType; }
 unsigned int Album::get_totalTracks() const { return totalTracks; }
@@ -18,11 +19,16 @@ std::string Album::get_releaseYear() const {
 }
 const std::string &Album::get_label() const { return label; }
 const std::string &Album::get_copyright() const { return copyright; }
-std::string Album::get_artists() const { return vecToStr(artists); }
+const std::vector<Artist> &Album::get_artists() const { return artists; }
+std::string Album::get_stringArtists() const { return vecToStr(artists); }
+const std::vector<Track> &Album::get_tracklist() const { return tracklist; }
 
 void Album::set_label(const std::string &_label) { label = _label; }
 void Album::set_copyright(const std::string &_copyright) {
     copyright = _copyright;
+}
+void Album::set_tracklist(const std::vector<Track> &_tracklist) {
+    tracklist = _tracklist;
 }
 
 } // namespace Spotify

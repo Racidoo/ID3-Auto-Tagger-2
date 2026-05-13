@@ -1,4 +1,6 @@
 #include "Sources/Discogs/DiscogsReleaseSource.h"
+#include "Discogs/ReleaseTrack.h"
+#include "Interfaces/ITrack.h"
 
 std::string DiscogsReleaseSource::get_id() const { return release->get_id(); }
 std::string DiscogsReleaseSource::get_title() { return release->get_name(); }
@@ -17,6 +19,25 @@ std::string DiscogsReleaseSource::get_year() {
 }
 std::string DiscogsReleaseSource::get_label() {
     return release->get_stringLabels();
+}
+
+std::string DiscogsReleaseSource::get_type() const { return "<DiscogsType>"; }
+std::vector<std::byte> DiscogsReleaseSource::get_artistCover() const {
+    return (release->get_artists().empty()
+                ? std::vector<std::byte>{}
+                : release->get_artists()[0].get_image());
+}
+std::vector<std::shared_ptr<ITrack>>
+DiscogsReleaseSource::get_tracklist() const {
+    std::vector<std::shared_ptr<ITrack>> tracklist;
+    for (auto &&track : release->get_tracklist()) {
+        tracklist.push_back(ITrack::fromDiscogs(
+            std::make_shared<Discogs::ReleaseTrack>(track)));
+    }
+    return tracklist;
+}
+bool DiscogsReleaseSource::isMetaDataComplete() const {
+    return release->get_state() == Discogs::Release::MetadataState::Full;
 }
 
 void DiscogsReleaseSource::set_title(const std::string &_title) {

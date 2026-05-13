@@ -105,6 +105,45 @@ std::string SpotifyAPI::prepareUrl(const std::string &_url) {
     return urlAPI + _url;
 }
 
+bool SpotifyAPI::insertTracklist(Album &_album, const json &_jsonAlbum) {
+    if (!_jsonAlbum.contains("tracks") ||
+        _jsonAlbum["tracks"]["items"].empty()) {
+        return false;
+    }
+    std::vector<Track> tracks;
+    // ToDo: Tracklimit is capped at 20. Implement loadMore()
+    if (_jsonAlbum["tracks"]["total"].get<int>() >
+        _jsonAlbum["tracks"]["limit"].get<int>()) {
+        std::cout << "[" << __FILE__ << ":" << __LINE__
+                  << "]: Loading additional tracks is currently not supported"
+                  << std::endl;
+    }
+    for (auto &&jsonTrack : _jsonAlbum["tracks"]["items"]) {
+        tracks.push_back(createTrack(jsonTrack, _album));
+    }
+    _album.set_tracklist(tracks);
+    return true;
+}
+
+bool SpotifyAPI::insertLabel(Album &_album, const json &_jsonAlbum) {
+    if (!_jsonAlbum.contains("label")) {
+        return false;
+    }
+    _album.set_label(_jsonAlbum["label"].get<std::string>());
+    return true;
+}
+
+bool SpotifyAPI::insertCopyright(Album &_album, const json &_jsonAlbum) {
+    if (_jsonAlbum.contains("copyrights")) {
+        return false;
+    }
+    if (!_jsonAlbum["copyrights"].empty()) {
+        _album.set_copyright(
+            _jsonAlbum["copyright"][0]["text"].get<std::string>());
+    }
+    return true;
+}
+
 Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
     Album album(_jsonAlbum.at("id").get<std::string>(),
                 _jsonAlbum.at("name").get<std::string>(),
@@ -114,6 +153,10 @@ Album SpotifyAPI::createAlbum(const json &_jsonAlbum, bool _fullTags) {
                 _jsonAlbum.at("release_date").get<std::string>(),
                 _jsonAlbum.at("images").at(1).at("url").get<std::string>(),
                 createArtists(_jsonAlbum.at("artists")));
+    if (insertTracklist(album, _jsonAlbum) && insertLabel(album, _jsonAlbum) &&
+        insertCopyright(album, _jsonAlbum)) {
+        album.set_state(Album::MetadataState::Full);
+    }
     return album;
 }
 
@@ -409,29 +452,37 @@ std::string SpotifyAPI::searchId(std::shared_ptr<ITrack> _localData) {
     return "";
 }
 
+void SpotifyAPI::loadAdditionalData(std::shared_ptr<IAlbum> _album) {
+    auto album = _album->get_spotifyAlbum();
+    json jsonFullAlbum = performRequest("/albums/" + album->get_id());
+
+    (void *)insertTracklist(*album, jsonFullAlbum);
+    (void *)insertLabel(*album, jsonFullAlbum);
+    (void *)insertCopyright(*album, jsonFullAlbum);
+}
+
+void SpotifyAPI::loadAdditionalData(Album &_album) {
+    json jsonFullAlbum = performRequest("/albums/" + _album.get_id());
+
+    (void *)insertTracklist(_album, jsonFullAlbum);
+    (void *)insertLabel(_album, jsonFullAlbum);
+    (void *)insertCopyright(_album, jsonFullAlbum);
+}
+
 void SpotifyAPI::loadAdditionalData(Track &_track) {
     json jsonFullAlbum =
         performRequest("/albums/" + _track.get_album().get_id());
-    if (jsonFullAlbum.contains("copyrights") &&
-        !jsonFullAlbum["copyrights"].empty() &&
-        !jsonFullAlbum["copyrights"].contains("text")) {
-        _track.get_album().set_copyright(
-            jsonFullAlbum.at("copyrights")[0]["text"]);
-    }
-    _track.get_album().set_label(jsonFullAlbum.at("label"));
-    _track.get_album().set_state(Album::MetadataState::Full);
+
+    (void *)insertLabel(_track.get_album(), jsonFullAlbum);
+    (void *)insertCopyright(_track.get_album(), jsonFullAlbum);
 }
 
 void SpotifyAPI::loadAdditionalData(std::shared_ptr<ITrack> _spotifyITrack) {
+    auto &album = _spotifyITrack->get_spotifyTrack()->get_album();
+    json jsonFullAlbum = performRequest("/albums/" + album.get_id());
 
-    json jsonFullAlbum = performRequest(
-        "/albums/" + _spotifyITrack->get_spotifyTrack()->get_album().get_id());
-    if (!jsonFullAlbum.at("copyrights").empty()) {
-        _spotifyITrack->set_copyright(
-            jsonFullAlbum.at("copyrights")[0]["text"]);
-    }
-
-    _spotifyITrack->set_label(jsonFullAlbum.at("label"));
+    (void *)insertLabel(album, jsonFullAlbum);
+    (void *)insertCopyright(album, jsonFullAlbum);
 }
 
 std::shared_ptr<ITrack>

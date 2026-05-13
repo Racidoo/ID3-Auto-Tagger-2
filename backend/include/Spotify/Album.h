@@ -9,6 +9,8 @@
 
 namespace Spotify {
 
+class Track;
+
 class Album : public QueryObject {
   public:
     Album(const std::string &_id, const std::string &_name,
@@ -23,10 +25,13 @@ class Album : public QueryObject {
     std::string get_releaseYear() const;
     const std::string &get_label() const;
     const std::string &get_copyright() const;
-    std::string get_artists() const;
+    const std::vector<Artist> &get_artists() const;
+    std::string get_stringArtists() const;
+    const std::vector<Track> &get_tracklist() const;
 
     void set_label(const std::string &_label);
     void set_copyright(const std::string &_copyright);
+    void set_tracklist(const std::vector<Track> &_tracklist);
 
   private:
     std::string albumType;
@@ -37,6 +42,7 @@ class Album : public QueryObject {
     // optional attributes
     std::string label;
     std::string copyright;
+    std::vector<Track> tracklist;
 };
 
 } // namespace Spotify

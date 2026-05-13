@@ -14,6 +14,8 @@ namespace Spotify {
 class Album;
 } // namespace Spotify
 
+class ITrack;
+
 class IAlbum : public IMediaEntity {
   public:
     explicit IAlbum(std::shared_ptr<IAlbumSource> _source)
@@ -23,8 +25,13 @@ class IAlbum : public IMediaEntity {
     std::string get_id() const override;
     std::string get_title() override;
     std::vector<std::byte> get_cover() override;
+    std::string get_type() const;
     std::string get_artist() const;
+    std::vector<std::byte> get_artistCover() const;
     std::string get_year() const;
+
+    std::vector<std::shared_ptr<ITrack>> get_tracklist() const;
+    bool isMetaDataComplete() const;
 
     void set_title(const std::string &_title) override;
     void set_cover(const std::vector<std::byte> &_imageData) override;

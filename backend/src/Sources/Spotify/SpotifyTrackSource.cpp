@@ -9,7 +9,7 @@ std::string SpotifyTrackSource::get_album() {
     return track->get_album().get_name();
 }
 std::string SpotifyTrackSource::get_albumArtist() {
-    return track->get_album().get_artists();
+    return track->get_album().get_stringArtists();
 }
 std::string SpotifyTrackSource::get_copyright() {
     return track->get_album().get_copyright();

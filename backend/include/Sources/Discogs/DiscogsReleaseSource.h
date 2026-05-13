@@ -2,10 +2,10 @@
 
 #include <memory>
 
+#include "Discogs/Release.h"
 #include "Sources/IAlbumSource.hpp"
 
-#include "Discogs/Release.h"
-
+class ITrack;
 class DiscogsReleaseSource : public IAlbumSource {
   public:
     explicit DiscogsReleaseSource(std::shared_ptr<Discogs::Release> _release)
@@ -20,6 +20,11 @@ class DiscogsReleaseSource : public IAlbumSource {
     std::string get_genre() override;
     std::string get_year() override;
     std::string get_label() override;
+
+    std::string get_type() const override;
+    std::vector<std::byte> get_artistCover() const override;
+    std::vector<std::shared_ptr<ITrack>> get_tracklist() const override;
+    bool isMetaDataComplete() const override;
 
     void set_title(const std::string &_title) override;
     void set_cover(const std::vector<std::byte> &_imageData) override;

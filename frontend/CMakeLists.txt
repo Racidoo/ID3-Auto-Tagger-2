@@ -2,6 +2,7 @@ project(SpotifyAPI_Frontend)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
     src/App.cpp
+    src/AlbumDetailsPanel.cpp
     src/CircleProgressBar.cpp
     src/DiscogsWindow.cpp
     src/DownloadStatusRenderer.cpp

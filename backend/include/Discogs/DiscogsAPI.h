@@ -81,8 +81,9 @@ class DiscogsAPI : public Query {
                                                 bool &_fallbackUsed);
     static std::vector<std::string> parseStyles(const json &_j,
                                                 bool &_fallbackUsed);
-    static std::vector<Release::Track> parseTracklist(const json &_j,
-                                                      bool &_fallbackUsed);
+    static std::vector<ReleaseTrack> parseTracklist(const json &_j,
+                                                    const Release &_release,
+                                                    bool &_fallbackUsed);
     static std::vector<Release::Video> parseVideos(const json &_j,
                                                    bool &_fallbackUsed);
     static std::string parseImageUrl(const json &_j, bool &_fallbackUsed);

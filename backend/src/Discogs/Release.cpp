@@ -1,4 +1,5 @@
 #include "Discogs/Release.h"
+#include "Discogs/ReleaseTrack.h"
 
 namespace Discogs {
 
@@ -8,14 +9,12 @@ Release::Release(int _id, const std::string &_name, MetadataState _state,
                  const std::vector<std::string> &_genres,
                  const std::vector<Label> &_labels,
                  const std::string &_releaseDate,
-                 const std::vector<std::string> &_styles,
-                 const std::vector<Track> &_tracklist, int _year,
+                 const std::vector<std::string> &_styles, int _year,
                  const std::vector<Video> &_videos, bool _verified)
     : QueryObject(std::to_string(_id), _name, _state, _imageUrl),
-      artists(_artists), genres(_genres), styles(_styles),
-      tracklist(_tracklist), year(_year), videos(_videos), masterId(_masterId),
-      country(_country), labels(_labels), releaseDate(_releaseDate),
-      verified(_verified) {}
+      artists(_artists), genres(_genres), styles(_styles), year(_year),
+      videos(_videos), masterId(_masterId), country(_country), labels(_labels),
+      releaseDate(_releaseDate), verified(_verified) {}
 
 const std::vector<Artist> &Release::get_artists() const { return artists; }
 std::string Release::get_stringArtists() const {
@@ -41,7 +40,7 @@ std::string Release::get_stringStyles() const {
     }
     return styles;
 }
-const std::vector<Release::Track> &Release::get_tracklist() const {
+const std::vector<ReleaseTrack> &Release::get_tracklist() const {
     return tracklist;
 }
 int Release::get_year() const { return year; }
@@ -56,5 +55,9 @@ std::string Release::get_stringLabels() const {
 }
 const std::string &Release::get_releaseDate() const { return releaseDate; }
 bool Release::isVerified() const { return verified; }
+
+void Release::set_tracklist(const std::vector<ReleaseTrack> &_tracklist) {
+    tracklist = _tracklist;
+}
 
 } // namespace Discogs

@@ -5,6 +5,7 @@
 #include <wx/tglbtn.h>
 #include <wx/wx.h>
 
+#include "AlbumDetailsPanel.h"
 #include "Downloader.h"
 #include "Interfaces/ISearchResult.hpp"
 #include "MediaLabel.h"
@@ -31,6 +32,7 @@ class SpotifyWindow : public wxScrolledWindow {
     MediaWindow<MediaLabel> *albumWindow;
     MediaWindow<MediaLabel> *artistWindow;
     MediaWindow<MediaLabel> *playlistWindow;
+    AlbumDetailsPanel *albumDetailsPanel;
     wxBitmapToggleButton *trackButton;
     wxBitmapToggleButton *albumButton;
     wxBitmapToggleButton *artistButton;

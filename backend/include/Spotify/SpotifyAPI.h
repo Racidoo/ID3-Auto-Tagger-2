@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 
+#include "Interfaces/IAlbum.h"
 #include "Interfaces/ITrack.h"
 #include "Query.h"
 #include "Spotify/Album.h"
@@ -67,6 +68,9 @@ class SpotifyAPI : public Query {
     std::vector<Track> getAlbumTracks(const std::string &_id);
     std::vector<Track> getPlaylistTracks(const std::string &_id);
     std::string searchId(std::shared_ptr<ITrack> _trackInterface);
+
+    void loadAdditionalData(Album &_album);
+    void loadAdditionalData(std::shared_ptr<IAlbum> _album);
     void loadAdditionalData(Track &_track);
     void loadAdditionalData(std::shared_ptr<ITrack> _spotifyITrack);
     std::shared_ptr<ITrack> researchTags(std::shared_ptr<ITrack> _localData);
@@ -85,6 +89,10 @@ class SpotifyAPI : public Query {
     json search(searchItem_type _type, const std::string &_query,
                 const std::string &_market = "", unsigned int _limit = 0,
                 const std::string &_offset = "");
+
+    bool insertTracklist(Album &_album, const json &_jsonAlbum);
+    bool insertLabel(Album &_album, const json &_jsonAlbum);
+    bool insertCopyright(Album &_album, const json &_jsonAlbum);
 
     Album createAlbum(const json &_jsonAlbum, bool _fullTags = false);
     Artist createArtist(const json &_jsonArtist) const;

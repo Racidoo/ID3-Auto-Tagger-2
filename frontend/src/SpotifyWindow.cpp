@@ -76,15 +76,26 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
     this->Bind(EVT_TRACK_DOWNLOAD, &SpotifyWindow::startDownload, this);
     // this->Bind(EVT_TRACK_VERIFY, &SpotifyWindow::verifyTags, this);
     this->Bind(EVT_MEDIA_LABEL_CLICKED, [this](wxCommandEvent &event) {
-        wxLogInfo(wxT("Temporarily disabled!"));
         auto *label = dynamic_cast<MediaLabel *>(event.GetEventObject());
-
         auto source = label->get_source();
 
+        if (!source) {
+            wxLogDebug(wxT("invalid reference to source"));
+        }
         if (auto artist = std::dynamic_pointer_cast<IArtist>(source)) {
             wxLogDebug(wxT("artist"));
         } else if (auto album = std::dynamic_pointer_cast<IAlbum>(source)) {
             wxLogDebug(wxT("album"));
+            auto dialog = new wxDialog(
+                this, wxID_ANY, "Album", wxDefaultPosition, wxSize(800, 600),
+                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+            dialog->SetMinSize(wxSize(800, 600));
+            auto sizer = new wxBoxSizer(wxVERTICAL);
+            sizer->Add(new AlbumDetailsPanel(dialog, album, downloader), 1,
+                       wxEXPAND | wxALL, 5);
+            dialog->SetSizerAndFit(sizer);
+            dialog->ShowModal();
+            dialog->Destroy();
         } else if (auto playlist =
                        std::dynamic_pointer_cast<IPlaylist>(source)) {
             wxLogDebug(wxT("playlist"));
