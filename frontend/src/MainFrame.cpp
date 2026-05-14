@@ -108,7 +108,7 @@ void MainFrame::OnDownloadClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
-    if (!downloader->is_initialized()) {
+    if (!downloader->initializeSpotify()) {
         wxLogError(wxT(
             "Provide credentials in the Settings, before using API-Services!"));
         return;
@@ -126,7 +126,7 @@ void MainFrame::OnDiscogsClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnYouTubeClicked(wxCommandEvent &event) {
-    if (!downloader->is_initialized()) {
+    if (!downloader->initializeYouTube()) {
         wxLogError(wxT(
             "Provide credentials in the Settings, before using API-Services!"));
         return;

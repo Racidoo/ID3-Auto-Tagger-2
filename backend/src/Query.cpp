@@ -102,7 +102,7 @@ json Query::performRequest(const std::string &_url) {
     if (response.contains("error")) {
         std::cerr << response.dump(4) << std::endl;
     }
-    std::cout << response.dump(4) << std::endl;
+    // std::cout << response.dump(4) << std::endl;
     std::ofstream("response.json") << response.dump(4);
     return response;
 }

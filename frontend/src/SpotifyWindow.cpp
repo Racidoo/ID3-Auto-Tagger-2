@@ -86,16 +86,20 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
             wxLogDebug(wxT("artist"));
         } else if (auto album = std::dynamic_pointer_cast<IAlbum>(source)) {
             wxLogDebug(wxT("album"));
-            auto dialog = new wxDialog(
-                this, wxID_ANY, "Album", wxDefaultPosition, wxSize(800, 600),
-                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
-            dialog->SetMinSize(wxSize(800, 600));
+            wxDialog dialog(this, wxID_ANY,
+                            "Albumdetails: " + album->get_title(),
+                            wxDefaultPosition, wxSize(800, 600),
+                            wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+            dialog.SetMinSize(wxSize(800, 600));
             auto sizer = new wxBoxSizer(wxVERTICAL);
-            sizer->Add(new AlbumDetailsPanel(dialog, album, downloader), 1,
+            sizer->Add(new AlbumDetailsPanel(&dialog, album, downloader), 1,
                        wxEXPAND | wxALL, 5);
-            dialog->SetSizerAndFit(sizer);
-            dialog->ShowModal();
-            dialog->Destroy();
+            dialog.SetSizer(sizer);
+            dialog.Layout();
+            dialog.SetSize(800, 600);
+            dialog.Centre();
+            dialog.ShowModal();
+
         } else if (auto playlist =
                        std::dynamic_pointer_cast<IPlaylist>(source)) {
             wxLogDebug(wxT("playlist"));
@@ -124,8 +128,8 @@ void SpotifyWindow::search(const wxString &_searchText) {
     if (playlistButton->GetValue())
         activeCategories.insert(ISearchResult::SearchCategory::Playlist);
 
-    ISearchResult result =
-        downloader->fetchResource(_searchText.ToStdString(), activeCategories);
+    ISearchResult result = downloader->fetchResource(_searchText.ToStdString(),
+                                                     activeCategories, "DE", 5);
     showSearchResults(result);
 }
 
