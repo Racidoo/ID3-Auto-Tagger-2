@@ -2,16 +2,18 @@
 
 #include <string>
 
-#include "QueryObject.h"
+#include "Interfaces/MediaEntityBase.h"
 
 namespace Discogs {
 
-class Artist : public QueryObject {
+class Artist : public MediaEntityBase {
   public:
-    Artist(int _id, const std::string &_name, MetadataState _state,
+    Artist(int _id, const std::string &_name, State _state,
            const std::string &_imageUrl);
     ~Artist() = default;
 
+
+    // void ensureLoaded(IMediaService& service) override;
   private:
     /* data */
 };

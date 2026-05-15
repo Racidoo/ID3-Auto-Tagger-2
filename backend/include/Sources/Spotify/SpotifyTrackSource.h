@@ -10,8 +10,8 @@ class SpotifyTrackSource : public ITrackSource {
     explicit SpotifyTrackSource(std::shared_ptr<Spotify::Track> _track)
         : track(std::move(_track)) {}
 
-    std::string get_id() const override;
-    std::string get_title() override;
+    const std::string &get_id() const override;
+    const std::string &get_name() override;
     std::string get_artist() override;
     std::string get_album() override;
     std::string get_albumArtist() override;
@@ -22,10 +22,11 @@ class SpotifyTrackSource : public ITrackSource {
     std::string get_trackNumber() override;
     std::string get_discNumber() override;
     std::size_t get_length() override;
-    std::vector<std::byte> get_cover() override;
+    const std::vector<std::byte> &get_image() override;
+    IMediaEntity::State get_state() const override;
 
     // Spotify object should only be mutated by SpotifyAPI
-    void set_title(const std::string &_title) override;
+    void set_name(const std::string &_name) override;
     void set_artist(const std::string &_artist) override;
     void set_album(const std::string &_album) override;
     void set_albumArtist(const std::string &_albumArtist) override;
@@ -35,9 +36,12 @@ class SpotifyTrackSource : public ITrackSource {
     void set_label(const std::string &_label) override;
     void set_trackNumber(const std::string &_track) override;
     void set_discNumber(const std::string &_disc) override;
-    void set_cover(const std::vector<std::byte> &_imageData) override;
+    void set_image(const std::vector<std::byte> &_imageData) override;
+    void set_state(IMediaEntity::State _state) override;
 
     std::shared_ptr<Spotify::Track> get_track() const;
+
+    void ensureLoaded(class IMediaService &_service) override;
 
   private:
     std::shared_ptr<Spotify::Track> track;

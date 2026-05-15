@@ -1,5 +1,4 @@
-#if !defined(SPOTIFY_TRACK_H)
-#define SPOTIFY_TRACK_H
+#pragma once
 
 #include <fstream>
 #include <iostream>
@@ -15,16 +14,15 @@
 #include <vector>
 
 #include "Album.h"
-#include "QueryObject.h"
+#include "Interfaces/MediaEntityBase.h"
 
 namespace Spotify {
 
-class Track : public QueryObject {
+class Track : public MediaEntityBase {
   public:
-    Track(const std::string &_id, const std::string &_name,
-          MetadataState _state, unsigned int _discNumber,
-          unsigned long _durationMs, bool _explicitContent,
-          unsigned int _trackNumber, const Album &_album,
+    Track(const std::string &_id, const std::string &_name, State _state,
+          unsigned int _discNumber, unsigned long _durationMs,
+          bool _explicitContent, unsigned int _trackNumber, const Album &_album,
           const std::vector<Artist> &_artists);
     ~Track() = default;
 
@@ -43,6 +41,8 @@ class Track : public QueryObject {
     void set_genre(const std::string &_genre);
     void set_downloaded(bool _downloaded);
 
+    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
+
   private:
     unsigned int discNumber;
     unsigned long durationMs;
@@ -56,4 +56,3 @@ class Track : public QueryObject {
 };
 
 } // namespace Spotify
-#endif // SPOTIFY_TRACK_H

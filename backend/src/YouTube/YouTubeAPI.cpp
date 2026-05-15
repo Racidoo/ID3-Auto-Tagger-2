@@ -176,9 +176,8 @@ std::shared_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
             duration = d->get<unsigned int>();
     }
 
-    return std::make_shared<Video>(id, title, Video::MetadataState::Full,
-                                   channel, uploadDate, thumbnail, duration,
-                                   licensed);
+    return std::make_shared<Video>(id, title, Video::State::Full, channel,
+                                   uploadDate, thumbnail, duration, licensed);
 }
 
 std::shared_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
@@ -221,6 +220,15 @@ YouTubeAPI::searchVideo(const std::string &_query, std::string *_nextPageToken,
     }
 
     return results;
+}
+
+void YouTubeAPI::load(IMediaEntity &_obj) {
+    if (auto *video = dynamic_cast<YouTube::Video *>(&_obj))
+        loadAdditionalData(*video);
+}
+
+void YouTubeAPI::loadAdditionalData(Video &_video) {
+    std::cerr << "Not yet implemented!" << std::endl;
 }
 
 // Check if artist name appears in video title

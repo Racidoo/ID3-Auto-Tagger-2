@@ -20,17 +20,16 @@ class IArtist : public IMediaEntity {
         : source(std::move(_source)) {}
     ~IArtist() = default;
 
-    std::string get_id() const override;
-    std::string get_title() override;
-    std::vector<std::byte> get_cover() override;
+    const std::string &get_id() const override;
+    const std::string &get_name() const override;
+    const std::vector<std::byte> &get_image() override;
 
-    void set_title(const std::string &_title) override;
-    void set_cover(const std::vector<std::byte> &_imageData) override;
+    void ensureLoaded(class IMediaService &_service) override;
 
     static std::shared_ptr<IArtist>
-    fromSpotify(std::shared_ptr<Spotify::Artist> _track);
+    fromSpotify(std::shared_ptr<Spotify::Artist> _artist);
     static std::shared_ptr<IArtist>
-    fromDiscogs(std::shared_ptr<Discogs::Artist> _track);
+    fromDiscogs(std::shared_ptr<Discogs::Artist> _artist);
 
   private:
     std::shared_ptr<IArtistSource> source;

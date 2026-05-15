@@ -2,15 +2,17 @@
 
 #include <string>
 
-#include "QueryObject.h"
+#include "Interfaces/MediaEntityBase.h"
 
 namespace Discogs {
 
-class Label : public QueryObject {
+class Label : public MediaEntityBase {
   public:
-    Label(int _id, const std::string &_name, MetadataState _state,
+    Label(int _id, const std::string &_name, State _state,
           const std::string &_imageUrl);
     ~Label() = default;
+
+    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
 
 };
 

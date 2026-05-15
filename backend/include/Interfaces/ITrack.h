@@ -24,8 +24,9 @@ class ITrack : public IMediaEntity {
         : source(std::move(_source)) {}
     ~ITrack() = default;
 
-    std::string get_id() const override;
-    std::string get_title() override;
+    const std::string &get_id() const override;
+    const std::string &get_name() const override;
+    const std::vector<std::byte> &get_image() override;
     std::string get_artist();
     std::string get_album();
     std::string get_albumArtist();
@@ -36,11 +37,10 @@ class ITrack : public IMediaEntity {
     std::string get_trackNumber();
     std::string get_discNumber();
     std::size_t get_length();
-    std::vector<std::byte> get_cover() override;
 
     bool is_verified() const;
 
-    void set_title(const std::string &_title) override;
+    void set_name(const std::string &_name);
     void set_artist(const std::string &_artist);
     void set_album(const std::string &_album);
     void set_albumArtist(const std::string &_albumArtist);
@@ -50,15 +50,17 @@ class ITrack : public IMediaEntity {
     void set_label(const std::string &_label);
     void set_trackNumber(const std::string &_track);
     void set_discNumber(const std::string &_disc);
-    void set_cover(const std::vector<std::byte> &_imageData) override;
+    void set_image(const std::vector<std::byte> &_imageData);
 
     void set_verified(bool _verified);
 
+    void ensureLoaded(class IMediaService &_service) override;
+
     std::shared_ptr<Spotify::Track> get_spotifyTrack() const;
     std::shared_ptr<LocalTrack> get_localTrack() const;
-    std::shared_ptr<Discogs::ReleaseTrack> get_discogsTrack() const;
+    // std::shared_ptr<Discogs::ReleaseTrack> get_discogsTrack() const;
 
-    void verifyTags(std::shared_ptr<ITrack> _template);
+    void verifyTags(std::shared_ptr<Spotify::Track> _template);
 
     static std::shared_ptr<ITrack>
     fromLocal(std::shared_ptr<LocalTrack> _track);

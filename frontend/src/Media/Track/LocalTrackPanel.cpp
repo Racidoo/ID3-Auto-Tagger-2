@@ -29,7 +29,7 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
             return;
         switch (_type) {
         case LocalTrack::tag_type_t::TITLE: {
-            track->set_title(_value);
+            track->set_name(_value);
             break;
         }
         case LocalTrack::tag_type_t::ARTIST: {

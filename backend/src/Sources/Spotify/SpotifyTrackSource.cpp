@@ -1,7 +1,9 @@
 #include "Sources/Spotify/SpotifyTrackSource.h"
 
-std::string SpotifyTrackSource::get_id() const { return track->get_id(); }
-std::string SpotifyTrackSource::get_title() { return track->get_name(); }
+const std::string &SpotifyTrackSource::get_id() const {
+    return track->get_id();
+}
+const std::string &SpotifyTrackSource::get_name() { return track->get_name(); }
 std::string SpotifyTrackSource::get_artist() {
     return track->get_stringArtists();
 }
@@ -30,14 +32,17 @@ std::string SpotifyTrackSource::get_discNumber() {
 std::size_t SpotifyTrackSource::get_length() {
     return track->get_durationMs() / 1000;
 }
-std::vector<std::byte> SpotifyTrackSource::get_cover() {
+const std::vector<std::byte> &SpotifyTrackSource::get_image() {
     return track->get_album().get_image();
+}
+IMediaEntity::State SpotifyTrackSource::get_state() const {
+    return track->get_state();
 }
 std::shared_ptr<Spotify::Track> SpotifyTrackSource::get_track() const {
     return track;
 }
 
-void SpotifyTrackSource::set_title(const std::string &_title) {
+void SpotifyTrackSource::set_name(const std::string &_name) {
     throw std::logic_error("Spotify Object is not mutable!");
 }
 void SpotifyTrackSource::set_artist(const std::string &_artist) {
@@ -67,6 +72,17 @@ void SpotifyTrackSource::set_trackNumber(const std::string &_track) {
 void SpotifyTrackSource::set_discNumber(const std::string &_disc) {
     throw std::logic_error("Spotify Object is not mutable!");
 }
-void SpotifyTrackSource::set_cover(const std::vector<std::byte> &_imageData) {
+void SpotifyTrackSource::set_image(const std::vector<std::byte> &_imageData) {
     throw std::logic_error("Spotify Object is not mutable!");
+}
+void SpotifyTrackSource::set_state(IMediaEntity::State _state) {
+    track->set_state(_state);
+}
+
+void SpotifyTrackSource::ensureLoaded(IMediaService &_service) {
+    if (track->get_state() == IMediaEntity::State::Full)
+        return;
+
+    _service.load(*track);
+    track->set_state(IMediaEntity::State::Full);
 }

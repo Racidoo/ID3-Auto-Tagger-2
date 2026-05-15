@@ -317,7 +317,7 @@ void Downloader::makeBlocked(std::shared_ptr<ITrack> _data) {
         return;
     }
 
-    blacklist["blacklist"][filename]["title"] = _data->get_title();
+    blacklist["blacklist"][filename]["title"] = _data->get_name();
     blacklist["blacklist"][filename]["artist"] = _data->get_artist();
     _data->set_verified(true);
 }
@@ -415,8 +415,9 @@ void Downloader::downloadAndTag(std::shared_ptr<ITrack> _track,
         auto localTrack(
             ITrack::fromLocal(std::make_shared<LocalTrack>(trackName)));
         // get additianl tags that are not relevant in normal search
-        spotify->loadAdditionalData(_track);
-        localTrack->verifyTags(_track);
+        // spotify->loadAdditionalData(_track->get_spotifyTrack());
+        _track->get_spotifyTrack()->ensureLoaded(*spotify);
+        localTrack->verifyTags(_track->get_spotifyTrack());
 
         _onProgress(99);
         makeBlocked(localTrack);

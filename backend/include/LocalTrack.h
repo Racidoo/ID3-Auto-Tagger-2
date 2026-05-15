@@ -12,13 +12,16 @@
 #include <taglib/mpegfile.h>
 #include <taglib/textidentificationframe.h>
 
+#include "Interfaces/IMediaEntity.hpp"
+
 class LocalTrack {
   private:
     std::filesystem::path filepath;
+    std::string id;
 
-    bool mainTagsLoaded;
-    bool additionalTagsLoadded;
-    // main tags
+    IMediaEntity::State state;
+
+    // preview tags
     std::string title;
     std::string artist;
     std::string album;
@@ -27,7 +30,7 @@ class LocalTrack {
     std::string trackNumber;
     int length;
 
-    // additional tags
+    // full tags
     std::string albumArtist;
     std::string copyright;
     std::string label;
@@ -35,6 +38,8 @@ class LocalTrack {
     std::size_t bitrate;
     std::size_t sampleRate;
     std::size_t channels;
+
+    std::vector<std::byte> cachedImage;
 
   public:
     LocalTrack(const std::filesystem::path &_path);
@@ -58,25 +63,25 @@ class LocalTrack {
         SAMPLE_RATE
     };
 
-    std::string get_title();
-    std::string get_artist();
-    std::string get_album();
-    std::string get_albumArtist();
-    std::string get_copyright();
-    std::string get_genre();
-    std::string get_year();
-    std::string get_label();
-    std::string get_trackNumber();
-    std::string get_discNumber();
-    std::size_t get_length();
+    const std::string &get_title() const;
+    const std::string &get_artist() const;
+    const std::string &get_album() const;
+    const std::string &get_genre() const;
+    const std::string &get_year() const;
+    const std::string &get_trackNumber() const;
+    std::size_t get_length() const;
+    const std::string &get_albumArtist();
+    const std::string &get_copyright();
+    const std::string &get_label();
+    const std::string &get_discNumber();
     std::string get_bitrate();
     std::string get_sampleRate();
     std::string get_channels();
-
-    std::vector<std::byte> get_cover() const;
+    IMediaEntity::State get_state() const;
+    const std::vector<std::byte> &get_cover();
 
     const std::filesystem::path &get_filepath() const;
-    std::string get_filename() const;
+    const std::string &get_id() const;
 
     void set_title(const std::string &_title);
     void set_artist(const std::string &_artist);
@@ -89,11 +94,11 @@ class LocalTrack {
     void set_trackNumber(const std::string &_trackNumber);
     void set_discNumber(const std::string &_discNumber);
     void set_cover(const std::vector<std::byte> &_imageData);
-
+    void set_state(IMediaEntity::State _state);
     void set_filepath(const std::filesystem::path &_filepath);
 
-    void ensureMainTagsLoaded();
-    void ensureAdditionalTagsLoaded();
+    void ensurePreviewTagsLoaded();
+    void ensureFullTagsLoaded();
 
     static std::string getFrameText(TagLib::ID3v2::Tag *_tag, const char *_id);
     static bool setTagValue(const std::filesystem::path &_filepath,

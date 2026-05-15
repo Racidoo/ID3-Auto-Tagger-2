@@ -1,7 +1,7 @@
 #include "Sources/LocalTrackSource.h"
 
-std::string LocalTrackSource::get_id() const { return track->get_filename(); }
-std::string LocalTrackSource::get_title() { return track->get_title(); }
+const std::string &LocalTrackSource::get_id() const { return track->get_id(); }
+const std::string &LocalTrackSource::get_name() { return track->get_title(); }
 std::string LocalTrackSource::get_artist() { return track->get_artist(); }
 std::string LocalTrackSource::get_album() { return track->get_album(); }
 std::string LocalTrackSource::get_albumArtist() {
@@ -18,12 +18,15 @@ std::string LocalTrackSource::get_discNumber() {
     return track->get_discNumber();
 }
 std::size_t LocalTrackSource::get_length() { return track->get_length(); }
-std::vector<std::byte> LocalTrackSource::get_cover() {
+const std::vector<std::byte> &LocalTrackSource::get_image() {
     return track->get_cover();
 }
+IMediaEntity::State LocalTrackSource::get_state() const {
+    return track->get_state();
+}
 
-void LocalTrackSource::set_title(const std::string &_title) {
-    track->set_title(_title);
+void LocalTrackSource::set_name(const std::string &_name) {
+    track->set_title(_name);
 }
 void LocalTrackSource::set_artist(const std::string &_artist) {
     track->set_artist(_artist);
@@ -52,10 +55,19 @@ void LocalTrackSource::set_trackNumber(const std::string &_track) {
 void LocalTrackSource::set_discNumber(const std::string &_disc) {
     track->set_discNumber(_disc);
 }
-void LocalTrackSource::set_cover(const std::vector<std::byte> &_imageData) {
+void LocalTrackSource::set_image(const std::vector<std::byte> &_imageData) {
     track->set_cover(_imageData);
+}
+void LocalTrackSource::set_state(IMediaEntity::State _state) {
+    track->set_state(_state);
 }
 
 std::shared_ptr<LocalTrack> LocalTrackSource::get_track() const {
     return track;
+}
+
+void LocalTrackSource::ensureLoaded(IMediaService &_service) {
+    if (track->get_state() == IMediaEntity::State::Full)
+        return;
+    track->ensureFullTagsLoaded();
 }

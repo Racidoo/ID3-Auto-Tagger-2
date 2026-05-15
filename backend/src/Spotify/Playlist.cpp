@@ -1,11 +1,17 @@
-#include "../include/Spotify/Playlist.h"
+#include "Spotify/Playlist.h"
 
 namespace Spotify {
 
 Playlist::Playlist(const std::string &_id, const std::string &_name,
-                   MetadataState _state, const std::string &_imageURL,
+                   State _state, const std::string &_imageURL,
                    const User &_creator)
-    : QueryObject(_id, _name, _state, _imageURL), creator(_creator) {}
+    : MediaEntityBase(_id, _name, _state, _imageURL), creator(_creator) {}
 
-Playlist::~Playlist() {}
+// void Playlist::loadAdditionalData(std::weak_ptr<IMediaService> _service) {
+//     if (state == MetadataState::Full)
+//         return;
+
+//     _service.lock()->load(*this);
+//     state = MetadataState::Full;
+// }
 } // namespace Spotify

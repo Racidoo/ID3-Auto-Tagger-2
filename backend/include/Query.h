@@ -28,6 +28,21 @@ class Query {
     std::string urlEncode(const std::string &_value);
 
   protected:
+    struct PerformanceStats {
+        long responseCode = 0;
+
+        double totalTime = 0.0;
+        double nameLookupTime = 0.0;
+        double connectTime = 0.0;
+        double appConnectTime = 0.0;
+        double preTransferTime = 0.0;
+        double startTransferTime = 0.0;
+
+        double downloadSpeed = 0.0;
+
+        curl_off_t downloadedBytes = 0;
+    };
+
     inline const static std::filesystem::path pathCredentials =
         std::filesystem::current_path() / "backend" / "api" /
         "credentials.json";
@@ -48,6 +63,9 @@ class Query {
                                       const std::string &_date2);
     static int levenshteinDistance(const std::string &_s1,
                                    const std::string &_s2);
+
+    static void printCurlStats(const PerformanceStats &_stats,
+                               const std::string &_url);
 
     json exec(const std::string &_cmd) const;
 

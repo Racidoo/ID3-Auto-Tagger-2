@@ -105,9 +105,9 @@ void TrackEditWindow::set_selected(
 void TrackEditWindow::Update() {
 
     albumCover->SetBitmap(getCommonBitmap(
-        wxSize(300, 300), [](auto t) { return t->get_cover(); }));
+        wxSize(300, 300), [](auto t) { return t->get_image(); }));
     titleText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_title(); }));
+        getCommonAttribute([](auto t) { return t->get_name(); }));
     artistText->SetValue(
         getCommonAttribute([](auto t) { return t->get_artist(); }));
     albumText->SetValue(

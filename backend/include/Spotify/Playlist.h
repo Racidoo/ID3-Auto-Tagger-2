@@ -1,23 +1,20 @@
-#if !defined(SPOTIFY_PLAYLIST_H)
-#define SPOTIFY_PLAYLIST_H
+#pragma once
 
-#include "QueryObject.h"
+#include "Interfaces/MediaEntityBase.h"
 #include "User.h"
 
 namespace Spotify {
-class Playlist : public QueryObject {
+class Playlist : public MediaEntityBase {
   private:
     User creator;
 
   public:
-    Playlist(const std::string &_id, const std::string &_name,
-             MetadataState _state, const std::string &_imageURL,
-             const User &_creator);
-    ~Playlist();
+    Playlist(const std::string &_id, const std::string &_name, State _state,
+             const std::string &_imageURL, const User &_creator);
+    ~Playlist() = default;
 
     inline User get_creator() const { return creator; }
+    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
 };
 
 } // namespace Spotify
-
-#endif // SPOTIFY_PLAYLIST_H

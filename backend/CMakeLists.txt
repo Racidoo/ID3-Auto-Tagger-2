@@ -13,10 +13,10 @@ set(SOURCES
     src/Interfaces/ITrack.cpp
     src/Interfaces/IPlaylist.cpp
     src/Interfaces/IVideo.cpp
+    src/Interfaces/MediaEntityBase.cpp
     src/LocalTrack.cpp
     src/LocalTrackService.cpp
     src/Query.cpp
-    src/QueryObject.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp
     src/Spotify/Playlist.cpp

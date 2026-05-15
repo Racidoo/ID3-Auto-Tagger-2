@@ -1,25 +1,25 @@
-#if !defined(VIDEO_H)
-#define VIDEO_H
+#pragma once
 
 #include <cmath>
 #include <string>
 #include <vector>
 
-#include "QueryObject.h"
+#include "Interfaces/MediaEntityBase.h"
 
 namespace YouTube {
-class Video : public QueryObject {
+class Video : public MediaEntityBase {
   public:
-    Video(const std::string &_id, const std::string &_name,
-          MetadataState _state, const std::string &_channelTitle,
-          const std::string &_uploadDate, const std::string &_imageUrl,
-          unsigned int _duration, bool _licensed);
+    Video(const std::string &_id, const std::string &_name, State _state,
+          const std::string &_channelTitle, const std::string &_uploadDate,
+          const std::string &_imageUrl, unsigned int _duration, bool _licensed);
     ~Video() = default;
 
     const std::string &get_channelTitle() const;
     const std::string &get_uploadDate() const;
     unsigned int get_duration() const;
     bool get_licensed() const;
+
+    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
 
   private:
     std::string channelTitle;
@@ -30,4 +30,3 @@ class Video : public QueryObject {
 };
 
 } // namespace YouTube
-#endif // VIDEO_H

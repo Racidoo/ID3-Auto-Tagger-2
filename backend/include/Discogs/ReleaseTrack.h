@@ -11,7 +11,7 @@ namespace Discogs {
 
 class ReleaseTrack {
   public:
-    ReleaseTrack(const std::string &_id, const std::string &_title,
+    ReleaseTrack(const std::string &_id, const std::string &_name,
                  const Release &_release, const std::vector<Artist> &_artists,
                  const std::vector<Artist> &_extraArtists,
                  const std::vector<std::string> &_genres,
@@ -21,7 +21,7 @@ class ReleaseTrack {
     ~ReleaseTrack() = default;
 
     const std::string &get_id() const;
-    const std::string &get_title() const;
+    const std::string &get_name() const;
     const Release &get_release() const;
     const std::vector<Artist> &get_artists() const;
     const std::vector<Artist> &get_extraArtists() const;
@@ -29,7 +29,7 @@ class ReleaseTrack {
     const std::vector<std::string> &get_genres() const;
     std::string get_stringGenres() const;
     const std::string &get_imageUrl() const;
-    std::vector<std::byte> get_image() const;
+    const std::vector<std::byte> &get_image();
     const std::vector<Label> &get_labels() const;
     std::string get_stringLabels() const;
     int get_duration() const;
@@ -46,6 +46,7 @@ class ReleaseTrack {
     std::vector<Artist> extraArtists;
     std::vector<std::string> genres;
     std::string imageUrl;
+    std::vector<std::byte> chachedImage;
     std::vector<Label> labels;
     int duration;
     std::string position;

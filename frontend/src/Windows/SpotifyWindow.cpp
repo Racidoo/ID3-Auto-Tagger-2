@@ -86,7 +86,7 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
         } else if (auto album = std::dynamic_pointer_cast<IAlbum>(source)) {
             wxLogDebug(wxT("album"));
             wxDialog dialog(this, wxID_ANY,
-                            "Albumdetails: " + album->get_title(),
+                            "Albumdetails: " + album->get_name(),
                             wxDefaultPosition, wxSize(800, 600),
                             wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
             dialog.SetMinSize(wxSize(800, 600));

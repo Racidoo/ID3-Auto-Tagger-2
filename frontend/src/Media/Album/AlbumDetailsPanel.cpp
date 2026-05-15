@@ -19,9 +19,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
         return;
     }
 
-    if (!album->isMetaDataComplete()) {
-        _downloader->get_spotify()->loadAdditionalData(album);
-    }
+    album->ensureLoaded(*_downloader->get_spotify());
 
     std::size_t totalLength(0);
     for (auto &&track : album->get_tracklist()) {
@@ -38,7 +36,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
 
     auto albumCoverBitmap = new wxStaticBitmap(
         this, wxID_ANY,
-        MediaLabel::loadImage(album->get_cover(), wxSize(256, 265)));
+        MediaLabel::loadImage(album->get_image(), wxSize(256, 265)));
 
     auto albumTypeText =
         new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_type()));
@@ -47,8 +45,8 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
     typeFont.SetWeight(wxFONTWEIGHT_LIGHT);
     albumTypeText->SetFont(typeFont);
 
-    auto titleText = new wxStaticText(this, wxID_ANY,
-                                      wxString::FromUTF8(album->get_title()));
+    auto titleText =
+        new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_name()));
     auto titleFont = titleText->GetFont();
     // ToDo: Adjust later, based of the length and available space from parent
     // window

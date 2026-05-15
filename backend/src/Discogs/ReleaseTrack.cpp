@@ -3,22 +3,20 @@
 
 namespace Discogs {
 
-ReleaseTrack::ReleaseTrack(const std::string &_id, const std::string &_title,
+ReleaseTrack::ReleaseTrack(const std::string &_id, const std::string &_name,
                            const Release &_release,
                            const std::vector<Artist> &_artists,
                            const std::vector<Artist> &_extraArtists,
                            const std::vector<std::string> &_genres,
                            const std::string &_imageUrl,
-                           const std::vector<Label> &_labels,
-                           int _duration, const std::string &_position,
-                           int _year)
-    : id(_id), title(_title), release(_release), artists(_artists),
+                           const std::vector<Label> &_labels, int _duration,
+                           const std::string &_position, int _year)
+    : id(_id), title(_name), release(_release), artists(_artists),
       extraArtists(_extraArtists), genres(_genres), imageUrl(_imageUrl),
-      labels(_labels), duration(_duration),
-      position(_position), year(_year) {}
+      labels(_labels), duration(_duration), position(_position), year(_year) {}
 
 const std::string &ReleaseTrack::get_id() const { return id; }
-const std::string &ReleaseTrack::get_title() const { return title; }
+const std::string &ReleaseTrack::get_name() const { return title; }
 const Release &ReleaseTrack::get_release() const { return release; }
 const std::vector<Artist> &ReleaseTrack::get_artists() const { return artists; }
 const std::vector<Artist> &ReleaseTrack::get_extraArtists() const {
@@ -44,8 +42,11 @@ std::string ReleaseTrack::get_stringGenres() const {
     return genres;
 }
 const std::string &ReleaseTrack::get_imageUrl() const { return imageUrl; }
-std::vector<std::byte> ReleaseTrack::get_image() const {
-    return Query::downloadImage(get_imageUrl());
+const std::vector<std::byte> &ReleaseTrack::get_image() {
+    if (chachedImage.empty()) {
+        chachedImage = Query::downloadImage(imageUrl);
+    }
+    return chachedImage;
 }
 const std::vector<Label> &ReleaseTrack::get_labels() const { return labels; }
 std::string ReleaseTrack::get_stringLabels() const {

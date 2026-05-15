@@ -2,7 +2,6 @@
 #define MEDIA_WINDOW_H
 
 #include "Core/IconProvider.h"
-#include "QueryObject.h"
 #include <unordered_map>
 #include <wx/wx.h>
 

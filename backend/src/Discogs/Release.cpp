@@ -3,7 +3,7 @@
 
 namespace Discogs {
 
-Release::Release(int _id, const std::string &_name, MetadataState _state,
+Release::Release(int _id, const std::string &_name, State _state,
                  const std::string &_imageUrl, std::vector<Artist> _artists,
                  int _masterId, const std::string &_country,
                  const std::vector<std::string> &_genres,
@@ -11,12 +11,13 @@ Release::Release(int _id, const std::string &_name, MetadataState _state,
                  const std::string &_releaseDate,
                  const std::vector<std::string> &_styles, int _year,
                  const std::vector<Video> &_videos, bool _verified)
-    : QueryObject(std::to_string(_id), _name, _state, _imageUrl),
+    : MediaEntityBase(std::to_string(_id), _name, _state, _imageUrl),
       artists(_artists), genres(_genres), styles(_styles), year(_year),
       videos(_videos), masterId(_masterId), country(_country), labels(_labels),
       releaseDate(_releaseDate), verified(_verified) {}
 
 const std::vector<Artist> &Release::get_artists() const { return artists; }
+std::vector<Artist> &Release::get_artists() { return artists; }
 std::string Release::get_stringArtists() const {
     return Artist::vecToStr(artists);
 }
@@ -59,5 +60,13 @@ bool Release::isVerified() const { return verified; }
 void Release::set_tracklist(const std::vector<ReleaseTrack> &_tracklist) {
     tracklist = _tracklist;
 }
+
+// void Release::loadAdditionalData(std::weak_ptr<IMediaService> _service) {
+//     if (state == MetadataState::Full)
+//         return;
+
+//     _service.lock()->load(*this);
+//     state = MetadataState::Full;
+// }
 
 } // namespace Discogs

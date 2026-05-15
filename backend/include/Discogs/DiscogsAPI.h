@@ -10,11 +10,12 @@ using json = nlohmann::json;
 #include "Discogs/Release.h"
 #include "Discogs/ReleaseTrack.h"
 #include "Interfaces/ISearchResult.hpp"
+#include "IMediaService.hpp"
 #include "Query.h"
 
 namespace Discogs {
 
-class DiscogsAPI : public Query {
+class DiscogsAPI : public Query, public IMediaService {
   public:
     DiscogsAPI() = default;
     DiscogsAPI(const std::string &_accessToken);
@@ -53,6 +54,12 @@ class DiscogsAPI : public Query {
                                         const std::string &_currAbbr = "EUR");
     std::vector<std::shared_ptr<ReleaseTrack>>
     getReleaseTracks(std::shared_ptr<Release> _release);
+
+    void load(IMediaEntity &_obj) override;
+
+    void loadAdditionalData(Artist &_artist);
+    void loadAdditionalData(Release &_album);
+    void loadAdditionalData(Label &_playlist);
 
   protected:
     void prepareHeaders(struct curl_slist *&_headers) override;

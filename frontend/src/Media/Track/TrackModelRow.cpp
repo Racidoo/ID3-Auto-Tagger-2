@@ -71,8 +71,8 @@ const wxBitmap &TrackModelRow::GetDeleteBitmap() {
 
 void TrackModelRow::RebuildSortCache() {
 
-    cover = MediaLabel::loadImage(track->get_cover(), wxSize(64, 64));
-    title = wxString::FromUTF8(track->get_title());
+    cover = MediaLabel::loadImage(track->get_image(), wxSize(64, 64));
+    title = wxString::FromUTF8(track->get_name());
     artist = wxString::FromUTF8(track->get_artist());
     album = wxString::FromUTF8(track->get_album());
     genre = wxString::FromUTF8(track->get_genre());

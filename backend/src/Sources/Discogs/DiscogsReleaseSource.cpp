@@ -2,9 +2,13 @@
 #include "Discogs/ReleaseTrack.h"
 #include "Interfaces/ITrack.h"
 
-std::string DiscogsReleaseSource::get_id() const { return release->get_id(); }
-std::string DiscogsReleaseSource::get_title() { return release->get_name(); }
-std::vector<std::byte> DiscogsReleaseSource::get_cover() {
+const std::string &DiscogsReleaseSource::get_id() const {
+    return release->get_id();
+}
+const std::string &DiscogsReleaseSource::get_name() {
+    return release->get_name();
+}
+const std::vector<std::byte> &DiscogsReleaseSource::get_image() {
     return release->get_image();
 }
 std::string DiscogsReleaseSource::get_artist() {
@@ -22,7 +26,7 @@ std::string DiscogsReleaseSource::get_label() {
 }
 
 std::string DiscogsReleaseSource::get_type() const { return "<DiscogsType>"; }
-std::vector<std::byte> DiscogsReleaseSource::get_artistCover() const {
+std::vector<std::byte> DiscogsReleaseSource::get_artistCover() {
     return (release->get_artists().empty()
                 ? std::vector<std::byte>{}
                 : release->get_artists()[0].get_image());
@@ -36,14 +40,17 @@ DiscogsReleaseSource::get_tracklist() const {
     }
     return tracklist;
 }
-bool DiscogsReleaseSource::isMetaDataComplete() const {
-    return release->get_state() == Discogs::Release::MetadataState::Full;
+IMediaEntity::State DiscogsReleaseSource::get_state() const {
+    return release->get_state();
 }
+// bool DiscogsReleaseSource::isMetaDataComplete() const {
+//     return release->get_state() == Discogs::Release::State::Full;
+// }
 
-void DiscogsReleaseSource::set_title(const std::string &_title) {
+void DiscogsReleaseSource::set_name(const std::string &_name) {
     throw std::logic_error("Discogs Object is not mutable!");
 }
-void DiscogsReleaseSource::set_cover(const std::vector<std::byte> &_imageData) {
+void DiscogsReleaseSource::set_image(const std::vector<std::byte> &_imageData) {
     throw std::logic_error("Discogs Object is not mutable!");
 }
 void DiscogsReleaseSource::set_artist(const std::string &_artist) {
@@ -61,6 +68,17 @@ void DiscogsReleaseSource::set_year(const std::string &_year) {
 void DiscogsReleaseSource::set_label(const std::string &_label) {
     throw std::logic_error("Discogs Object is not mutable!");
 }
+void DiscogsReleaseSource::set_state(IMediaEntity::State _state) {
+    release->set_state(_state);
+}
 std::shared_ptr<Discogs::Release> DiscogsReleaseSource::get_release() const {
     return release;
+}
+
+void DiscogsReleaseSource::ensureLoaded(IMediaService &_service) {
+    if (release->get_state() == IMediaEntity::State::Full)
+        return;
+
+    _service.load(*release);
+    release->set_state(IMediaEntity::State::Full);
 }

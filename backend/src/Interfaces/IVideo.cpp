@@ -1,21 +1,16 @@
 #include "Interfaces/IVideo.h"
+#include "IMediaService.hpp"
 #include "Sources/YouTube/YouTubeVideoSource.h"
 
-std::string IVideo::get_id() const { return source ? source->get_id() : ""; }
-std::string IVideo::get_title() { return source ? source->get_title() : ""; }
-std::vector<std::byte> IVideo::get_cover() {
-    return source ? source->get_cover() : std::vector<std::byte>{};
+const std::string &IVideo::get_id() const { return source->get_id(); }
+const std::string &IVideo::get_name() const { return source->get_name(); }
+const std::vector<std::byte> &IVideo::get_image() {
+    return source->get_image();
 }
 
-void IVideo::set_title(const std::string &_title) {
-    if (source)
-        source->set_title(_title);
+void IVideo::ensureLoaded(class IMediaService &_service) {
+    source->ensureLoaded(_service);
 }
-void IVideo::set_cover(const std::vector<std::byte> &_imageData) {
-    if (source)
-        source->set_cover(_imageData);
-}
-
 std::shared_ptr<IVideo>
 IVideo::fromYouTube(std::shared_ptr<YouTube::Video> _release) {
     return std::make_shared<IVideo>(

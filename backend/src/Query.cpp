@@ -211,26 +211,68 @@ double Query::similarityScoreDate(const std::string &_date1,
 std::vector<std::byte> Query::downloadImage(const std::string &_url,
                                             const std::string &_outputPath) {
     std::vector<std::byte> imageData;
-    auto curl(curl_easy_init());
+
+    CURL *curl = curl_easy_init();
+
+    if (!curl)
+        return {};
+
     curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
+    FILE *fp = nullptr;
+
     if (!_outputPath.empty()) {
-        FILE *fp = fopen(_outputPath.c_str(), "wb");
+        fp = fopen(_outputPath.c_str(), "wb");
+
         if (!fp) {
             std::cerr << "Failed to open file for writing\n";
+            curl_easy_cleanup(curl);
             return {};
         }
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nullptr);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
     } else {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeImageCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &imageData);
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     CURLcode res = curl_easy_perform(curl);
-    if (curl)
-        curl_easy_cleanup(curl);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    if (fp)
+        fclose(fp);
+
+    if (res == CURLE_OK) {
+        PerformanceStats stats;
+
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &stats.responseCode);
+        curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &stats.totalTime);
+        curl_easy_getinfo(curl, CURLINFO_NAMELOOKUP_TIME,
+                          &stats.nameLookupTime);
+        curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &stats.connectTime);
+        curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME,
+                          &stats.appConnectTime);
+        curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME,
+                          &stats.preTransferTime);
+        curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME,
+                          &stats.startTransferTime);
+        curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD, &stats.downloadSpeed);
+        curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD_T,
+                          &stats.downloadedBytes);
+
+        printCurlStats(stats, _url);
+    } else {
+        std::cerr << "curl_easy_perform failed: " << curl_easy_strerror(res)
+                  << '\n';
+    }
+
+    curl_easy_cleanup(curl);
+
     return imageData;
 }
 
@@ -244,6 +286,30 @@ std::string Query::urlEncode(const std::string &_value) {
     curl_free(escaped);
     curl_easy_cleanup(curl);
     return result;
+}
+
+void Query::printCurlStats(const PerformanceStats &_stats,
+                           const std::string &_url) {
+    std::cout << "\n=== CURL PERFORMANCE ===\n";
+    std::cout << "URL: " << _url << '\n';
+    std::cout << "HTTP Code: " << _stats.responseCode << '\n';
+
+    std::cout << std::fixed << std::setprecision(3);
+
+    std::cout << "DNS Lookup:      " << _stats.nameLookupTime << " s\n";
+    std::cout << "TCP Connect:     " << _stats.connectTime << " s\n";
+    std::cout << "TLS Handshake:   " << _stats.appConnectTime << " s\n";
+    std::cout << "Pre-transfer:    " << _stats.preTransferTime << " s\n";
+    std::cout << "TTFB:            " << _stats.startTransferTime << " s\n";
+    std::cout << "Total Time:      " << _stats.totalTime << " s\n";
+
+    std::cout << "Downloaded Size: " << _stats.downloadedBytes / 1024.0
+              << " KB\n";
+
+    std::cout << "Average Speed:   " << _stats.downloadSpeed / 1024.0
+              << " KB/s\n";
+
+    std::cout << "========================\n";
 }
 
 json Query::exec(const std::string &_cmd) const {

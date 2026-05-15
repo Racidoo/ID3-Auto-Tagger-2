@@ -5,11 +5,11 @@
 
 #include "Discogs/Artist.h"
 #include "Discogs/Label.h"
-#include "QueryObject.h"
+#include "Interfaces/MediaEntityBase.h"
 
 namespace Discogs {
 class ReleaseTrack;
-class Release : public QueryObject {
+class Release : public MediaEntityBase {
   public:
     // struct Track {
     //     std::string duration;
@@ -24,7 +24,7 @@ class Release : public QueryObject {
         int duration;
     };
 
-    Release(int _id, const std::string &_name, MetadataState _state,
+    Release(int _id, const std::string &_name, State _state,
             const std::string &_imageUrl, std::vector<Artist> _artists,
             int _masterId, const std::string &_country,
             const std::vector<std::string> &_genres,
@@ -34,6 +34,7 @@ class Release : public QueryObject {
     ~Release() = default;
 
     const std::vector<Artist> &get_artists() const;
+    std::vector<Artist> &get_artists();
     std::string get_stringArtists() const;
     const std::vector<std::string> &get_genres() const;
     std::string get_stringGenres() const;
@@ -50,6 +51,8 @@ class Release : public QueryObject {
     bool isVerified() const;
 
     void set_tracklist(const std::vector<ReleaseTrack> &_tracklist);
+
+    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
 
   private:
     std::vector<Artist> artists;

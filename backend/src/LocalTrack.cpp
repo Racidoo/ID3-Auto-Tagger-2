@@ -1,88 +1,73 @@
 #include "LocalTrack.h"
 
 LocalTrack::LocalTrack(const std::filesystem::path &_path)
-    : filepath(_path), mainTagsLoaded(false), additionalTagsLoadded(false),
+    : filepath(_path), id(filepath.stem()), state(IMediaEntity::State::None),
       length(0) {
-    ensureMainTagsLoaded();
+    ensurePreviewTagsLoaded();
 }
 
 LocalTrack::~LocalTrack() {}
 
-std::string LocalTrack::get_title() {
-    ensureMainTagsLoaded();
-    return title;
-}
-std::string LocalTrack::get_artist() {
-    ensureMainTagsLoaded();
-    return artist;
-}
-std::string LocalTrack::get_album() {
-    ensureMainTagsLoaded();
-    return album;
-}
-std::string LocalTrack::get_albumArtist() {
-    ensureAdditionalTagsLoaded();
+const std::string &LocalTrack::get_title() const { return title; }
+const std::string &LocalTrack::get_artist() const { return artist; }
+const std::string &LocalTrack::get_album() const { return album; }
+const std::string &LocalTrack::get_genre() const { return genre; }
+const std::string &LocalTrack::get_year() const { return year; }
+const std::string &LocalTrack::get_trackNumber() const { return trackNumber; }
+std::size_t LocalTrack::get_length() const { return length; }
+const std::string &LocalTrack::get_albumArtist() {
+    ensureFullTagsLoaded();
     return albumArtist;
 }
-std::string LocalTrack::get_copyright() {
-    ensureAdditionalTagsLoaded();
+const std::string &LocalTrack::get_copyright() {
+    ensureFullTagsLoaded();
     return copyright;
 }
-std::string LocalTrack::get_genre() {
-    ensureMainTagsLoaded();
-    return genre;
-}
-std::string LocalTrack::get_year() {
-    ensureMainTagsLoaded();
-    return year;
-}
-std::string LocalTrack::get_label() {
-    ensureAdditionalTagsLoaded();
+const std::string &LocalTrack::get_label() {
+    ensureFullTagsLoaded();
     return label;
 }
-std::string LocalTrack::get_trackNumber() {
-    ensureMainTagsLoaded();
-    return trackNumber;
-}
-std::string LocalTrack::get_discNumber() {
-    ensureAdditionalTagsLoaded();
+const std::string &LocalTrack::get_discNumber() {
+    ensureFullTagsLoaded();
     return discNumber;
 }
-std::size_t LocalTrack::get_length() {
-    ensureMainTagsLoaded();
-    return length;
-}
 std::string LocalTrack::get_bitrate() {
-    ensureAdditionalTagsLoaded();
+    ensureFullTagsLoaded();
     return std::to_string(bitrate);
 }
 std::string LocalTrack::get_sampleRate() {
-    ensureAdditionalTagsLoaded();
+    ensureFullTagsLoaded();
     return std::to_string(sampleRate);
 }
 std::string LocalTrack::get_channels() {
-    ensureAdditionalTagsLoaded();
+    ensureFullTagsLoaded();
     return std::to_string(channels);
 }
 
-std::vector<std::byte> LocalTrack::get_cover() const {
+IMediaEntity::State LocalTrack::get_state() const { return state; }
+
+const std::vector<std::byte> &LocalTrack::get_cover() {
+    if (!cachedImage.empty()) {
+        return cachedImage;
+    }
+
     TagLib::MPEG::File _track(get_filepath().c_str());
 
     if (!_track.hasID3v2Tag()) {
-        return {};
+        return cachedImage;
     }
     // Get ID3v2 tag
     auto *tag = _track.ID3v2Tag();
     if (!tag) {
         std::cerr << "No ID3v2 tag found in: " << _track.name() << std::endl;
-        return {};
+        return cachedImage;
     }
 
     // Search for an APIC (Attached Picture) frame
     auto frames = tag->frameListMap()["APIC"];
     if (frames.isEmpty()) {
         std::cerr << "No album cover found in: " << _track.name() << std::endl;
-        return {};
+        return cachedImage;
     }
 
     // Extract image data
@@ -90,29 +75,28 @@ std::vector<std::byte> LocalTrack::get_cover() const {
         dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frames.front());
     if (!apic) {
         std::cerr << "Invalid APIC frame in: " << _track.name() << std::endl;
-        return {};
+        return cachedImage;
     }
 
     // Get raw image data
     const auto &imageData = apic->picture();
     if (imageData.isEmpty()) {
         std::cerr << "APIC frame contains no image data in: " << std::endl;
-        return {};
+        return cachedImage;
     }
 
-    std::vector<std::byte> result;
-    result.reserve(imageData.size());
+    cachedImage.reserve(imageData.size());
 
     for (auto c : imageData)
-        result.push_back(static_cast<std::byte>(c));
+        cachedImage.push_back(static_cast<std::byte>(c));
 
-    return result;
+    return cachedImage;
 }
 
 const std::filesystem::path &LocalTrack::get_filepath() const {
     return filepath;
 }
-std::string LocalTrack::get_filename() const { return filepath.stem(); }
+const std::string &LocalTrack::get_id() const { return id; }
 
 void LocalTrack::set_title(const std::string &_title) {
     TagLib::MPEG::File file(filepath.c_str());
@@ -259,26 +243,30 @@ void LocalTrack::set_cover(const std::vector<std::byte> &_imageData) {
         std::cerr << "Failed to save changes!" << std::endl;
         return;
     }
+    cachedImage = _imageData;
 }
+
+void LocalTrack::set_state(IMediaEntity::State _state) { state = _state; }
 
 void LocalTrack::set_filepath(const std::filesystem::path &_filepath) {
     filepath = _filepath;
-    mainTagsLoaded = false;
-    additionalTagsLoadded = false;
+    id = filepath.stem();
+    state = IMediaEntity::State::None;
+    ensurePreviewTagsLoaded();
 }
 
-void LocalTrack::ensureMainTagsLoaded() {
-    if (mainTagsLoaded)
+void LocalTrack::ensurePreviewTagsLoaded() {
+    if (state != IMediaEntity::State::None)
         return;
 
     if (filepath.empty()) {
-        mainTagsLoaded = true;
+        state = IMediaEntity::State::Preview;
         return;
     }
 
     TagLib::MPEG::File file(filepath.c_str());
     if (!file.isValid() || !file.tag()) {
-        mainTagsLoaded = true;
+        state = IMediaEntity::State::Preview;
         return;
     }
 
@@ -294,15 +282,15 @@ void LocalTrack::ensureMainTagsLoaded() {
     trackNumber = tag->track() == 0 ? "" : std::to_string(tag->track());
 
     length = fr.audioProperties() ? fr.audioProperties()->length() : 0;
-    mainTagsLoaded = true;
+    state = IMediaEntity::State::Preview;
 }
 
-void LocalTrack::ensureAdditionalTagsLoaded() {
-    if (additionalTagsLoadded)
+void LocalTrack::ensureFullTagsLoaded() {
+    if (state == IMediaEntity::State::Full)
         return;
 
     if (filepath.empty()) {
-        additionalTagsLoadded = true;
+        state = IMediaEntity::State::Full;
         return;
     }
 
@@ -310,7 +298,7 @@ void LocalTrack::ensureAdditionalTagsLoaded() {
     TagLib::FileRef fr(TagLib::FileName(filepath.c_str()), true,
                        TagLib::AudioProperties::Accurate);
     if (!file.isValid()) {
-        additionalTagsLoadded = true;
+        state = IMediaEntity::State::Full;
         return;
     }
 
@@ -324,8 +312,8 @@ void LocalTrack::ensureAdditionalTagsLoaded() {
     bitrate = file.audioProperties()->bitrate();
     sampleRate = file.audioProperties()->sampleRate();
     channels = file.audioProperties()->channels();
-
-    additionalTagsLoadded = true;
+    ensurePreviewTagsLoaded();
+    state = IMediaEntity::State::Full;
 }
 
 std::string LocalTrack::getFrameText(TagLib::ID3v2::Tag *_tag,

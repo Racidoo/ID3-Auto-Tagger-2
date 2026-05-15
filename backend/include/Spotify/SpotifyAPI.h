@@ -8,8 +8,9 @@
 #include <sstream>
 #include <string>
 
-#include "Interfaces/IAlbum.h"
-#include "Interfaces/ITrack.h"
+// #include "Interfaces/IAlbum.h"
+// #include "Interfaces/ITrack.h"
+#include "IMediaService.hpp"
 #include "Query.h"
 #include "Spotify/Album.h"
 #include "Spotify/Artist.h"
@@ -21,7 +22,7 @@ using json = nlohmann::json;
 
 namespace Spotify {
 
-class SpotifyAPI : public Query {
+class SpotifyAPI : public Query, public IMediaService {
   public:
     SpotifyAPI();
     SpotifyAPI(const std::string &_clientId, const std::string &_clientSecret);
@@ -30,10 +31,6 @@ class SpotifyAPI : public Query {
     void saveCredentials() override;
     std::string generateAccessToken() override;
 
-    static SpotifyAPI &getInstance() {
-        static SpotifyAPI instance;
-        return instance;
-    }
     enum searchItem_type {
         ALBUM,
         ARTIST,
@@ -42,6 +39,14 @@ class SpotifyAPI : public Query {
         // SHOW,
         // EPISODE,
         // AUDIOBOOK
+    };
+
+    struct TrackSearchContext {
+        std::string title;
+        std::string artist;
+        std::string album;
+        std::string filename;
+        std::size_t durationSeconds = 0;
     };
 
     std::vector<Track> searchTrack(const std::string &_query,
@@ -67,13 +72,16 @@ class SpotifyAPI : public Query {
     Track getTrack(const std::string &_id);
     std::vector<Track> getAlbumTracks(const std::string &_id);
     std::vector<Track> getPlaylistTracks(const std::string &_id);
-    std::string searchId(std::shared_ptr<ITrack> _trackInterface);
+    std::string searchId(const TrackSearchContext &_ctx);
 
+    void load(IMediaEntity &_obj) override;
+
+    void loadAdditionalData(Artist &_artist);
     void loadAdditionalData(Album &_album);
-    void loadAdditionalData(std::shared_ptr<IAlbum> _album);
+    void loadAdditionalData(Playlist &_playlist);
     void loadAdditionalData(Track &_track);
-    void loadAdditionalData(std::shared_ptr<ITrack> _spotifyITrack);
-    std::shared_ptr<ITrack> researchTags(std::shared_ptr<ITrack> _localData);
+
+    std::shared_ptr<Track> researchTags(const TrackSearchContext &_ctx);
 
     static bool isValidIdFormat(const std::string &_id);
 
