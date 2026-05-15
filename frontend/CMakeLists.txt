@@ -1,27 +1,27 @@
 project(SpotifyAPI_Frontend)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
-    src/App.cpp
-    src/AlbumDetailsPanel.cpp
-    src/CircleProgressBar.cpp
-    src/DiscogsWindow.cpp
-    src/DownloadStatusRenderer.cpp
-    src/IconProvider.cpp
-    src/LabeledTextCtrl.cpp
-    src/LocalTrackWindow.cpp
+    src/Core/App.cpp
+    src/Core/IconProvider.cpp
+    src/Core/MainFrame.cpp
+    src/Components/CircleProgressBar.cpp
+    src/Components/LabeledTextCtrl.cpp
+    src/Components/MediaLabel.cpp
+    src/Components/ScrollText.cpp
+    src/Dialogs/MultiInputDialog.cpp
+    src/Media/Album/AlbumDetailsPanel.cpp
+    src/Media/Track/TrackPanel.cpp
+    src/Media/Track/TrackModel.cpp
+    src/Media/Track/TrackModelRow.cpp
+    src/Media/Track/Renderers/DownloadStatusRenderer.cpp
+    src/Windows/DiscogsWindow.cpp
+    src/Windows/LocalTrackWindow.cpp
+    src/Windows/SettingsWindow.cpp
+    src/Windows/SpotifyWindow.cpp
+    src/Windows/TrackEditWindow.cpp
+    src/Windows/YouTubeWindow.cpp
     src/main.cpp
-    src/MainFrame.cpp
-    src/MediaLabel.cpp
-    src/MultiInputDialog.cpp
-    src/ScrollText.cpp
-    src/SettingsWindow.cpp
-    src/SpotifyWindow.cpp
-    src/TrackEditWindow.cpp
-    src/TrackPanel.cpp
-    src/TrackModel.cpp
-    src/TrackModelRow.cpp
-    src/YouTubeWindow.cpp
-)
+    )
 
 # Find wxWidgets
 find_package(wxWidgets REQUIRED COMPONENTS core base adv)
