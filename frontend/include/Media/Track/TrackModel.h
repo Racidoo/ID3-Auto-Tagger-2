@@ -14,6 +14,7 @@ class TrackModel : public wxDataViewVirtualListModel {
     enum Columns {
         COL_PROGRESS,
         COL_COVER,
+        COL_TRACKNUMBER,
         COL_TITLE,
         COL_ARTIST,
         COL_ALBUM,

@@ -10,6 +10,7 @@ set(SOURCES
     src/Components/ScrollText.cpp
     src/Dialogs/MultiInputDialog.cpp
     src/Media/Album/AlbumDetailsPanel.cpp
+    src/Media/Track/LocalTrackPanel.cpp
     src/Media/Track/TrackPanel.cpp
     src/Media/Track/TrackModel.cpp
     src/Media/Track/TrackModelRow.cpp

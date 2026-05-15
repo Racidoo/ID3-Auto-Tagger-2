@@ -1,7 +1,7 @@
 #include "Windows/LocalTrackWindow.h"
 #include "Components/LabeledTextCtrl.h"
 #include "Downloader.h"
-#include "Media/Track/TrackPanel.h"
+#include "Media/Track/LocalTrackPanel.h"
 #include "Windows/TrackEditWindow.h"
 
 LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
@@ -34,7 +34,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     toolbarSizer->Add(itemCount, 0, wxALL, 5);
     toolbarSizer->Add(searchBar, 1, wxALL, 5);
 
-    trackPanel = new TrackPanel(this, _downloader);
+    trackPanel = new LocalTrackPanel(this, _downloader);
     trackEditWindow = new TrackEditWindow(this);
 
     auto trackSizer = new wxBoxSizer(wxHORIZONTAL);

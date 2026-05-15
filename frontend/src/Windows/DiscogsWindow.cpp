@@ -1,6 +1,6 @@
 #include "Windows/DiscogsWindow.h"
-#include "Downloader.h"
 #include "Core/IconProvider.h"
+#include "Downloader.h"
 #include "Media/Track/TrackPanel.h"
 
 DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
@@ -48,8 +48,7 @@ DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // trackWindow = new TrackWindow(this, downloader);
-    trackPanel = new TrackPanel(this, downloader);
+    trackPanel = new TrackPanel(this);
     albumWindow = new MediaWindow<MediaLabel>(this);
     artistWindow = new MediaWindow<MediaLabel>(this);
     playlistWindow = new MediaWindow<MediaLabel>(this);
@@ -57,12 +56,10 @@ DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
     mainSizer->Add(trackPanel, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
-    // mainSizer->Add(trackWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(albumWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(artistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(playlistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
-    // trackWindow->Hide();
     trackPanel->Hide();
     albumWindow->Hide();
     artistWindow->Hide();
@@ -119,7 +116,7 @@ void DiscogsWindow::search(const wxString &_searchText) {
         params.categories.insert(ISearchResult::SearchCategory::Playlist);
 
     auto results = downloader->get_discogs()->search(params);
- 
+
     showSearchResults(results);
 }
 

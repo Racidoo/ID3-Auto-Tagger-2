@@ -19,13 +19,16 @@ const wxString &TrackModelRow::get_artist() const { return artist; }
 const wxString &TrackModelRow::get_album() const { return album; }
 const wxString &TrackModelRow::get_genre() const { return genre; }
 const wxString &TrackModelRow::get_length() const { return length; }
+const wxString &TrackModelRow::get_tracknumber() const { return tracknumber; }
 
-// bool TrackModelRow::get_sortVerified() const { return sortVerified; }
 const std::string &TrackModelRow::get_sortTitle() const { return sortTitle; }
 const std::string &TrackModelRow::get_sortArtist() const { return sortArtist; }
 const std::string &TrackModelRow::get_sortAlbum() const { return sortAlbum; }
 const std::string &TrackModelRow::get_sortGenre() const { return sortGenre; }
 std::size_t TrackModelRow::get_sortLength() const { return sortLength; }
+std::size_t TrackModelRow::get_sortTracknumber() const {
+    return sortTracknumber;
+}
 
 void TrackModelRow::set_status(const DownloadStatus &_status) {
     status = _status;
@@ -73,8 +76,8 @@ void TrackModelRow::RebuildSortCache() {
     artist = wxString::FromUTF8(track->get_artist());
     album = wxString::FromUTF8(track->get_album());
     genre = wxString::FromUTF8(track->get_genre());
+    tracknumber = track->get_trackNumber();
 
-    // sortVerified = track->is_verified();
     if (track->is_verified()) {
         status = {100, DownloadState::Verified};
     } else if (track->get_spotifyTrack()) {
@@ -88,6 +91,7 @@ void TrackModelRow::RebuildSortCache() {
     sortAlbum = album.Lower();
     sortGenre = genre.Lower();
     sortLength = track->get_length();
+    sortTracknumber = std::stoul(track->get_trackNumber());
 
     int minutes = (sortLength / 60) % 60;
     int seconds = sortLength % 60;

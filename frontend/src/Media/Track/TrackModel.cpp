@@ -26,7 +26,7 @@ void TrackModel::AddRows(
         visibleRows.push_back(std::move(trackInterface));
     }
     // Notify ctrl that row count changed
-    SortByHeader(Columns::COL_TITLE, true);
+    SortByHeader(Columns::COL_TRACKNUMBER, true);
 }
 
 void TrackModel::MergeRows(const std::vector<std::shared_ptr<ITrack>> &_batch) {
@@ -143,6 +143,9 @@ void TrackModel::GetValueByRow(wxVariant &_variant, unsigned int _row,
     case COL_COVER:
         _variant << r->get_cover();
         break;
+    case COL_TRACKNUMBER:
+        _variant = r->get_tracknumber();
+        break;
     case COL_TITLE:
         _variant = r->get_title();
         break;
@@ -191,6 +194,9 @@ void TrackModel::SortByHeader(unsigned int _column, bool _ascending) {
             case COL_PROGRESS:
                 return compare(a->get_status().progress,
                                b->get_status().progress);
+            case COL_TRACKNUMBER:
+                return compare(a->get_sortTracknumber(),
+                               b->get_sortTracknumber());
             case COL_TITLE:
                 return compare(a->get_sortTitle(), b->get_sortTitle());
             case COL_ARTIST:

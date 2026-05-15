@@ -53,7 +53,7 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    trackPanel = new TrackPanel(this, downloader);
+    trackPanel = new TrackPanel(this);
     albumWindow = new MediaWindow<MediaLabel>(this);
     artistWindow = new MediaWindow<MediaLabel>(this);
     playlistWindow = new MediaWindow<MediaLabel>(this);

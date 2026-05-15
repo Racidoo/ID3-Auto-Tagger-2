@@ -7,13 +7,13 @@
 
 #include "LocalTrackService.h"
 
-class TrackEditWindow;
 class Downloader;
-class TrackPanel;
+class LocalTrackPanel;
+class TrackEditWindow;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:
-    TrackPanel *trackPanel;
+    LocalTrackPanel *trackPanel;
     TrackEditWindow *trackEditWindow;
     wxStaticText *itemCount;
     wxCheckBox *unverifiedCheckBox;

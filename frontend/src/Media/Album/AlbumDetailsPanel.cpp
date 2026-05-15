@@ -96,7 +96,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
     headerSizer->Add(albumCoverBitmap, 0, wxALL, 10);
     headerSizer->Add(infoSizer, 1, wxEXPAND | wxTOP | wxBOTTOM | wxRIGHT, 10);
 
-    auto trackPanel = new TrackPanel(this, nullptr);
+    auto trackPanel = new TrackPanel(this);
     contentSizer->Add(trackPanel, 1, wxEXPAND | wxALL, 5);
     trackPanel->MergeTracks(album->get_tracklist());
 
