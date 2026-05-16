@@ -1,7 +1,7 @@
 #if !defined(LABELED_TEXT_CTRL_H)
 #define LABELED_TEXT_CTRL_H
 
-#include "LocalTrack.h" // tag_type_t
+#include "Local/LocalTrack.h" // tag_type_t
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>

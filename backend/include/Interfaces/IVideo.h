@@ -2,29 +2,12 @@
 
 #include <memory>
 
-#include "IMediaEntity.hpp"
+#include "MediaEntityBase.h"
 
-class IVideoSource;
-
-namespace YouTube {
-class Video;
-} // namespace YouTube
-
-class IVideo : public IMediaEntity {
+class IVideo : public MediaEntityBase {
   public:
-    explicit IVideo(std::shared_ptr<IVideoSource> _source)
-        : source(std::move(_source)) {}
+    explicit IVideo(const std::string &_id, const std::string &_name,
+                    State _state, const std::string &_imageURL)
+        : MediaEntityBase(_id, _name, _state, _imageURL) {}
     ~IVideo() = default;
-
-    const std::string &get_id() const override;
-    const std::string &get_name() const override;
-    const std::vector<std::byte> &get_image() override;
-
-    void ensureLoaded(class IMediaService &_service) override;
-
-    static std::shared_ptr<IVideo>
-    fromYouTube(std::shared_ptr<YouTube::Video> _video);
-
-  private:
-    std::shared_ptr<IVideoSource> source;
 };

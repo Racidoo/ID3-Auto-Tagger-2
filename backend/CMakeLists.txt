@@ -14,8 +14,8 @@ set(SOURCES
     src/Interfaces/IPlaylist.cpp
     src/Interfaces/IVideo.cpp
     src/Interfaces/MediaEntityBase.cpp
-    src/LocalTrack.cpp
-    src/LocalTrackService.cpp
+    src/Local/LocalTrack.cpp
+    src/Local/LocalTrackService.cpp
     src/Query.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp
@@ -23,15 +23,6 @@ set(SOURCES
     src/Spotify/SpotifyAPI.cpp
     src/Spotify/Track.cpp
     src/Spotify/User.cpp
-    src/Sources/Discogs/DiscogsArtistSource.cpp
-    src/Sources/Discogs/DiscogsReleaseSource.cpp
-    src/Sources/Discogs/DiscogsTrackSource.cpp
-    src/Sources/LocalTrackSource.cpp
-    src/Sources/Spotify/SpotifyAlbumSource.cpp
-    src/Sources/Spotify/SpotifyArtistSource.cpp
-    src/Sources/Spotify/SpotifyPlaylistSource.cpp
-    src/Sources/Spotify/SpotifyTrackSource.cpp
-    src/Sources/YouTube/YouTubeVideoSource.cpp
     src/YouTube/Video.cpp
     src/YouTube/YouTubeAPI.cpp
     # Add more source files here

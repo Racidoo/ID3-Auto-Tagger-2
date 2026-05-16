@@ -1,6 +1,7 @@
 #include "Media/Track/LocalTrackPanel.h"
 #include "Downloader.h"
 #include "Interfaces/ITrack.h"
+#include "Local/LocalTrackService.h"
 #include "Media/Track/Renderers/DownloadStatusRenderer.h" // DownloadState
 #include "Media/Track/TrackModel.h"
 #include "Media/Track/TrackModelRow.h"
@@ -27,49 +28,52 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
         auto track = model->GetTrack(row);
         if (!track)
             return;
+        auto local = std::dynamic_pointer_cast<LocalTrack>(track);
+        if (!local)
+            return;
         switch (_type) {
         case LocalTrack::tag_type_t::TITLE: {
-            track->set_name(_value);
+            local->set_name(_value);
             break;
         }
         case LocalTrack::tag_type_t::ARTIST: {
-            track->set_artist(_value);
+            local->set_artist(_value);
             break;
         }
         case LocalTrack::tag_type_t::ALBUM: {
-            track->set_album(_value);
+            local->set_albumName(_value);
             break;
         }
         case LocalTrack::tag_type_t::ALBUM_ARTIST: {
-            track->set_albumArtist(_value);
+            local->set_albumArtist(_value);
             break;
         }
         case LocalTrack::tag_type_t::COPYRIGHT: {
-            track->set_copyright(_value);
+            local->set_copyright(_value);
             break;
         }
         case LocalTrack::tag_type_t::GENRE: {
-            track->set_genre(_value);
+            local->set_genre(_value);
             break;
         }
         case LocalTrack::tag_type_t::LABEL: {
-            track->set_label(_value);
+            local->set_label(_value);
             break;
         }
         case LocalTrack::tag_type_t::YEAR: {
-            track->set_year(_value);
+            local->set_year(std::stoi(_value));
             break;
         }
         case LocalTrack::tag_type_t::TRACK: {
-            track->set_trackNumber(_value);
+            local->set_trackNumber(std::stoi(_value));
             break;
         }
         case LocalTrack::tag_type_t::DISC: {
-            track->set_discNumber(_value);
+            local->set_discNumber(std::stoi(_value));
             break;
         }
         case LocalTrack::tag_type_t::FILENAME: {
-            track->get_localTrack()->renameLocalTrack(_value);
+            LocalTrackService::renameTrack(local, _value);
             break;
         }
         }
@@ -79,32 +83,42 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
     }
 }
 
-void LocalTrackPanel::OnActivated(wxDataViewEvent &event) {
-    unsigned int rowIndex = model->GetRow(event.GetItem());
-    int column = event.GetColumn();
+bool LocalTrackPanel::HandleColumnAction(
+    int _column, unsigned _rowIndex, const std::shared_ptr<TrackModelRow> &_row,
+    const std::shared_ptr<ITrack> &_track) {
 
-    std::cout << rowIndex << ", " << column << std::endl;
+    if (TrackPanel::HandleColumnAction(_column, _rowIndex, _row, _track)) {
+        return true;
+    }
 
-    auto row = model->GetRowByIndex(rowIndex);
-    const auto &track = model->GetTrack(row);
+    auto local = std::dynamic_pointer_cast<LocalTrack>(_track);
+    if (!local)
+        return false;
 
-    if (column == TrackModel::COL_DELETE) {
+    if (_column == TrackModel::COL_DELETE) {
         wxMessageDialog dialog(this, "Delete selected track?",
                                "Confirm deletion", wxYES_NO | wxICON_WARNING);
 
         if (dialog.ShowModal() == wxID_YES) {
+            model->RemoveRow(_rowIndex);
+            LocalTrackService::deleteTrack(local);
+        }
 
-            model->RemoveRow(rowIndex);
-            downloader->deleteLocalTrack(track);
-        }
-        return;
-    } else if (column == TrackModel::COL_VERIFY) {
-        if (!ITrack::verify(track, downloader)) {
-            wxMessageBox("Unable to retrieve meta data from SpotifyAPI");
-            return;
-        }
-        model->RowChanged(rowIndex);
-        // make sure that changes are already visible
-        row->RebuildSortCache();
+        return true;
     }
+
+    if (_column == TrackModel::COL_VERIFY) {
+        if (!LocalTrackService::verify(local, downloader)) {
+            wxMessageBox("Unable to retrieve meta data from SpotifyAPI");
+            return true;
+        }
+
+        model->RowChanged(_rowIndex);
+
+        _row->RebuildSortCache();
+
+        return true;
+    }
+
+    return false;
 }

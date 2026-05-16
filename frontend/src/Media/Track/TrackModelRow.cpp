@@ -74,24 +74,25 @@ void TrackModelRow::RebuildSortCache() {
     cover = MediaLabel::loadImage(track->get_image(), wxSize(64, 64));
     title = wxString::FromUTF8(track->get_name());
     artist = wxString::FromUTF8(track->get_artist());
-    album = wxString::FromUTF8(track->get_album());
+    album = wxString::FromUTF8(track->get_albumName());
     genre = wxString::FromUTF8(track->get_genre());
-    tracknumber = track->get_trackNumber();
+    tracknumber = std::to_string(track->get_trackNumber());
 
     if (track->is_verified()) {
         status = {100, DownloadState::Verified};
-    } else if (track->get_spotifyTrack()) {
-        status = {0, DownloadState::NotDownloaded};
     } else {
-        status = {-1, DownloadState::Failed};
+        status = {0, DownloadState::NotDownloaded};
     }
+    // else {
+    //     status = {-1, DownloadState::Failed};
+    // }
 
     sortTitle = title.Lower();
     sortArtist = artist.Lower();
     sortAlbum = album.Lower();
     sortGenre = genre.Lower();
     sortLength = track->get_length();
-    sortTracknumber = std::stoul(track->get_trackNumber());
+    sortTracknumber = track->get_trackNumber();
 
     int minutes = (sortLength / 60) % 60;
     int seconds = sortLength % 60;

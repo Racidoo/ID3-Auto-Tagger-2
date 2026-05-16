@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include "Interfaces/MediaEntityBase.h"
 
 namespace Discogs {
@@ -11,9 +9,6 @@ class Label : public MediaEntityBase {
     Label(int _id, const std::string &_name, State _state,
           const std::string &_imageUrl);
     ~Label() = default;
-
-    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
-
 };
 
 } // namespace Discogs

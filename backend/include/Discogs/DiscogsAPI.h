@@ -10,10 +10,15 @@ using json = nlohmann::json;
 #include "Discogs/Release.h"
 #include "Discogs/ReleaseTrack.h"
 #include "Interfaces/ISearchResult.hpp"
-#include "IMediaService.hpp"
 #include "Query.h"
+#include "Services/IMediaService.hpp"
 
 namespace Discogs {
+
+class Artist;
+class Label;
+class Release;
+class ReleaseTracks;
 
 class DiscogsAPI : public Query, public IMediaService {
   public:
@@ -55,11 +60,11 @@ class DiscogsAPI : public Query, public IMediaService {
     std::vector<std::shared_ptr<ReleaseTrack>>
     getReleaseTracks(std::shared_ptr<Release> _release);
 
-    void load(IMediaEntity &_obj) override;
+    void load(std::shared_ptr<IMediaEntity> _obj) override;
 
-    void loadAdditionalData(Artist &_artist);
-    void loadAdditionalData(Release &_album);
-    void loadAdditionalData(Label &_playlist);
+    void loadAdditionalData(std::shared_ptr<Artist> _artist);
+    void loadAdditionalData(std::shared_ptr<Release> _album);
+    void loadAdditionalData(std::shared_ptr<Label> _playlist);
 
   protected:
     void prepareHeaders(struct curl_slist *&_headers) override;
@@ -69,11 +74,12 @@ class DiscogsAPI : public Query, public IMediaService {
     std::string accessToken;
     inline static const std::string urlAPI = "https://api.discogs.com";
 
-    Artist createArtistFromRelease(const json &_jsonArtist,
-                                   bool &_fallbackUsed);
-    Artist createArtistFromArtist(const json &_jsonArtist, bool &_fallbackUsed);
-    std::vector<Artist> createArtists(const json &_jsonArtists,
-                                      bool &_fallbackUsed);
+    std::shared_ptr<Artist> createArtistFromRelease(const json &_jsonArtist,
+                                                    bool &_fallbackUsed);
+    std::shared_ptr<Artist> createArtistFromArtist(const json &_jsonArtist,
+                                                   bool &_fallbackUsed);
+    std::vector<std::shared_ptr<IArtist>>
+    createArtists(const json &_jsonArtists, bool &_fallbackUsed);
     std::vector<Label> createLabels(const json &_jsonLabels,
                                     bool &_fallbackUsed);
 
@@ -88,9 +94,9 @@ class DiscogsAPI : public Query, public IMediaService {
                                                 bool &_fallbackUsed);
     static std::vector<std::string> parseStyles(const json &_j,
                                                 bool &_fallbackUsed);
-    static std::vector<ReleaseTrack> parseTracklist(const json &_j,
-                                                    const Release &_release,
-                                                    bool &_fallbackUsed);
+    static std::vector<std::shared_ptr<ITrack>>
+    parseTracklist(const json &_j, std::weak_ptr<Release> _release,
+                   bool &_fallbackUsed);
     static std::vector<Release::Video> parseVideos(const json &_j,
                                                    bool &_fallbackUsed);
     static std::string parseImageUrl(const json &_j, bool &_fallbackUsed);

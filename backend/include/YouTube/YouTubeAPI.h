@@ -8,13 +8,15 @@
 #include <string>
 #include <vector>
 
-#include "IMediaService.hpp"
-#include "Query.h"
-#include "Spotify/Track.h"
-#include "YouTube/Video.h"
-namespace YouTube {
-
 using json = nlohmann::json;
+
+#include "Query.h"
+#include "Services/IMediaService.hpp"
+#include "YouTube/Video.h"
+
+class ITrack;
+
+namespace YouTube {
 
 class YouTubeAPI : public Query, public IMediaService {
   public:
@@ -25,16 +27,16 @@ class YouTubeAPI : public Query, public IMediaService {
     void saveCredentials() override;
     std::string generateAccessToken() override;
 
-    std::string findBestMatch(const Spotify::Track &_track,
+    std::string findBestMatch(std::shared_ptr<ITrack> _track,
                               std::function<void(int)> _onProgress);
     std::shared_ptr<Video> getVideo(const std::string &_id);
     std::vector<std::shared_ptr<Video>>
     searchVideo(const std::string &_query,
                 std::string *_nextPageToken = nullptr, unsigned int _limit = 0);
 
-    void load(IMediaEntity &_obj) override;
+    void load(std::shared_ptr<IMediaEntity> _obj) override;
 
-    void loadAdditionalData(Video &_video);
+    void loadAdditionalData(std::shared_ptr<Video> _video);
 
   private:
     std::string accessToken;

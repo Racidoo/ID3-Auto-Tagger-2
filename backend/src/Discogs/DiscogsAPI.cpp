@@ -1,4 +1,8 @@
 #include "Discogs/DiscogsAPI.h"
+#include "Discogs/Artist.h"
+#include "Discogs/Label.h"
+#include "Discogs/Release.h"
+#include "Discogs/ReleaseTrack.h"
 
 namespace Discogs {
 
@@ -103,16 +107,14 @@ ISearchResult DiscogsAPI::search(const SearchParams &_params) {
         if ((type == "release" || type == "master") &&
             _params.categories.find(ISearchResult::SearchCategory::Album) !=
                 _params.categories.end()) {
-            searchResult.albums.push_back(
-                IAlbum::fromDiscogs(createReleaseFromSearch(result)));
+            searchResult.albums.push_back(createReleaseFromSearch(result));
         } else if (type == "artist" &&
                    _params.categories.find(
                        ISearchResult::SearchCategory::Artist) !=
                        _params.categories.end()) {
             bool fallbackUsed(false);
             searchResult.artists.push_back(
-                IArtist::fromDiscogs(std::make_shared<Artist>(
-                    createArtistFromArtist(result, fallbackUsed))));
+                createArtistFromArtist(result, fallbackUsed));
         } else if (type == "label") {
             // currently not supported
             continue;
@@ -134,10 +136,13 @@ DiscogsAPI::searchRelease(const SearchParams &_params) {
     std::unordered_set<int> masterIds;
 
     for (auto &&result : results.albums) {
-        int id(0);
-        if (result->get_discogsRelease()) {
-            id = result->get_discogsRelease()->get_masterId();
+        if (!result) {
+            std::cerr << "Invalid search result!" << std::endl;
+            continue;
         }
+
+        int id(std::dynamic_pointer_cast<Release>(result)->get_masterId());
+
         if (id != 0) {
             masterIds.insert(id);
         }
@@ -213,40 +218,42 @@ std::shared_ptr<Release> DiscogsAPI::getMasterRelease(int _masterId) {
 //     return releaseTracks;
 // }
 
-void DiscogsAPI::load(IMediaEntity &_obj) {
-    if (auto *artist = dynamic_cast<Discogs::Artist *>(&_obj))
-        loadAdditionalData(*artist);
-    else if (auto *label = dynamic_cast<Discogs::Label *>(&_obj))
-        loadAdditionalData(*label);
-    else if (auto *release = dynamic_cast<Discogs::Release *>(&_obj))
-        loadAdditionalData(*release);
+void DiscogsAPI::load(std::shared_ptr<IMediaEntity> _obj) {
+    if (auto artist = std::dynamic_pointer_cast<Artist>(_obj))
+        loadAdditionalData(artist);
+    // else if (auto label = std::dynamic_pointer_cast<Discogs::Label>(_obj))
+    //     loadAdditionalData(label);
+    else if (auto release = std::dynamic_pointer_cast<Release>(_obj))
+        loadAdditionalData(release);
 }
 
-void DiscogsAPI::loadAdditionalData(Artist &_artist) {}
-void DiscogsAPI::loadAdditionalData(Release &_album) {}
-void DiscogsAPI::loadAdditionalData(Label &_playlist) {}
+void DiscogsAPI::loadAdditionalData(std::shared_ptr<Artist> _artist) {}
+void DiscogsAPI::loadAdditionalData(std::shared_ptr<Release> _album) {}
+void DiscogsAPI::loadAdditionalData(std::shared_ptr<Label> _playlist) {}
 
-Artist DiscogsAPI::createArtistFromArtist(const json &_jsonArtist,
-                                          bool &_fallbackUsed) {
-    return Artist(_jsonArtist.at("id").get<int>(),
-                  _jsonArtist.at("title").get<std::string>(),
-                  Artist::State::Full,
-                  getOptional<std::string>(_jsonArtist, "cover_image", {},
-                                           _fallbackUsed));
+std::shared_ptr<Artist>
+DiscogsAPI::createArtistFromArtist(const json &_jsonArtist,
+                                   bool &_fallbackUsed) {
+    return std::make_shared<Artist>(
+        _jsonArtist.at("id").get<int>(),
+        _jsonArtist.at("title").get<std::string>(), Artist::State::Full,
+        getOptional<std::string>(_jsonArtist, "cover_image", {},
+                                 _fallbackUsed));
 }
 
-Artist DiscogsAPI::createArtistFromRelease(const json &_jsonArtist,
-                                           bool &_fallbackUsed) {
-    return Artist(_jsonArtist.at("id").get<int>(),
-                  _jsonArtist.at("name").get<std::string>(),
-                  Artist::State::Preview,
-                  getOptional<std::string>(_jsonArtist, "thumbnail_url", {},
-                                           _fallbackUsed));
+std::shared_ptr<Artist>
+DiscogsAPI::createArtistFromRelease(const json &_jsonArtist,
+                                    bool &_fallbackUsed) {
+    return std::make_shared<Artist>(
+        _jsonArtist.at("id").get<int>(),
+        _jsonArtist.at("name").get<std::string>(), Artist::State::Preview,
+        getOptional<std::string>(_jsonArtist, "thumbnail_url", {},
+                                 _fallbackUsed));
 }
 
-std::vector<Artist> DiscogsAPI::createArtists(const json &_jsonArtists,
-                                              bool &_fallbackUsed) {
-    std::vector<Artist> artists;
+std::vector<std::shared_ptr<IArtist>>
+DiscogsAPI::createArtists(const json &_jsonArtists, bool &_fallbackUsed) {
+    std::vector<std::shared_ptr<IArtist>> artists;
     for (auto &&jsonArtist : _jsonArtists) {
         artists.push_back(createArtistFromRelease(jsonArtist, _fallbackUsed));
     }
@@ -268,7 +275,7 @@ std::vector<Label> DiscogsAPI::createLabels(const json &_jsonLabels,
 std::shared_ptr<Release>
 DiscogsAPI::createReleaseFromSearch(const json &_jsonRelease) {
     bool fallbackUsed(false);
-    Release release(
+    auto release = std::make_shared<Release>(
         _jsonRelease.at("id").get<int>(),
         _jsonRelease.at("title").get<std::string>(), Release::State::Full,
         getOptional<std::string>(_jsonRelease, "cover_image", {}, fallbackUsed),
@@ -281,6 +288,7 @@ DiscogsAPI::createReleaseFromSearch(const json &_jsonRelease) {
         createLabels(
             getOptional<json>(_jsonRelease, "labels", {}, fallbackUsed),
             fallbackUsed),
+        "<copyright>",
         getOptional<std::string>(_jsonRelease, "released", "", fallbackUsed),
         parseStylesFromSearch(_jsonRelease, fallbackUsed),
         std::stoi(
@@ -288,16 +296,16 @@ DiscogsAPI::createReleaseFromSearch(const json &_jsonRelease) {
         parseVideos(_jsonRelease, fallbackUsed),
         getOptional<std::string>(_jsonRelease, "data_quality", "",
                                  fallbackUsed) == "Correct");
-    release.set_tracklist(parseTracklist(_jsonRelease, release, fallbackUsed));
+    release->set_tracklist(parseTracklist(_jsonRelease, release, fallbackUsed));
     if (fallbackUsed) {
-        release.set_state(Release::State::Partial);
+        release->set_state(Release::State::Partial);
     }
-    return std::make_shared<Release>(release);
+    return release;
 }
 
 std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
     bool fallbackUsed(false);
-    Release release(
+    auto release = std::make_shared<Release>(
         _jsonRelease.at("id").get<int>(),
         _jsonRelease.at("title").get<std::string>(), Release::State::Full,
         getOptional<std::string>(_jsonRelease, "cover_image", {}, fallbackUsed),
@@ -310,17 +318,18 @@ std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
         createLabels(
             getOptional<json>(_jsonRelease, "labels", {}, fallbackUsed),
             fallbackUsed),
+        "<copyright>",
         getOptional<std::string>(_jsonRelease, "released", "", fallbackUsed),
         parseStyles(_jsonRelease, fallbackUsed),
         getOptional<int>(_jsonRelease, "year", 0, fallbackUsed),
         parseVideos(_jsonRelease, fallbackUsed),
         getOptional<std::string>(_jsonRelease, "data_quality", "",
                                  fallbackUsed) == "Correct");
-    release.set_tracklist(parseTracklist(_jsonRelease, release, fallbackUsed));
+    release->set_tracklist(parseTracklist(_jsonRelease, release, fallbackUsed));
     if (fallbackUsed) {
-        release.set_state(Release::State::Partial);
+        release->set_state(Release::State::Partial);
     }
-    return std::make_shared<Release>(release);
+    return release;
 }
 
 std::vector<std::string>
@@ -361,26 +370,28 @@ std::vector<std::string> DiscogsAPI::parseStyles(const json &_j,
     return styles;
 }
 
-std::vector<ReleaseTrack> DiscogsAPI::parseTracklist(const json &_j,
-                                                     const Release &_release,
-                                                     bool &_fallbackUsed) {
-    std::vector<ReleaseTrack> tracklist;
+std::vector<std::shared_ptr<ITrack>>
+DiscogsAPI::parseTracklist(const json &_j, std::weak_ptr<Release> _release,
+                           bool &_fallbackUsed) {
+    std::vector<std::shared_ptr<ITrack>> tracklist;
     for (auto &&jsonTrack :
          getOptional<json>(_j, "tracklist", {}, _fallbackUsed)) {
         json extraArtists =
             getOptional<json>(jsonTrack, "extraartists", {}, _fallbackUsed);
 
-        tracklist.emplace_back(
-            _release.get_id(),
+        tracklist.push_back(std::make_shared<ReleaseTrack>(
+            _release.lock()->get_id(),
             getOptional<std::string>(jsonTrack, "title", {}, _fallbackUsed),
-            _release, _release.get_artists(), std::vector<Artist>{},
+            _release, _release.lock()->get_artists(),
+            std::vector<std::shared_ptr<IArtist>>{},
             // createArtists(extraArtists, _fallbackUsed),
-            _release.get_genres(), _release.get_imageUrl(),
-            _release.get_labels(),
+            _release.lock()->get_genres(), _release.lock()->get_imageUrl(),
+            // _release.get_labels(),
             ReleaseTrack::parseDuration(getOptional<std::string>(
                 jsonTrack, "duration", {}, _fallbackUsed)),
-            getOptional<std::string>(jsonTrack, "position", {}, _fallbackUsed),
-            _release.get_year());
+            getOptional<std::string>(jsonTrack, "position", {}, _fallbackUsed)
+            // , _release.get_year()
+            ));
     }
     return tracklist;
 }

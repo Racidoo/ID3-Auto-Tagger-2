@@ -56,11 +56,11 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
 
     auto artistCoverBitmap = new wxStaticBitmap(
         this, wxID_ANY,
-        MediaLabel::loadImage(album->get_artistCover(), wxSize(32, 32)));
+        MediaLabel::loadImage(album->get_artistImage(), wxSize(32, 32)));
     auto artistText = new wxStaticText(this, wxID_ANY,
                                        wxString::FromUTF8(album->get_artist()));
-    auto yearText =
-        new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_year()));
+    auto yearText = new wxStaticText(
+        this, wxID_ANY, wxString::FromUTF8(std::to_string(album->get_year())));
     auto totalTracksText = new wxStaticText(
         this, wxID_ANY,
         wxString(std::to_string(album->get_tracklist().size()) + " tracks"));

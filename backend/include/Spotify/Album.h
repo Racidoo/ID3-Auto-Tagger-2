@@ -1,51 +1,51 @@
-#pragma once 
+#pragma once
 
-#include <string>
-#include <vector>
+#include "Interfaces/IAlbum.h"
 
-#include "Artist.h"
-#include "Interfaces/MediaEntityBase.h"
-
-class MediaService;
+class ITrack;
+class IArtist;
 
 namespace Spotify {
 
-class Track;
-class Album : public MediaEntityBase {
+class Album : public IAlbum {
   public:
     Album(const std::string &_id, const std::string &_name, State _state,
-          const std::string &_albumType, unsigned int _totalTracks,
-          const std::string &_releaseDate, const std::string &_imageURL,
-          const std::vector<Artist> &_artists);
+          const std::string &_albumType, std::size_t _totalTracks,
+          const std::string &_releaseDate, std::size_t _year,
+          const std::string &_imageURL,
+          const std::vector<std::shared_ptr<IArtist>> &_artists);
     ~Album() = default;
 
-    const std::string &get_albumType() const;
-    unsigned int get_totalTracks() const;
+    const std::string &get_type() const override;
+    std::string get_artist() const override;
+    const std::vector<std::byte> &get_artistImage();
+    std::size_t get_year() const override;
+    const std::string &get_label() const override;
+    const std::string &get_copyright() const override;
+    const std::vector<std::shared_ptr<ITrack>> &get_tracklist() const override;
+
     const std::string get_releaseDate() const;
-    std::string get_releaseYear() const;
-    const std::string &get_label() const;
-    const std::string &get_copyright() const;
-    const std::vector<Artist> &get_artists() const;
-    std::vector<Artist> &get_artists();
-    std::string get_stringArtists() const;
-    const std::vector<Track> &get_tracklist() const;
+    const std::vector<std::shared_ptr<IArtist>> &get_artists() const;
+    std::vector<std::shared_ptr<IArtist>> &get_artists();
+    std::size_t get_totalTracks() const;
 
-    void set_label(const std::string &_label);
-    void set_copyright(const std::string &_copyright);
-    void set_tracklist(const std::vector<Track> &_tracklist);
-
-    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
+    void set_label(const std::string &_label) override;
+    void set_copyright(const std::string &_copyright) override;
+    void set_tracklist(
+        const std::vector<std::shared_ptr<ITrack>> &_tracklist) override;
+    void set_year(std::size_t _year) override;
 
   private:
-    std::string albumType;
-    unsigned int totalTracks;
+    std::string type;
+    size_t year;
+    std::size_t totalTracks;
     std::string releaseDate;
-    std::vector<Artist> artists;
+    std::vector<std::shared_ptr<IArtist>> artists;
 
     // optional attributes
     std::string label;
     std::string copyright;
-    std::vector<Track> tracklist;
+    std::vector<std::shared_ptr<ITrack>> tracklist;
 };
 
 } // namespace Spotify

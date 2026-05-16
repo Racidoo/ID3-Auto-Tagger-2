@@ -8,10 +8,8 @@
 #include <sstream>
 #include <string>
 
-// #include "Interfaces/IAlbum.h"
-// #include "Interfaces/ITrack.h"
-#include "IMediaService.hpp"
 #include "Query.h"
+#include "Services/IMediaService.hpp"
 #include "Spotify/Album.h"
 #include "Spotify/Artist.h"
 #include "Spotify/Playlist.h"
@@ -49,39 +47,36 @@ class SpotifyAPI : public Query, public IMediaService {
         std::size_t durationSeconds = 0;
     };
 
-    std::vector<Track> searchTrack(const std::string &_query,
-                                   const std::string &_market = "",
-                                   unsigned int _limit = 0,
-                                   const std::string &_offset = "");
-    std::vector<Album> searchAlbum(const std::string &_query,
-                                   const std::string &_market = "",
-                                   unsigned int _limit = 0,
-                                   const std::string &_offset = "");
-    std::vector<Artist> searchArtist(const std::string &_query,
-                                     const std::string &_market = "",
-                                     unsigned int _limit = 0,
-                                     const std::string &_offset = "");
-    std::vector<Playlist> searchPlaylist(const std::string &_query,
-                                         const std::string &_market = "",
-                                         unsigned int _limit = 0,
-                                         const std::string &_offset = "");
+    std::vector<std::shared_ptr<ITrack>>
+    searchTrack(const std::string &_query, const std::string &_market = "",
+                unsigned int _limit = 0, const std::string &_offset = "");
+    std::vector<std::shared_ptr<IAlbum>>
+    searchAlbum(const std::string &_query, const std::string &_market = "",
+                unsigned int _limit = 0, const std::string &_offset = "");
+    std::vector<std::shared_ptr<IArtist>>
+    searchArtist(const std::string &_query, const std::string &_market = "",
+                 unsigned int _limit = 0, const std::string &_offset = "");
+    std::vector<std::shared_ptr<IPlaylist>>
+    searchPlaylist(const std::string &_query, const std::string &_market = "",
+                   unsigned int _limit = 0, const std::string &_offset = "");
 
-    Album getAlbum(const std::string &_id);
-    Artist getArtist(const std::string &_id);
-    Playlist getPlaylist(const std::string &_id);
-    Track getTrack(const std::string &_id);
-    std::vector<Track> getAlbumTracks(const std::string &_id);
-    std::vector<Track> getPlaylistTracks(const std::string &_id);
+    std::shared_ptr<IAlbum> getAlbum(const std::string &_id);
+    std::shared_ptr<IArtist> getArtist(const std::string &_id);
+    std::shared_ptr<IPlaylist> getPlaylist(const std::string &_id);
+    std::shared_ptr<ITrack> getTrack(const std::string &_id);
+    std::vector<std::shared_ptr<ITrack>> getAlbumTracks(const std::string &_id);
+    std::vector<std::shared_ptr<ITrack>>
+    getPlaylistTracks(const std::string &_id);
     std::string searchId(const TrackSearchContext &_ctx);
 
-    void load(IMediaEntity &_obj) override;
+    void load(std::shared_ptr<IMediaEntity> _obj) override;
 
-    void loadAdditionalData(Artist &_artist);
-    void loadAdditionalData(Album &_album);
-    void loadAdditionalData(Playlist &_playlist);
-    void loadAdditionalData(Track &_track);
+    void loadAdditionalData(std::shared_ptr<Artist> _artist);
+    void loadAdditionalData(std::shared_ptr<Album> _album);
+    void loadAdditionalData(std::shared_ptr<Playlist> _playlist);
+    void loadAdditionalData(std::shared_ptr<Track> _track);
 
-    std::shared_ptr<Track> researchTags(const TrackSearchContext &_ctx);
+    std::shared_ptr<ITrack> researchTags(const TrackSearchContext &_ctx);
 
     static bool isValidIdFormat(const std::string &_id);
 
@@ -98,15 +93,19 @@ class SpotifyAPI : public Query, public IMediaService {
                 const std::string &_market = "", unsigned int _limit = 0,
                 const std::string &_offset = "");
 
-    bool insertTracklist(Album &_album, const json &_jsonAlbum);
-    bool insertLabel(Album &_album, const json &_jsonAlbum);
-    bool insertCopyright(Album &_album, const json &_jsonAlbum);
+    bool insertTracklist(std::shared_ptr<IAlbum> _album,
+                         const json &_jsonAlbum);
+    bool insertLabel(std::shared_ptr<Album> _album, const json &_jsonAlbum);
+    bool insertCopyright(std::shared_ptr<Album> _album, const json &_jsonAlbum);
 
-    Album createAlbum(const json &_jsonAlbum, bool _fullTags = false);
-    Artist createArtist(const json &_jsonArtist) const;
-    std::vector<Artist> createArtists(const json &_jsonArtists) const;
-    Playlist createPlaylist(const json &_jsonPlaylist) const;
-    Track createTrack(const json &_jsonTrack, const Album &_album) const;
+    std::shared_ptr<IAlbum> createAlbum(const json &_jsonAlbum,
+                                        bool _fullTags = false);
+    std::shared_ptr<IArtist> createArtist(const json &_jsonArtist) const;
+    std::vector<std::shared_ptr<IArtist>>
+    createArtists(const json &_jsonArtists) const;
+    std::shared_ptr<IPlaylist> createPlaylist(const json &_jsonPlaylist) const;
+    std::shared_ptr<ITrack> createTrack(const json &_jsonTrack,
+                                        std::shared_ptr<IAlbum> _album) const;
     User createUser(const json &_jsonUser) const;
 };
 

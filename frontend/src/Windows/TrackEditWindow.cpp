@@ -111,31 +111,31 @@ void TrackEditWindow::Update() {
     artistText->SetValue(
         getCommonAttribute([](auto t) { return t->get_artist(); }));
     albumText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_album(); }));
-    yearText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_year(); }));
-    trackNumberText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_trackNumber(); }));
+        getCommonAttribute([](auto t) { return t->get_albumName(); }));
+    yearText->SetValue(getCommonAttribute(
+        [](auto t) { return std::to_string(t->get_year()); }));
+    trackNumberText->SetValue(getCommonAttribute(
+        [](auto t) { return std::to_string(t->get_trackNumber()); }));
     genreText->SetValue(
         getCommonAttribute([](auto t) { return t->get_genre(); }));
     albumArtistsText->SetValue(
         getCommonAttribute([](auto t) { return t->get_albumArtist(); }));
-    discNumberText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_discNumber(); }));
+    discNumberText->SetValue(getCommonAttribute(
+        [](auto t) { return std::to_string(t->get_discNumber()); }));
     labelText->SetValue(
         getCommonAttribute([](auto t) { return t->get_label(); }));
     copyrightText->SetValue(
         getCommonAttribute([](auto t) { return t->get_copyright(); }));
     filenameText->SetValue(
         getCommonAttribute([](auto t) { return t->get_id(); }));
-    bitrateText->SetValue(getCommonAttribute([](auto t) {
-        return (t->get_localTrack()->get_bitrate() + " kBit/s");
-    }));
-    channelsText->SetValue(getCommonAttribute(
-        [](auto t) { return t->get_localTrack()->get_channels(); }));
-    sampleRateText->SetValue(getCommonAttribute([](auto t) {
-        return (t->get_localTrack()->get_sampleRate() + " Hz");
-    }));
+    // bitrateText->SetValue(getCommonAttribute([](auto t) {
+    //     return (t->get_localTrack()->get_bitrate() + " kBit/s");
+    // }));
+    // channelsText->SetValue(getCommonAttribute(
+    //     [](auto t) { return t->get_localTrack()->get_channels(); }));
+    // sampleRateText->SetValue(getCommonAttribute([](auto t) {
+    //     return (t->get_localTrack()->get_sampleRate() + " Hz");
+    // }));
 
     this->GetSizer()->Layout();
 }

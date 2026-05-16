@@ -2,7 +2,7 @@
 
 #include <wx/wx.h>
 
-#include "LocalTrack.h" // tag_type_t
+#include "Local/LocalTrack.h" // tag_type_t
 #include "Media/Track/TrackPanel.h"
 
 class LocalTrackPanel : public TrackPanel {
@@ -16,7 +16,9 @@ class LocalTrackPanel : public TrackPanel {
                                    const std::string &_value);
 
   protected:
-    void OnActivated(wxDataViewEvent &event);
-
+    virtual bool
+    HandleColumnAction(int _column, unsigned _rowIndex,
+                       const std::shared_ptr<TrackModelRow> &_row,
+                       const std::shared_ptr<ITrack> &_track) override;
     Downloader *downloader;
 };

@@ -1,21 +1,20 @@
-#include "LocalTrack.h"
+#include "Local/LocalTrack.h"
 
 LocalTrack::LocalTrack(const std::filesystem::path &_path)
-    : filepath(_path), id(filepath.stem()), state(IMediaEntity::State::None),
+    : ITrack(_path.stem(), "", IMediaEntity::State::None, ""), filepath(_path),
       length(0) {
     ensurePreviewTagsLoaded();
 }
 
 LocalTrack::~LocalTrack() {}
 
-const std::string &LocalTrack::get_title() const { return title; }
-const std::string &LocalTrack::get_artist() const { return artist; }
-const std::string &LocalTrack::get_album() const { return album; }
+std::string LocalTrack::get_artist() const { return artist; }
+const std::string &LocalTrack::get_albumName() const { return album; }
 const std::string &LocalTrack::get_genre() const { return genre; }
-const std::string &LocalTrack::get_year() const { return year; }
-const std::string &LocalTrack::get_trackNumber() const { return trackNumber; }
+std::size_t LocalTrack::get_year() const { return year; }
+std::size_t LocalTrack::get_trackNumber() const { return trackNumber; }
 std::size_t LocalTrack::get_length() const { return length; }
-const std::string &LocalTrack::get_albumArtist() {
+std::string LocalTrack::get_albumArtist() {
     ensureFullTagsLoaded();
     return albumArtist;
 }
@@ -27,7 +26,7 @@ const std::string &LocalTrack::get_label() {
     ensureFullTagsLoaded();
     return label;
 }
-const std::string &LocalTrack::get_discNumber() {
+std::size_t LocalTrack::get_discNumber() {
     ensureFullTagsLoaded();
     return discNumber;
 }
@@ -44,9 +43,9 @@ std::string LocalTrack::get_channels() {
     return std::to_string(channels);
 }
 
-IMediaEntity::State LocalTrack::get_state() const { return state; }
+// IMediaEntity::State LocalTrack::get_state() const { return state; }
 
-const std::vector<std::byte> &LocalTrack::get_cover() {
+const std::vector<std::byte> &LocalTrack::get_image() {
     if (!cachedImage.empty()) {
         return cachedImage;
     }
@@ -92,21 +91,21 @@ const std::vector<std::byte> &LocalTrack::get_cover() {
 
     return cachedImage;
 }
+bool LocalTrack::is_verified() const { return verified; }
 
 const std::filesystem::path &LocalTrack::get_filepath() const {
     return filepath;
 }
-const std::string &LocalTrack::get_id() const { return id; }
 
-void LocalTrack::set_title(const std::string &_title) {
+void LocalTrack::set_name(const std::string &_name) {
     TagLib::MPEG::File file(filepath.c_str());
 
     if (file.tag()) {
-        file.tag()->setTitle(TagLib::String(_title, TagLib::String::UTF8));
+        file.tag()->setTitle(TagLib::String(_name, TagLib::String::UTF8));
         file.save();
     }
 
-    title = _title;
+    name = _name;
 }
 
 void LocalTrack::set_artist(const std::string &_artist) {
@@ -120,7 +119,7 @@ void LocalTrack::set_artist(const std::string &_artist) {
     artist = _artist;
 }
 
-void LocalTrack::set_album(const std::string &_album) {
+void LocalTrack::set_albumName(const std::string &_album) {
     TagLib::MPEG::File file(filepath.c_str());
 
     if (file.tag()) {
@@ -152,11 +151,11 @@ void LocalTrack::set_genre(const std::string &_genre) {
     genre = _genre;
 }
 
-void LocalTrack::set_year(const std::string &_year) {
+void LocalTrack::set_year(std::size_t _year) {
     TagLib::MPEG::File file(filepath.c_str());
 
     if (file.tag()) {
-        file.tag()->setYear(std::stoi(_year));
+        file.tag()->setYear(_year);
         file.save();
     }
 
@@ -168,23 +167,23 @@ void LocalTrack::set_label(const std::string &_label) {
     label = _label;
 }
 
-void LocalTrack::set_trackNumber(const std::string &_trackNumber) {
+void LocalTrack::set_trackNumber(std::size_t _trackNumber) {
     TagLib::MPEG::File file(filepath.c_str());
 
     if (file.tag()) {
-        file.tag()->setTrack(std::stoi(_trackNumber));
+        file.tag()->setTrack(_trackNumber);
         file.save();
     }
     trackNumber = _trackNumber;
 }
 
-void LocalTrack::set_discNumber(const std::string &_discNumber) {
+void LocalTrack::set_discNumber(std::size_t _discNumber) {
     TagLib::MPEG::File file(filepath.c_str());
-    setTagValue(filepath, "TPOS", _discNumber);
+    setTagValue(filepath, "TPOS", std::to_string(_discNumber));
     discNumber = _discNumber;
 }
 
-void LocalTrack::set_cover(const std::vector<std::byte> &_imageData) {
+void LocalTrack::set_image(const std::vector<std::byte> &_imageData) {
 
     auto detectMime = [](const std::vector<std::byte> &data) -> const char * {
         if (data.size() >= 4) {
@@ -246,7 +245,7 @@ void LocalTrack::set_cover(const std::vector<std::byte> &_imageData) {
     cachedImage = _imageData;
 }
 
-void LocalTrack::set_state(IMediaEntity::State _state) { state = _state; }
+void LocalTrack::set_verified(bool _verified) { verified = _verified; }
 
 void LocalTrack::set_filepath(const std::filesystem::path &_filepath) {
     filepath = _filepath;
@@ -274,12 +273,12 @@ void LocalTrack::ensurePreviewTagsLoaded() {
     TagLib::FileRef fr(TagLib::FileName(filepath.c_str()), true,
                        TagLib::AudioProperties::Accurate);
 
-    title = tag->title().to8Bit(true);
+    name = tag->title().to8Bit(true);
     artist = tag->artist().to8Bit(true);
     album = tag->album().to8Bit(true);
     genre = tag->genre().to8Bit(true);
-    year = tag->year() == 0 ? "" : std::to_string(tag->year());
-    trackNumber = tag->track() == 0 ? "" : std::to_string(tag->track());
+    year = tag->year();
+    trackNumber = tag->track();
 
     length = fr.audioProperties() ? fr.audioProperties()->length() : 0;
     state = IMediaEntity::State::Preview;
@@ -306,7 +305,9 @@ void LocalTrack::ensureFullTagsLoaded() {
 
     albumArtist = getFrameText(id3Tag, "TPE2");
     label = getFrameText(id3Tag, "TPUB");
-    discNumber = getFrameText(id3Tag, "TPOS");
+    discNumber = (getFrameText(id3Tag, "TPOS").empty()
+                      ? 0
+                      : std::stoi(getFrameText(id3Tag, "TPOS")));
     copyright = getFrameText(id3Tag, "TCOP");
 
     bitrate = file.audioProperties()->bitrate();
@@ -361,40 +362,5 @@ bool LocalTrack::setTagValue(const std::filesystem::path &_filepath,
         return false;
     }
 
-    return true;
-}
-
-bool LocalTrack::renameLocalTrack(const std::string &_filename) {
-    std::filesystem::path newPath =
-        filepath.parent_path() / (_filename + filepath.extension().string());
-    try {
-        std::filesystem::rename(filepath, newPath);
-    } catch (const std::filesystem::filesystem_error &e) {
-        std::cerr << "Rename failed: " << e.what() << std::endl;
-        return false;
-    }
-    filepath = newPath;
-    return true;
-}
-
-/**
- * @brief only deletes the file on disc. Deleting `this` is the user's
- * responsibility!
- *
- * @return true
- * @return false
- */
-bool LocalTrack::deleteLocalTrack() {
-    if (!std::filesystem::exists(filepath)) {
-        std::cerr << "Could not remove " << filepath
-                  << ": File does not exist.\n";
-        return false;
-    }
-    if (!std::filesystem::remove(filepath)) {
-        std::cerr << "Could not remove " << filepath
-                  << ":Failed to delete the file.\n";
-        return false;
-    }
-    std::cout << "File deleted successfully.\n";
     return true;
 }

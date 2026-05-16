@@ -121,18 +121,17 @@ void TrackPanel::OnSelectionChanged(wxDataViewEvent &) {
 }
 
 void TrackPanel::OnActivated(wxDataViewEvent &event) {
-    unsigned int rowIndex = model->GetRow(event.GetItem());
+    unsigned rowIndex = model->GetRow(event.GetItem());
     int column = event.GetColumn();
-
-    std::cout << rowIndex << ", " << column << std::endl;
 
     auto row = model->GetRowByIndex(rowIndex);
     const auto &track = model->GetTrack(row);
 
-    if (column == TrackModel::COL_PROGRESS && track->get_spotifyTrack()) {
-        wxCommandEvent evt(EVT_TRACK_DOWNLOAD);
-        wxPostEvent(GetParent(), evt);
+    if (HandleColumnAction(column, rowIndex, row, track)) {
+        return;
     }
+
+    // optional fallback/default behavior
 }
 
 void TrackPanel::OnColumnSorted(wxDataViewEvent &_event) {
@@ -173,4 +172,17 @@ void TrackPanel::OnLeftDown(wxMouseEvent &event) {
     }
 
     event.Skip();
+}
+
+bool TrackPanel::HandleColumnAction(int _column, unsigned _rowIndex,
+                                    const std::shared_ptr<TrackModelRow> &_row,
+                                    const std::shared_ptr<ITrack> &_track) {
+
+    if (_column == TrackModel::COL_PROGRESS) {
+        wxCommandEvent evt(EVT_TRACK_DOWNLOAD);
+        wxPostEvent(GetParent(), evt);
+        return true;
+    }
+
+    return false;
 }

@@ -77,7 +77,7 @@ class Downloader {
                           std::function<void(int)> _onProgress);
     std::string downloadResource(std::vector<std::shared_ptr<IVideo>> &&_videos,
                                  std::function<void(int)> _onProgress);
-    void deleteLocalTrack(std::shared_ptr<ITrack> _data);
+    // void deleteLocalTrack(std::shared_ptr<ITrack> _data);
 };
 
 #endif // DOWNLOADER_H

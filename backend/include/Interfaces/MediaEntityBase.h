@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "Interfaces/IMediaEntity.hpp"
 
 class MediaEntityBase : public IMediaEntity {
@@ -24,5 +25,5 @@ class MediaEntityBase : public IMediaEntity {
     State state = State::Preview;
     std::string name;
     std::string imageURL;
-    std::vector<std::byte> chachedImage;
+    std::vector<std::byte> cachedImage;
 };

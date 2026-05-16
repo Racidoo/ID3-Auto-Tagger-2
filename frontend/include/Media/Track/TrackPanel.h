@@ -9,6 +9,7 @@
 
 class ITrack;
 class TrackModel;
+class TrackModelRow;
 class Downloader;
 
 wxDECLARE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
@@ -36,4 +37,7 @@ class TrackPanel : public wxPanel {
     void OnActivated(wxDataViewEvent &event);
     void OnColumnSorted(wxDataViewEvent &_event);
     void OnLeftDown(wxMouseEvent &event);
+    virtual bool HandleColumnAction(int _column, unsigned _rowIndex,
+                                    const std::shared_ptr<TrackModelRow> &_row,
+                                    const std::shared_ptr<ITrack> &_track);
 };

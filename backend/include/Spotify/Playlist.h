@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Interfaces/MediaEntityBase.h"
+#include "Interfaces/IPlaylist.h"
 #include "User.h"
 
 namespace Spotify {
-class Playlist : public MediaEntityBase {
+class Playlist : public IPlaylist {
   private:
     User creator;
 

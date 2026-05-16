@@ -2,35 +2,12 @@
 
 #include <memory>
 
-#include "IMediaEntity.hpp"
+#include "MediaEntityBase.h"
 
-class IArtistSource;
-
-namespace Discogs {
-class Artist;
-} // namespace Discogs
-
-namespace Spotify {
-class Artist;
-} // namespace Spotify
-
-class IArtist : public IMediaEntity {
+class IArtist : public MediaEntityBase {
   public:
-    explicit IArtist(std::shared_ptr<IArtistSource> _source)
-        : source(std::move(_source)) {}
+    explicit IArtist(const std::string &_id, const std::string &_name,
+                     State _state, const std::string &_imageURL)
+        : MediaEntityBase(_id, _name, _state, _imageURL) {}
     ~IArtist() = default;
-
-    const std::string &get_id() const override;
-    const std::string &get_name() const override;
-    const std::vector<std::byte> &get_image() override;
-
-    void ensureLoaded(class IMediaService &_service) override;
-
-    static std::shared_ptr<IArtist>
-    fromSpotify(std::shared_ptr<Spotify::Artist> _artist);
-    static std::shared_ptr<IArtist>
-    fromDiscogs(std::shared_ptr<Discogs::Artist> _artist);
-
-  private:
-    std::shared_ptr<IArtistSource> source;
 };

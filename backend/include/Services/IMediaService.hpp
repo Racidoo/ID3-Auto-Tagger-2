@@ -6,7 +6,7 @@ class IMediaService {
   public:
     virtual ~IMediaService() = default;
 
-    virtual void load(class IMediaEntity &obj) = 0;
+    virtual void load(std::shared_ptr<class IMediaEntity> _obj) = 0;
 
     template <typename T>
     static T getOptional(const nlohmann::json &j, const char *key, T fallback,

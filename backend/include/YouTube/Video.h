@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "Interfaces/MediaEntityBase.h"
+#include "Interfaces/IVideo.h"
 
 namespace YouTube {
-class Video : public MediaEntityBase {
+class Video : public IVideo {
   public:
     Video(const std::string &_id, const std::string &_name, State _state,
           const std::string &_channelTitle, const std::string &_uploadDate,
@@ -18,8 +18,6 @@ class Video : public MediaEntityBase {
     const std::string &get_uploadDate() const;
     unsigned int get_duration() const;
     bool get_licensed() const;
-
-    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
 
   private:
     std::string channelTitle;

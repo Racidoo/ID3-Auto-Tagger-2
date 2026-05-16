@@ -1,10 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
-class IMediaEntity {
+class IMediaEntity : public std::enable_shared_from_this<IMediaEntity> {
   public:
     enum class State { None, Preview, Partial, Full };
 
@@ -15,19 +16,32 @@ class IMediaEntity {
     virtual const std::vector<std::byte> &get_image() = 0;
     virtual void ensureLoaded(class IMediaService &_service) = 0;
 
-  public:
     template <typename T>
-    static std::string vecToStr(const std::vector<T> &_object,
+    static std::string vecToStr(const std::vector<T> &_objects,
                                 const std::string &_sep = ", ") {
-        static_assert(std::is_base_of<IMediaEntity, T>::value,
+        using RawT = typename std::remove_reference<decltype(deref(
+            std::declval<T>()))>::type;
+
+        static_assert(std::is_base_of<IMediaEntity, RawT>::value,
                       "T must derive from IMediaEntity");
 
         std::stringstream ss;
-        for (size_t i = 0; i < _object.size(); ++i) {
+
+        for (size_t i = 0; i < _objects.size(); ++i) {
             if (i != 0)
                 ss << _sep;
-            ss << _object[i].get_name();
+
+            ss << deref(_objects[i]).get_name();
         }
+
         return ss.str();
+    }
+
+  private:
+    template <typename T> static const T &deref(const T &_obj) { return _obj; }
+
+    template <typename T>
+    static const T &deref(const std::shared_ptr<T> &_obj) {
+        return *_obj;
     }
 };

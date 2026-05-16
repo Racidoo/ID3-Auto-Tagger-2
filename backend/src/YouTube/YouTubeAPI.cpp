@@ -1,5 +1,6 @@
-#include "../include/YouTube/YouTubeAPI.h"
-#include "../include/Spotify/SpotifyAPI.h"
+#include "YouTube/YouTubeAPI.h"
+#include "Interfaces/ITrack.h"
+#include "Spotify/SpotifyAPI.h"
 
 namespace YouTube {
 
@@ -222,12 +223,12 @@ YouTubeAPI::searchVideo(const std::string &_query, std::string *_nextPageToken,
     return results;
 }
 
-void YouTubeAPI::load(IMediaEntity &_obj) {
-    if (auto *video = dynamic_cast<YouTube::Video *>(&_obj))
-        loadAdditionalData(*video);
+void YouTubeAPI::load(std::shared_ptr<IMediaEntity> _obj) {
+    if (auto video = std::dynamic_pointer_cast<YouTube::Video>(_obj))
+        loadAdditionalData(video);
 }
 
-void YouTubeAPI::loadAdditionalData(Video &_video) {
+void YouTubeAPI::loadAdditionalData(std::shared_ptr<Video> _video) {
     std::cerr << "Not yet implemented!" << std::endl;
 }
 
@@ -270,12 +271,11 @@ YouTubeAPI::parse_duration(const std::string &iso8601_duration) const {
 }
 
 // Select best match from YouTubeAPI results
-std::string YouTubeAPI::findBestMatch(const Spotify::Track &_track,
+std::string YouTubeAPI::findBestMatch(std::shared_ptr<ITrack> _track,
                                       std::function<void(int)> _onProgress) {
     double bestScore = 0.0;
     std::vector<std::string> topMatches;
-    std::string searchQuery =
-        _track.get_stringArtists() + " - " + _track.get_name();
+    std::string searchQuery = _track->get_artist() + " - " + _track->get_name();
     std::cout << "Search query: " << searchQuery << std::endl;
 
     bool googleAPI(true);
@@ -294,29 +294,29 @@ std::string YouTubeAPI::findBestMatch(const Spotify::Track &_track,
                 continue;
             }
 
-            score += similarityScore(_track.get_durationMs() / 1000,
-                                     video->get_duration());
+            score +=
+                similarityScore(_track->get_length(), video->get_duration());
             if (score < 0.1) {
                 std::cout << "[" << video->get_id() << "]: video length "
                           << video->get_duration() << " exceeds Spotify track "
-                          << _track.get_durationMs() / 1000 << std::endl;
+                          << _track->get_length() << std::endl;
                 continue;
             }
 
-            score += similarityScore(video->get_name(), _track.get_name());
+            score += similarityScore(video->get_name(), _track->get_name());
 
             if (googleAPI && video->get_licensed())
                 score = 1.0;
 
-            for (auto &&artist : _track.get_artists()) {
-                if (findInString(video->get_name(), artist.get_name()))
-                    score += 1.0 / _track.get_artists().size();
-                if (findInString(video->get_channelTitle(), artist.get_name()))
-                    score += 1.0 / _track.get_artists().size();
-            }
+            if (findInString(video->get_name(), _track->get_artist()))
+                score += 1.0;
+            if (findInString(video->get_channelTitle(), _track->get_artist()))
+                score += 1.0;
 
-            score += similarityScoreDate(_track.get_album().get_releaseDate(),
-                                         video->get_uploadDate());
+            if (findInString(video->get_uploadDate(),
+                             std::to_string(_track->get_year()))) {
+                score += 1.0;
+            }
 
             std::cout << "score: " << score << "\t" << video->get_id() << "\t"
                       << video->get_name() << std::endl;

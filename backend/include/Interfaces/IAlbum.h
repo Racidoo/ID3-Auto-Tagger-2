@@ -1,46 +1,28 @@
 #pragma once
 
-#include <memory>
-
-#include "IMediaEntity.hpp"
-
-class IAlbumSource;
-class IMediaService;
-
-namespace Discogs {
-class Release;
-} // namespace Discogs
-
-namespace Spotify {
-class Album;
-} // namespace Spotify
+#include "MediaEntityBase.h"
 
 class ITrack;
 
-class IAlbum : public IMediaEntity {
+class IAlbum : public MediaEntityBase {
   public:
-    explicit IAlbum(std::shared_ptr<IAlbumSource> _source)
-        : source(std::move(_source)) {}
+    explicit IAlbum(const std::string &_id, const std::string &_name,
+                    State _state, const std::string &_imageURL)
+        : MediaEntityBase(_id, _name, _state, _imageURL) {}
     ~IAlbum() = default;
 
-    const std::string &get_id() const override;
-    const std::string &get_name() const override;
-    const std::vector<std::byte> &get_image() override;
-    std::string get_type() const;
-    std::string get_artist() const;
-    std::vector<std::byte> get_artistCover() const;
-    std::string get_year() const;
-    std::vector<std::shared_ptr<ITrack>> get_tracklist() const;
+    virtual const std::string &get_type() const = 0;
+    virtual std::string get_artist() const = 0;
+    virtual const std::vector<std::byte> &get_artistImage() = 0;
+    virtual std::size_t get_year() const = 0;
+    virtual const std::string &get_label() const = 0;
+    virtual const std::string &get_copyright() const = 0;
+    virtual const std::vector<std::shared_ptr<ITrack>> &
+    get_tracklist() const = 0;
 
-    std::shared_ptr<Discogs::Release> get_discogsRelease() const;
-
-    static std::shared_ptr<IAlbum>
-    fromSpotify(std::shared_ptr<Spotify::Album> _album);
-    static std::shared_ptr<IAlbum>
-    fromDiscogs(std::shared_ptr<Discogs::Release> _release);
-
-    void ensureLoaded(class IMediaService &_service) override;
-
-  private:
-    std::shared_ptr<IAlbumSource> source;
+    virtual void set_year(std::size_t _year) = 0;
+    virtual void set_copyright(const std::string &_copyright) = 0;
+    virtual void set_label(const std::string &_label) = 0;
+    virtual void
+    set_tracklist(const std::vector<std::shared_ptr<ITrack>> &_tracklist) = 0;
 };

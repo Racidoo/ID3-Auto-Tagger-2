@@ -12,34 +12,29 @@
 #include <taglib/mpegfile.h>
 #include <taglib/textidentificationframe.h>
 
-#include "Interfaces/IMediaEntity.hpp"
+#include "Interfaces/ITrack.h"
 
-class LocalTrack {
+class LocalTrack : public ITrack {
   private:
     std::filesystem::path filepath;
-    std::string id;
-
-    IMediaEntity::State state;
+    bool verified;
 
     // preview tags
-    std::string title;
     std::string artist;
     std::string album;
     std::string genre;
-    std::string year;
-    std::string trackNumber;
+    std::size_t year;
+    std::size_t trackNumber;
     int length;
 
     // full tags
     std::string albumArtist;
     std::string copyright;
     std::string label;
-    std::string discNumber;
+    std::size_t discNumber;
     std::size_t bitrate;
     std::size_t sampleRate;
     std::size_t channels;
-
-    std::vector<std::byte> cachedImage;
 
   public:
     LocalTrack(const std::filesystem::path &_path);
@@ -63,38 +58,37 @@ class LocalTrack {
         SAMPLE_RATE
     };
 
-    const std::string &get_title() const;
-    const std::string &get_artist() const;
-    const std::string &get_album() const;
-    const std::string &get_genre() const;
-    const std::string &get_year() const;
-    const std::string &get_trackNumber() const;
-    std::size_t get_length() const;
-    const std::string &get_albumArtist();
-    const std::string &get_copyright();
-    const std::string &get_label();
-    const std::string &get_discNumber();
+    // const std::string &get_name() const;
+    std::string get_artist() const override;
+    const std::string &get_albumName() const override;
+    const std::string &get_genre() const override;
+    std::size_t get_year() const override;
+    std::size_t get_trackNumber() const override;
+    std::size_t get_length() const override;
+    std::string get_albumArtist() override;
+    const std::string &get_copyright() override;
+    const std::string &get_label() override;
+    std::size_t get_discNumber() override;
     std::string get_bitrate();
     std::string get_sampleRate();
     std::string get_channels();
-    IMediaEntity::State get_state() const;
-    const std::vector<std::byte> &get_cover();
-
+    const std::vector<std::byte> &get_image() override;
+    bool is_verified() const override;
     const std::filesystem::path &get_filepath() const;
-    const std::string &get_id() const;
+    // const std::string &get_id() const;
 
-    void set_title(const std::string &_title);
-    void set_artist(const std::string &_artist);
-    void set_album(const std::string &_album);
-    void set_albumArtist(const std::string &_albumArtist);
-    void set_copyright(const std::string &_copyright);
-    void set_genre(const std::string &_genre);
-    void set_year(const std::string &_year);
-    void set_label(const std::string &_label);
-    void set_trackNumber(const std::string &_trackNumber);
-    void set_discNumber(const std::string &_discNumber);
-    void set_cover(const std::vector<std::byte> &_imageData);
-    void set_state(IMediaEntity::State _state);
+    void set_name(const std::string &_name);
+    void set_artist(const std::string &_artist) override;
+    void set_albumName(const std::string &_albumName) override;
+    void set_albumArtist(const std::string &_albumArtist) override;
+    void set_copyright(const std::string &_copyright) override;
+    void set_genre(const std::string &_genre) override;
+    void set_year(std::size_t _year) override;
+    void set_label(const std::string &_label) override;
+    void set_trackNumber(std::size_t _trackNumber) override;
+    void set_discNumber(std::size_t _discNumber) override;
+    void set_image(const std::vector<std::byte> &_imageData);
+    void set_verified(bool _verified) override;
     void set_filepath(const std::filesystem::path &_filepath);
 
     void ensurePreviewTagsLoaded();
@@ -103,9 +97,6 @@ class LocalTrack {
     static std::string getFrameText(TagLib::ID3v2::Tag *_tag, const char *_id);
     static bool setTagValue(const std::filesystem::path &_filepath,
                             const char *frameID, const std::string &value);
-
-    bool renameLocalTrack(const std::string &_filename);
-    bool deleteLocalTrack();
 };
 
 #endif // LOCAL_TRACK_H

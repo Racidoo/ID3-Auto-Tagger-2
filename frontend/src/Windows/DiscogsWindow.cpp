@@ -138,9 +138,10 @@ void DiscogsWindow::showSearchResults(ISearchResult &result) {
     if (!result.albums.empty()) {
         albumWindow->Show();
         for (auto album : result.albums)
-            albumWindow->appendChildren(new MediaLabel(
-                albumWindow, album,
-                {wxString(album->get_artist()), wxString(album->get_year())}));
+            albumWindow->appendChildren(
+                new MediaLabel(albumWindow, album,
+                               {wxString(album->get_artist()),
+                                wxString(std::to_string(album->get_year()))}));
     } else {
         albumWindow->Hide();
     }

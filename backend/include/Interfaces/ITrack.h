@@ -1,77 +1,42 @@
 #pragma once
 
-#include <functional>
+#include <iostream>
 #include <memory>
 
-#include "IMediaEntity.hpp"
+#include "MediaEntityBase.h"
 
-class Downloader;
-class LocalTrack;
-class ITrackSource;
-
-namespace Discogs {
-class ReleaseTrack;
-} // namespace Discogs
-
-namespace Spotify {
-class Track;
-} // namespace Spotify
-
-class ITrack : public IMediaEntity {
+class ITrack : public MediaEntityBase {
 
   public:
-    explicit ITrack(std::shared_ptr<ITrackSource> _source)
-        : source(std::move(_source)) {}
+    explicit ITrack(const std::string &_id, const std::string &_name,
+                    State _state, const std::string &_imageURL)
+        : MediaEntityBase(_id, _name, _state, _imageURL) {}
     ~ITrack() = default;
 
-    const std::string &get_id() const override;
-    const std::string &get_name() const override;
-    const std::vector<std::byte> &get_image() override;
-    std::string get_artist();
-    std::string get_album();
-    std::string get_albumArtist();
-    std::string get_copyright();
-    std::string get_genre();
-    std::string get_year();
-    std::string get_label();
-    std::string get_trackNumber();
-    std::string get_discNumber();
-    std::size_t get_length();
+    virtual std::string get_artist() const = 0;
+    virtual const std::string &get_albumName() const = 0;
+    virtual std::string get_albumArtist() = 0;
+    virtual const std::string &get_copyright() = 0;
+    virtual const std::string &get_genre() const = 0;
+    virtual std::size_t get_year() const = 0;
+    virtual const std::string &get_label() = 0;
+    virtual std::size_t get_trackNumber() const = 0;
+    virtual std::size_t get_discNumber() = 0;
+    virtual std::size_t get_length() const = 0;
 
-    bool is_verified() const;
+    virtual bool is_verified() const = 0;
 
-    void set_name(const std::string &_name);
-    void set_artist(const std::string &_artist);
-    void set_album(const std::string &_album);
-    void set_albumArtist(const std::string &_albumArtist);
-    void set_copyright(const std::string &_copyright);
-    void set_genre(const std::string &_genre);
-    void set_year(const std::string &_year);
-    void set_label(const std::string &_label);
-    void set_trackNumber(const std::string &_track);
-    void set_discNumber(const std::string &_disc);
-    void set_image(const std::vector<std::byte> &_imageData);
+    virtual void set_artist(const std::string &_artist) = 0;
+    virtual void set_albumName(const std::string &_albumName) = 0;
+    virtual void set_albumArtist(const std::string &_albumArtist) = 0;
+    virtual void set_copyright(const std::string &_copyright) = 0;
+    virtual void set_genre(const std::string &_genre) = 0;
+    virtual void set_year(std::size_t _year) = 0;
+    virtual void set_label(const std::string &_label) = 0;
+    virtual void set_trackNumber(std::size_t _trackNumber) = 0;
+    virtual void set_discNumber(std::size_t _discNumber) = 0;
 
-    void set_verified(bool _verified);
+    virtual void set_verified(bool _verified) = 0;
 
-    void ensureLoaded(class IMediaService &_service) override;
-
-    std::shared_ptr<Spotify::Track> get_spotifyTrack() const;
-    std::shared_ptr<LocalTrack> get_localTrack() const;
-    // std::shared_ptr<Discogs::ReleaseTrack> get_discogsTrack() const;
-
-    void verifyTags(std::shared_ptr<Spotify::Track> _template);
-
-    static std::shared_ptr<ITrack>
-    fromLocal(std::shared_ptr<LocalTrack> _track);
-    static std::shared_ptr<ITrack>
-    fromSpotify(std::shared_ptr<Spotify::Track> _track);
-    static std::shared_ptr<ITrack>
-    fromDiscogs(std::shared_ptr<Discogs::ReleaseTrack> _track);
-
-    static bool verify(std::shared_ptr<ITrack> _data, Downloader *_downloader);
-
-  private:
-    bool verified = false;
-    std::shared_ptr<ITrackSource> source;
+    void applyDifferences(std::shared_ptr<ITrack> _template);
 };

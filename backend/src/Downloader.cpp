@@ -5,7 +5,7 @@
 #include "Interfaces/ISearchResult.hpp"
 #include "Interfaces/ITrack.h"
 #include "Interfaces/IVideo.h"
-#include "LocalTrack.h"
+#include "Local/LocalTrack.h"
 
 Downloader::Downloader()
     : trackPath(std::filesystem::current_path() / "music/"), spotify(nullptr),
@@ -209,26 +209,23 @@ ISearchResult Downloader::fetchResource(
 
     if (type == "track") {
         auto track = spotify->getTrack(id);
-        result.tracks.push_back(
-            ITrack::fromSpotify(std::make_shared<Spotify::Track>(track)));
-        track.set_downloaded(isBlocked(track.get_id()));
+        result.tracks.push_back(track);
+        track->set_verified(isBlocked(track->get_id()));
     } else if (type == "album") {
         auto tracks = spotify->getAlbumTracks(id);
         for (auto &&track : tracks) {
-            track.set_downloaded(isBlocked(track.get_id()));
-            result.tracks.push_back(
-                ITrack::fromSpotify(std::make_shared<Spotify::Track>(track)));
+            track->set_verified(isBlocked(track->get_id()));
+            result.tracks.push_back(track);
         }
     } else if (type == "playlist") {
         auto tracks = spotify->getPlaylistTracks(id);
         for (auto &&track : tracks) {
-            track.set_downloaded(isBlocked(track.get_id()));
-            result.tracks.push_back(
-                ITrack::fromSpotify(std::make_shared<Spotify::Track>(track)));
+            track->set_verified(isBlocked(track->get_id()));
+            result.tracks.push_back(track);
         }
     } else if (type == "video") {
         auto video = youTube->getVideo(id);
-        result.videos.push_back(IVideo::fromYouTube(video));
+        result.videos.push_back(video);
 
     } else {
 
@@ -238,9 +235,8 @@ ISearchResult Downloader::fetchResource(
                 auto tracks =
                     spotify->searchTrack(_query, _market, _limit, _offset);
                 for (auto &track : tracks) {
-                    track.set_downloaded(isBlocked(track.get_id()));
-                    result.tracks.push_back(ITrack::fromSpotify(
-                        std::make_shared<Spotify::Track>(track)));
+                    track->set_verified(isBlocked(track->get_id()));
+                    result.tracks.push_back(track);
                 }
                 break;
             }
@@ -248,8 +244,7 @@ ISearchResult Downloader::fetchResource(
                 auto albums =
                     spotify->searchAlbum(_query, _market, _limit, _offset);
                 for (auto &album : albums) {
-                    result.albums.push_back(IAlbum::fromSpotify(
-                        std::make_shared<Spotify::Album>(album)));
+                    result.albums.push_back(album);
                 }
                 break;
             }
@@ -257,8 +252,7 @@ ISearchResult Downloader::fetchResource(
                 auto artists =
                     spotify->searchArtist(_query, _market, _limit, _offset);
                 for (auto &artist : artists) {
-                    result.artists.push_back(IArtist::fromSpotify(
-                        std::make_shared<Spotify::Artist>(artist)));
+                    result.artists.push_back(artist);
                 }
                 break;
             }
@@ -266,15 +260,14 @@ ISearchResult Downloader::fetchResource(
                 auto playlists =
                     spotify->searchPlaylist(_query, _market, _limit, _offset);
                 for (auto &playlist : playlists) {
-                    result.playlists.push_back(IPlaylist::fromSpotify(
-                        std::make_shared<Spotify::Playlist>(playlist)));
+                    result.playlists.push_back(playlist);
                 }
                 break;
             }
             case ISearchResult::SearchCategory::Video: {
                 auto videos = youTube->searchVideo(_query, nullptr, _limit);
                 for (auto &&video : videos) {
-                    result.videos.push_back(IVideo::fromYouTube(video));
+                    result.videos.push_back(video);
                 }
                 break;
             }
@@ -305,12 +298,11 @@ bool Downloader::isBlocked(const std::string &_id) const {
 
 void Downloader::makeBlocked(const Spotify::Track &_track) {
     blacklist["blacklist"][_track.get_id()]["title"] = _track.get_name();
-    blacklist["blacklist"][_track.get_id()]["artist"] =
-        _track.get_stringArtists();
+    blacklist["blacklist"][_track.get_id()]["artist"] = _track.get_artist();
 }
 
 void Downloader::makeBlocked(std::shared_ptr<ITrack> _data) {
-    if (!_data || !_data->get_localTrack())
+    if (!_data)
         return;
     const auto &filename = _data->get_id();
     if (!Spotify::SpotifyAPI::isValidIdFormat(filename)) {
@@ -324,7 +316,7 @@ void Downloader::makeBlocked(std::shared_ptr<ITrack> _data) {
 
 void Downloader::removeBlocked(std::shared_ptr<ITrack> _data) {
 
-    if (!_data || !_data->get_localTrack())
+    if (!_data)
         return;
     const auto &filename = _data->get_id();
 
@@ -337,17 +329,15 @@ void Downloader::removeBlocked(std::shared_ptr<ITrack> _data) {
 void Downloader::downloadAndTag(std::shared_ptr<ITrack> _track,
                                 std::function<void(int)> _onProgress) {
 
-    if (!_track || !_track->get_spotifyTrack()) {
-        std::cerr << "Cannot download with missing spotify information!"
-                  << std::endl;
+    if (!_track) {
+        std::cerr << "Cannot download with missing information!" << std::endl;
         _onProgress(-1);
         return;
     }
 
     std::thread([this, _onProgress, _track]() mutable {
         _onProgress(0);
-        auto bestMatch =
-            youTube->findBestMatch(*_track->get_spotifyTrack(), _onProgress);
+        auto bestMatch = youTube->findBestMatch(_track, _onProgress);
         if (bestMatch.empty()) {
             _onProgress(-1);
             return;
@@ -412,12 +402,10 @@ void Downloader::downloadAndTag(std::shared_ptr<ITrack> _track,
             return;
         }
 
-        auto localTrack(
-            ITrack::fromLocal(std::make_shared<LocalTrack>(trackName)));
+        auto localTrack(std::make_shared<LocalTrack>(trackName));
         // get additianl tags that are not relevant in normal search
-        // spotify->loadAdditionalData(_track->get_spotifyTrack());
-        _track->get_spotifyTrack()->ensureLoaded(*spotify);
-        localTrack->verifyTags(_track->get_spotifyTrack());
+        _track->ensureLoaded(*spotify);
+        localTrack->applyDifferences(_track);
 
         _onProgress(99);
         makeBlocked(localTrack);
@@ -512,18 +500,18 @@ void Downloader::downloadAndTag(std::shared_ptr<IVideo> &_video,
     }).detach();
 }
 
-void Downloader::deleteLocalTrack(std::shared_ptr<ITrack> _data) {
-    if (!_data || !_data->get_localTrack()) {
-        std::cerr << "invalid reference to localTrack!" << std::endl;
-        return;
-    }
+// void Downloader::deleteLocalTrack(std::shared_ptr<ITrack> _data) {
+//     if (!_data || !_data->get_localTrack()) {
+//         std::cerr << "invalid reference to localTrack!" << std::endl;
+//         return;
+//     }
 
-    const auto &filepath = _data->get_localTrack()->get_filepath();
-    std::string possibleId(filepath.stem().string());
+//     const auto &filepath = _data->get_localTrack()->get_filepath();
+//     std::string possibleId(filepath.stem().string());
 
-    if (!_data->get_localTrack()->deleteLocalTrack()) {
-        return;
-    }
+//     if (!_data->get_localTrack()->deleteLocalTrack()) {
+//         return;
+//     }
 
-    removeBlocked(_data);
-}
+//     removeBlocked(_data);
+// }

@@ -5,7 +5,7 @@
 #include <wx/event.h>
 #include <wx/wx.h>
 
-#include "LocalTrackService.h"
+#include "Local/LocalTrackService.h"
 
 class Downloader;
 class LocalTrackPanel;
