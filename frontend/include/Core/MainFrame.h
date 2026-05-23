@@ -7,7 +7,8 @@
 #include <string>
 #include <wx/wx.h>
 
-class Downloader;
+#include "Services/MediaServiceRegistry.h"
+
 class SettingsWindow;
 class SpotifyWindow;
 class DiscogsWindow;
@@ -21,7 +22,7 @@ class MainFrame : public wxFrame {
     ~MainFrame() = default;
 
   private:
-    std::unique_ptr<Downloader> downloader;
+    std::unique_ptr<MediaServiceRegistry> registry;
     wxBoxSizer *mainSizer;
     wxPanel *mainPanel;
     SettingsWindow *settingsPanel;

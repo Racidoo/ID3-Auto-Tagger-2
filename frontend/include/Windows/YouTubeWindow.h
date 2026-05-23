@@ -7,19 +7,15 @@
 #include <wx/wx.h>
 
 #include "Components/MediaLabel.h"
-#include "Downloader.h"
 #include "Interfaces/ISearchResult.hpp"
 #include "Windows/MediaWindow.hpp"
 
-class Downloader;
-
 class YouTubeWindow : public wxScrolledWindow {
   private:
-    Downloader *downloader;
     MediaWindow<MediaLabel> *videoWindow;
 
   public:
-    YouTubeWindow(wxWindow *_parent, Downloader *_downloader);
+    YouTubeWindow(wxWindow *_parent);
     ~YouTubeWindow();
 
     void search(const wxString &_searchText);

@@ -55,15 +55,6 @@ class Query {
     virtual std::string prepareUrl(const std::string &_url) = 0;
     json performRequest(const std::string &_url);
 
-    static std::string toLower(const std::string &_str);
-    static double similarityScore(const std::string &_s1,
-                                  const std::string &_s2);
-    static double similarityScore(int _duration1, int _duration2);
-    static double similarityScoreDate(const std::string &_date1,
-                                      const std::string &_date2);
-    static int levenshteinDistance(const std::string &_s1,
-                                   const std::string &_s2);
-
     static void printCurlStats(const PerformanceStats &_stats,
                                const std::string &_url);
 

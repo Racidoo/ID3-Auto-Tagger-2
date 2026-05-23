@@ -5,11 +5,10 @@
 #include <wx/event.h>
 #include <wx/wx.h>
 
-#include "Local/LocalTrackService.h"
-
-class Downloader;
 class LocalTrackPanel;
 class TrackEditWindow;
+class LocalTrackService;
+class SearchService;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:
@@ -22,12 +21,13 @@ class LocalTrackWindow : public wxScrolledWindow {
 
     wxTextCtrl *searchBar;
 
-    LocalTrackService trackService;
+    LocalTrackService *trackService;
 
     wxTimer searchDebounceTimer;
 
   public:
-    LocalTrackWindow(wxWindow *_parent, Downloader *_downloader);
+    LocalTrackWindow(wxWindow *_parent, LocalTrackService *_trackService,
+                     SearchService *_searchService);
     ~LocalTrackWindow();
 
     void refresh();

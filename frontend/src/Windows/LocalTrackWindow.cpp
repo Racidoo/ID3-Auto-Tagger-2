@@ -1,11 +1,20 @@
 #include "Windows/LocalTrackWindow.h"
 #include "Components/LabeledTextCtrl.h"
-#include "Downloader.h"
+#include "Local/LocalTrackService.h"
 #include "Media/Track/LocalTrackPanel.h"
+#include "Services/SearchService.h"
+#include "Services/TagService.h"
 #include "Windows/TrackEditWindow.h"
 
-LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
-    : wxScrolledWindow(_parent, wxID_ANY) {
+LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
+                                   LocalTrackService *_trackService,
+                                   SearchService *_searchService)
+    : wxScrolledWindow(_parent, wxID_ANY), trackService(_trackService) {
+
+    if (!_trackService) {
+        wxLogInfo(wxT("Local service is currently unavailable!"));
+        return;
+    }
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -34,7 +43,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
     toolbarSizer->Add(itemCount, 0, wxALL, 5);
     toolbarSizer->Add(searchBar, 1, wxALL, 5);
 
-    trackPanel = new LocalTrackPanel(this, _downloader);
+    trackPanel = new LocalTrackPanel(this);
     trackEditWindow = new TrackEditWindow(this);
 
     auto trackSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -63,12 +72,21 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
         trackPanel->ApplyChangeToSelectedRows(type, value);
     });
 
-    size_t currentGen = trackService.getGeneration();
-    trackService.onBatch = [this, currentGen](
-                               std::vector<std::shared_ptr<ITrack>> _batch,
-                               size_t _gen) {
+    this->Bind(EVT_TRACK_VERIFY, [this, _searchService](wxCommandEvent &event) {
+        auto rows = trackPanel->GetSelectedRows();
+
+        for (auto row : rows) {
+            auto track = trackPanel->GetTrack(row);
+            TagService::researchMissingTags(track, _searchService);
+        }
+    });
+
+    size_t currentGen = trackService->getGeneration();
+    trackService->onBatch = [this, currentGen](
+                                std::vector<std::shared_ptr<ITrack>> _batch,
+                                size_t _gen) {
         wxTheApp->CallAfter([this, batch = std::move(_batch), _gen]() mutable {
-            if (_gen != trackService.getGeneration()) {
+            if (_gen != trackService->getGeneration()) {
                 wxLogError(wxT("Outdated generation!"));
                 return; // stale batch
             }
@@ -84,22 +102,18 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent, Downloader *_downloader)
 LocalTrackWindow::~LocalTrackWindow() {}
 
 void LocalTrackWindow::refresh() {
-
     searchBar->Clear();
     // substitution for Clear()
     trackPanel->MergeTracks({});
     trackEditWindow->Hide();
 
-    std::filesystem::path musicPath =
-        trackPanel->get_downloader()->get_trackPath();
-    trackService.loadTracks(musicPath, trackPanel->get_downloader(),
-                            subtreeCheckBox->GetValue());
+    trackService->loadTracks(subtreeCheckBox->GetValue());
 
-    if (!std::filesystem::exists(musicPath) ||
-        !std::filesystem::is_directory(musicPath)) {
-        wxMessageBox("Music directory not found!", "Error", wxICON_ERROR);
-        return;
-    }
+    // if (!std::filesystem::exists(musicPath) ||
+    //     !std::filesystem::is_directory(musicPath)) {
+    //     wxMessageBox("Music directory not found!", "Error",
+    //     wxICON_ERROR); return;
+    // }
 }
 
 void LocalTrackWindow::OnSearch(wxEvent &) {

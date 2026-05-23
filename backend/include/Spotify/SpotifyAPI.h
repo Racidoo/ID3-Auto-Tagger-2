@@ -28,7 +28,9 @@ class SpotifyAPI : public Query, public IMediaService {
 
     void saveCredentials() override;
     std::string generateAccessToken() override;
-
+    inline constexpr IMediaService::MediaSourceId get_id() const override {
+        return MediaSourceId::Spotify;
+    }
     enum searchItem_type {
         ALBUM,
         ARTIST,
@@ -39,13 +41,13 @@ class SpotifyAPI : public Query, public IMediaService {
         // AUDIOBOOK
     };
 
-    struct TrackSearchContext {
-        std::string title;
-        std::string artist;
-        std::string album;
-        std::string filename;
-        std::size_t durationSeconds = 0;
-    };
+    // struct TrackSearchContext {
+    //     std::string title;
+    //     std::string artist;
+    //     std::string album;
+    //     std::string filename;
+    //     std::size_t durationSeconds = 0;
+    // };
 
     std::vector<std::shared_ptr<ITrack>>
     searchTrack(const std::string &_query, const std::string &_market = "",
@@ -67,16 +69,16 @@ class SpotifyAPI : public Query, public IMediaService {
     std::vector<std::shared_ptr<ITrack>> getAlbumTracks(const std::string &_id);
     std::vector<std::shared_ptr<ITrack>>
     getPlaylistTracks(const std::string &_id);
-    std::string searchId(const TrackSearchContext &_ctx);
+    // std::string searchId(const TrackSearchContext &_ctx);
 
-    void load(std::shared_ptr<IMediaEntity> _obj) override;
+    bool load(std::shared_ptr<IMediaEntity> _obj) override;
 
-    void loadAdditionalData(std::shared_ptr<Artist> _artist);
-    void loadAdditionalData(std::shared_ptr<Album> _album);
-    void loadAdditionalData(std::shared_ptr<Playlist> _playlist);
-    void loadAdditionalData(std::shared_ptr<Track> _track);
+    bool loadAdditionalData(std::shared_ptr<Artist> _artist);
+    bool loadAdditionalData(std::shared_ptr<Album> _album);
+    bool loadAdditionalData(std::shared_ptr<Playlist> _playlist);
+    bool loadAdditionalData(std::shared_ptr<Track> _track);
 
-    std::shared_ptr<ITrack> researchTags(const TrackSearchContext &_ctx);
+    // std::shared_ptr<ITrack> researchTags(const TrackSearchContext &_ctx);
 
     static bool isValidIdFormat(const std::string &_id);
 
@@ -97,16 +99,18 @@ class SpotifyAPI : public Query, public IMediaService {
                          const json &_jsonAlbum);
     bool insertLabel(std::shared_ptr<Album> _album, const json &_jsonAlbum);
     bool insertCopyright(std::shared_ptr<Album> _album, const json &_jsonAlbum);
+    
+     IAlbum::album_type_t parseAlbumType(const json&_jsonAlbum);
 
     std::shared_ptr<IAlbum> createAlbum(const json &_jsonAlbum,
                                         bool _fullTags = false);
-    std::shared_ptr<IArtist> createArtist(const json &_jsonArtist) const;
+    std::shared_ptr<IArtist> createArtist(const json &_jsonArtist);
     std::vector<std::shared_ptr<IArtist>>
-    createArtists(const json &_jsonArtists) const;
-    std::shared_ptr<IPlaylist> createPlaylist(const json &_jsonPlaylist) const;
+    createArtists(const json &_jsonArtists);
+    std::shared_ptr<IPlaylist> createPlaylist(const json &_jsonPlaylist);
     std::shared_ptr<ITrack> createTrack(const json &_jsonTrack,
-                                        std::shared_ptr<IAlbum> _album) const;
-    User createUser(const json &_jsonUser) const;
+                                        std::shared_ptr<IAlbum> _album);
+    std::shared_ptr<User> createUser(const json &_jsonUser);
 };
 
 } // namespace Spotify

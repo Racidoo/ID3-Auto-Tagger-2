@@ -26,17 +26,19 @@ class YouTubeAPI : public Query, public IMediaService {
 
     void saveCredentials() override;
     std::string generateAccessToken() override;
-
-    std::string findBestMatch(std::shared_ptr<ITrack> _track,
-                              std::function<void(int)> _onProgress);
-    std::shared_ptr<Video> getVideo(const std::string &_id);
-    std::vector<std::shared_ptr<Video>>
+    inline constexpr IMediaService::MediaSourceId get_id() const override {
+        return MediaSourceId::YouTube;
+    }
+    // std::string findBestMatch(std::shared_ptr<ITrack> _track,
+    //                           std::function<void(int)> _onProgress);
+    std::shared_ptr<IVideo> getVideo(const std::string &_id);
+    std::vector<std::shared_ptr<IVideo>>
     searchVideo(const std::string &_query,
                 std::string *_nextPageToken = nullptr, unsigned int _limit = 0);
 
-    void load(std::shared_ptr<IMediaEntity> _obj) override;
+    bool load(std::shared_ptr<IMediaEntity> _obj) override;
 
-    void loadAdditionalData(std::shared_ptr<Video> _video);
+    bool loadAdditionalData(std::shared_ptr<Video> _video);
 
   private:
     std::string accessToken;
@@ -51,13 +53,13 @@ class YouTubeAPI : public Query, public IMediaService {
     void prepareHeaders(struct curl_slist *&_headers) override;
     std::string prepareUrl(const std::string &_url) override;
 
-    std::shared_ptr<Video> createVideo(const json &_jsonVideo) const;
+    std::shared_ptr<Video> createVideo(const json &_jsonVideo);
     json searchList(const std::string &_query, std::string *_nextPageToken,
                     unsigned int _maxResults = 0,
                     const std::string &_type = "video");
     json fetchContentDetails(const std::string &_id);
 
-    bool findInString(const std::string &title, const std::string &artist);
+    // bool findInString(const std::string &title, const std::string &artist);
     unsigned int parse_duration(const std::string &iso8601_duration) const;
 };
 

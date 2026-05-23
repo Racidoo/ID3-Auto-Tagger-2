@@ -7,12 +7,11 @@
 #include "Interfaces/ISearchResult.hpp"
 #include "Windows/MediaWindow.hpp"
 
-class Downloader;
 class TrackPanel;
 
 class DiscogsWindow : public wxScrolledWindow {
   private:
-    Downloader *downloader;
+    // Downloader *downloader;
 
     wxStaticText *trackHeader;
     wxStaticText *albumHeader;
@@ -28,7 +27,7 @@ class DiscogsWindow : public wxScrolledWindow {
     wxBitmapToggleButton *playlistButton;
 
   public:
-    DiscogsWindow(wxWindow *_parent, Downloader *_downloader);
+    DiscogsWindow(wxWindow *_parent);
     ~DiscogsWindow() = default;
 
     void search(const wxString &_searchText);

@@ -6,6 +6,7 @@
 
 wxDEFINE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
+wxDEFINE_EVENT(EVT_TRACK_VERIFY, wxCommandEvent);
 
 TrackPanel::TrackPanel(wxWindow *_parent) : wxPanel(_parent) {
     auto *sizer = new wxBoxSizer(wxVERTICAL);
@@ -100,10 +101,12 @@ TrackPanel::GetTracksOfSelectedRows() const {
     return tracks;
 }
 
-void TrackPanel::SetDownloadProgress(unsigned _row, int _progress) {
+void TrackPanel::SetDownloadProgress(std::size_t _row, int _progress) {
     model->SetDownloadStatusByRow(_row,
                                   {_progress, DownloadState::Downloading});
 }
+
+void TrackPanel::UpdateRow(std::size_t _row) { model->RowChanged(_row); }
 
 std::shared_ptr<ITrack> TrackPanel::GetTrack(std::size_t _row) const {
     return model->GetTrack(model->GetRowByIndex(_row));
@@ -126,6 +129,9 @@ void TrackPanel::OnActivated(wxDataViewEvent &event) {
 
     auto row = model->GetRowByIndex(rowIndex);
     const auto &track = model->GetTrack(row);
+
+    std::cout << rowIndex << ", " << column << " id: " << track->get_id()
+              << std::endl;
 
     if (HandleColumnAction(column, rowIndex, row, track)) {
         return;
@@ -174,7 +180,7 @@ void TrackPanel::OnLeftDown(wxMouseEvent &event) {
     event.Skip();
 }
 
-bool TrackPanel::HandleColumnAction(int _column, unsigned _rowIndex,
+bool TrackPanel::HandleColumnAction(int _column, std::size_t _rowIndex,
                                     const std::shared_ptr<TrackModelRow> &_row,
                                     const std::shared_ptr<ITrack> &_track) {
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "Interfaces/IAlbum.h"
@@ -8,12 +9,9 @@
 #include "Interfaces/IPlaylist.h"
 #include "Interfaces/ITrack.h"
 #include "Interfaces/IVideo.h"
+#include "Services/IMediaService.hpp"
 
-class ISearchResult {
-  public:
-    ISearchResult() = default;
-    ~ISearchResult() = default;
-
+struct ISearchResult {
     enum class SearchCategory {
         Track,
         Album,
@@ -28,4 +26,15 @@ class ISearchResult {
     std::vector<std::shared_ptr<IArtist>> artists;
     std::vector<std::shared_ptr<IPlaylist>> playlists;
     std::vector<std::shared_ptr<IVideo>> videos;
+};
+
+struct SearchOptions {
+    std::unordered_set<ISearchResult::SearchCategory> categories;
+
+    std::size_t limit = 5;
+    std::string market = "DE";
+
+    std::unordered_set<IMediaService::MediaSourceId> sources;
+
+    bool aggregate = true;
 };

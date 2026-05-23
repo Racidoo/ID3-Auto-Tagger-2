@@ -2,6 +2,7 @@
 
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <regex>
 #include <string>
 #include <unordered_set>
 
@@ -27,6 +28,9 @@ class DiscogsAPI : public Query, public IMediaService {
 
     void saveCredentials() override;
     std::string generateAccessToken() override;
+    inline constexpr IMediaService::MediaSourceId get_id() const override {
+        return MediaSourceId::Discogs;
+    }
 
     struct SearchParams {
         std::optional<std::string> query;
@@ -50,9 +54,14 @@ class DiscogsAPI : public Query, public IMediaService {
         std::unordered_set<ISearchResult::SearchCategory> categories;
     };
 
-    std::vector<std::shared_ptr<Release>>
-    searchRelease(const SearchParams &_params);
-    ISearchResult search(const SearchParams &_params);
+    ISearchResult search(const SearchParams &_params, std::size_t _perPage = 0,
+                         std::size_t _page = 0);
+    std::vector<std::shared_ptr<IAlbum>> searchRelease(SearchParams _params,
+                                                       std::size_t _perPage = 0,
+                                                       std::size_t _page = 0);
+    ISearchResult searchReleaseTrack(SearchParams _params,
+                                     std::size_t _perPage = 0,
+                                     std::size_t _page = 0);
 
     std::shared_ptr<Release> getMasterRelease(int _masterId);
     std::shared_ptr<Release> getRelease(int _releaseId,
@@ -60,11 +69,11 @@ class DiscogsAPI : public Query, public IMediaService {
     std::vector<std::shared_ptr<ReleaseTrack>>
     getReleaseTracks(std::shared_ptr<Release> _release);
 
-    void load(std::shared_ptr<IMediaEntity> _obj) override;
+    bool load(std::shared_ptr<IMediaEntity> _obj) override;
 
-    void loadAdditionalData(std::shared_ptr<Artist> _artist);
-    void loadAdditionalData(std::shared_ptr<Release> _album);
-    void loadAdditionalData(std::shared_ptr<Label> _playlist);
+    bool loadAdditionalData(std::shared_ptr<Artist> _artist);
+    bool loadAdditionalData(std::shared_ptr<Release> _release);
+    bool loadAdditionalData(std::shared_ptr<Label> _playlist);
 
   protected:
     void prepareHeaders(struct curl_slist *&_headers) override;
@@ -74,32 +83,36 @@ class DiscogsAPI : public Query, public IMediaService {
     std::string accessToken;
     inline static const std::string urlAPI = "https://api.discogs.com";
 
-    std::shared_ptr<Artist> createArtistFromRelease(const json &_jsonArtist,
-                                                    bool &_fallbackUsed);
+    std::shared_ptr<Artist> createArtistFromRelease(const json &_jsonArtist);
     std::shared_ptr<Artist> createArtistFromArtist(const json &_jsonArtist,
                                                    bool &_fallbackUsed);
     std::vector<std::shared_ptr<IArtist>>
-    createArtists(const json &_jsonArtists, bool &_fallbackUsed);
+    createArtists(const json &_jsonArtists);
     std::vector<Label> createLabels(const json &_jsonLabels,
                                     bool &_fallbackUsed);
 
-    std::shared_ptr<Release> createReleaseFromSearch(const json &_jsonRelease);
+    // std::shared_ptr<Release> createReleaseFromSearch(const json
+    // &_jsonRelease);
     std::shared_ptr<Release> createRelease(const json &_jsonRelease);
 
-    static std::vector<std::string> parseGenresFromSearch(const json &_j,
-                                                          bool &_fallbackUsed);
-    static std::vector<std::string> parseStylesFromSearch(const json &_j,
-                                                          bool &_fallbackUsed);
+    bool insertTracklist(std::shared_ptr<Release> _release,
+                         const json &_jsonAlbum);
+    bool insertArtists(std::shared_ptr<Release> _release,
+                       const json &_jsonAlbum);
+
     static std::vector<std::string> parseGenres(const json &_j,
                                                 bool &_fallbackUsed);
     static std::vector<std::string> parseStyles(const json &_j,
                                                 bool &_fallbackUsed);
-    static std::vector<std::shared_ptr<ITrack>>
-    parseTracklist(const json &_j, std::weak_ptr<Release> _release,
-                   bool &_fallbackUsed);
+
     static std::vector<Release::Video> parseVideos(const json &_j,
                                                    bool &_fallbackUsed);
     static std::string parseImageUrl(const json &_j, bool &_fallbackUsed);
+
+    static std::string normalizeArtistName(std::string _name);
+    static std::string normalizeReleaseName(std::string _name);
+    static std::pair<std::size_t, std::size_t>
+    normalizePosition(std::string _position);
 };
 
 } // namespace Discogs

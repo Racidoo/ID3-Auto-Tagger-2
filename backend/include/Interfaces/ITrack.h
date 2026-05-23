@@ -9,19 +9,20 @@ class ITrack : public MediaEntityBase {
 
   public:
     explicit ITrack(const std::string &_id, const std::string &_name,
-                    State _state, const std::string &_imageURL)
-        : MediaEntityBase(_id, _name, _state, _imageURL) {}
+                    State _state, const std::string &_imageURL,
+                    IMediaService *_mediaService)
+        : MediaEntityBase(_id, _name, _state, _imageURL, _mediaService) {}
     ~ITrack() = default;
 
     virtual std::string get_artist() const = 0;
     virtual const std::string &get_albumName() const = 0;
-    virtual std::string get_albumArtist() = 0;
-    virtual const std::string &get_copyright() = 0;
+    virtual std::string get_albumArtist() const = 0;
+    virtual const std::string &get_copyright() const = 0;
     virtual const std::string &get_genre() const = 0;
     virtual std::size_t get_year() const = 0;
-    virtual const std::string &get_label() = 0;
+    virtual const std::string &get_label() const = 0;
     virtual std::size_t get_trackNumber() const = 0;
-    virtual std::size_t get_discNumber() = 0;
+    virtual std::size_t get_discNumber() const = 0;
     virtual std::size_t get_length() const = 0;
 
     virtual bool is_verified() const = 0;

@@ -1,8 +1,9 @@
 #include "Local/LocalTrack.h"
 
-LocalTrack::LocalTrack(const std::filesystem::path &_path)
-    : ITrack(_path.stem(), "", IMediaEntity::State::None, ""), filepath(_path),
-      length(0) {
+LocalTrack::LocalTrack(const std::filesystem::path &_path,
+                       IMediaService *_mediaService)
+    : ITrack(_path.stem(), "", IMediaEntity::State::None, "", _mediaService),
+      filepath(_path), length(0) {
     ensurePreviewTagsLoaded();
 }
 
@@ -14,32 +15,15 @@ const std::string &LocalTrack::get_genre() const { return genre; }
 std::size_t LocalTrack::get_year() const { return year; }
 std::size_t LocalTrack::get_trackNumber() const { return trackNumber; }
 std::size_t LocalTrack::get_length() const { return length; }
-std::string LocalTrack::get_albumArtist() {
-    ensureFullTagsLoaded();
-    return albumArtist;
-}
-const std::string &LocalTrack::get_copyright() {
-    ensureFullTagsLoaded();
-    return copyright;
-}
-const std::string &LocalTrack::get_label() {
-    ensureFullTagsLoaded();
-    return label;
-}
-std::size_t LocalTrack::get_discNumber() {
-    ensureFullTagsLoaded();
-    return discNumber;
-}
-std::string LocalTrack::get_bitrate() {
-    ensureFullTagsLoaded();
-    return std::to_string(bitrate);
-}
-std::string LocalTrack::get_sampleRate() {
-    ensureFullTagsLoaded();
+std::string LocalTrack::get_albumArtist() const { return albumArtist; }
+const std::string &LocalTrack::get_copyright() const { return copyright; }
+const std::string &LocalTrack::get_label() const { return label; }
+std::size_t LocalTrack::get_discNumber() const { return discNumber; }
+std::string LocalTrack::get_bitrate() const { return std::to_string(bitrate); }
+std::string LocalTrack::get_sampleRate() const {
     return std::to_string(sampleRate);
 }
-std::string LocalTrack::get_channels() {
-    ensureFullTagsLoaded();
+std::string LocalTrack::get_channels() const {
     return std::to_string(channels);
 }
 

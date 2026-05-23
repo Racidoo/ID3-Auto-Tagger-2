@@ -37,7 +37,8 @@ class LocalTrack : public ITrack {
     std::size_t channels;
 
   public:
-    LocalTrack(const std::filesystem::path &_path);
+    LocalTrack(const std::filesystem::path &_path,
+               IMediaService *_mediaService);
     ~LocalTrack();
 
     enum tag_type_t {
@@ -65,13 +66,13 @@ class LocalTrack : public ITrack {
     std::size_t get_year() const override;
     std::size_t get_trackNumber() const override;
     std::size_t get_length() const override;
-    std::string get_albumArtist() override;
-    const std::string &get_copyright() override;
-    const std::string &get_label() override;
-    std::size_t get_discNumber() override;
-    std::string get_bitrate();
-    std::string get_sampleRate();
-    std::string get_channels();
+    std::string get_albumArtist() const override;
+    const std::string &get_copyright() const override;
+    const std::string &get_label() const override;
+    std::size_t get_discNumber() const override;
+    std::string get_bitrate() const;
+    std::string get_sampleRate() const;
+    std::string get_channels() const;
     const std::vector<std::byte> &get_image() override;
     bool is_verified() const override;
     const std::filesystem::path &get_filepath() const;

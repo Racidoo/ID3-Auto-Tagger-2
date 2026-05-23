@@ -1,20 +1,20 @@
 #pragma once
 
 #include "Interfaces/IPlaylist.h"
-#include "User.h"
 
 namespace Spotify {
+class User;
 class Playlist : public IPlaylist {
-  private:
-    User creator;
-
   public:
     Playlist(const std::string &_id, const std::string &_name, State _state,
-             const std::string &_imageURL, const User &_creator);
+             const std::string &_imageURL, std::shared_ptr<User> _creator,
+             IMediaService *_mediaService);
     ~Playlist() = default;
 
-    inline User get_creator() const { return creator; }
-    // void loadAdditionalData(std::weak_ptr<IMediaService> _service) override;
+    inline std::shared_ptr<User> get_creator() const { return creator; }
+
+  private:
+    std::shared_ptr<User> creator;
 };
 
 } // namespace Spotify

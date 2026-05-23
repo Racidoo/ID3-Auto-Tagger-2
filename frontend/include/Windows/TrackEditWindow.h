@@ -8,9 +8,9 @@
 #include <wx/wx.h>
 
 #include "Components/MediaLabel.h"
+#include "Interfaces/ITrack.h"
 
 class LabeledTextCtrl;
-class ITrack;
 
 class TrackEditWindow : public wxPanel {
   private:
@@ -66,6 +66,8 @@ class TrackEditWindow : public wxPanel {
         for (auto active : selected) {
             if (!active)
                 continue;
+
+            active->ensureLoaded();
 
             std::string value = getter(active); // call lambda
 

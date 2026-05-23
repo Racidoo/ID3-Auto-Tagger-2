@@ -8,7 +8,7 @@ class Artist : public IArtist {
   private:
   public:
     Artist(const std::string &_id, const std::string &_name, State _state,
-           const std::string &_imageURL);
+           const std::string &_imageURL, IMediaService *_mediaService);
     ~Artist() = default;
 };
 

@@ -7,7 +7,6 @@ set(SOURCES
     src/Discogs/Label.cpp
     src/Discogs/Release.cpp
     src/Discogs/ReleaseTrack.cpp
-    src/Downloader.cpp
     src/Interfaces/IAlbum.cpp
     src/Interfaces/IArtist.cpp
     src/Interfaces/ITrack.cpp
@@ -17,6 +16,14 @@ set(SOURCES
     src/Local/LocalTrack.cpp
     src/Local/LocalTrackService.cpp
     src/Query.cpp
+    src/Services/DownloadService.cpp
+    src/Services/MediaServiceRegistry.cpp
+    src/Services/SearchService.cpp
+    src/Services/Sources/DiscogsMediaSource.cpp
+    src/Services/Sources/SpotifyMediaSource.cpp
+    src/Services/Sources/YoutubeMediaSource.cpp
+    src/Services/TagService.cpp
+    src/Services/TrackIdentificationService.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp
     src/Spotify/Playlist.cpp

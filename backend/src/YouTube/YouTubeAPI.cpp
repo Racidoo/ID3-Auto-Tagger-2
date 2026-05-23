@@ -96,7 +96,7 @@ json YouTubeAPI::fetchContentDetails(const std::string &_id) {
     return response["items"].front()["contentDetails"];
 }
 
-std::shared_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
+std::shared_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) {
     auto safe_get = [](const json &j, const std::string &key) -> const json * {
         if (j.contains(key)) {
             return &j.at(key);
@@ -174,14 +174,15 @@ std::shared_ptr<Video> YouTubeAPI::createVideo(const json &_jsonVideo) const {
         }
     } else {
         if (const json *d = safe_get(_jsonVideo, "duration"))
-            duration = d->get<unsigned int>();
+            duration = d->get<std::size_t>();
     }
 
     return std::make_shared<Video>(id, title, Video::State::Full, channel,
-                                   uploadDate, thumbnail, duration, licensed);
+                                   uploadDate, thumbnail, duration, licensed,
+                                   this);
 }
 
-std::shared_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
+std::shared_ptr<IVideo> YouTubeAPI::getVideo(const std::string &_id) {
     return createVideo(
         performRequest(
             "/videos?part=snippet,contentDetails,statistics&id=" + _id +
@@ -192,16 +193,20 @@ std::shared_ptr<Video> YouTubeAPI::getVideo(const std::string &_id) {
             .front());
 }
 
-std::vector<std::shared_ptr<Video>>
+std::vector<std::shared_ptr<IVideo>>
 YouTubeAPI::searchVideo(const std::string &_query, std::string *_nextPageToken,
                         unsigned int _limit) {
 
-    std::vector<std::shared_ptr<Video>> results;
+    std::vector<std::shared_ptr<IVideo>> results;
     json list = searchList(_query, _nextPageToken, _limit, "video");
 
     for (auto &item : list.at("items")) {
-        std::string id = item["id"]["videoId"];
         std::string kind = item["id"]["kind"];
+        if (kind.find("video") == std::string::npos)
+            // implement support for channels etc. later
+            continue;
+
+        std::string id = item["id"]["videoId"];
 
         // Fetch contentDetails
         try {
@@ -223,19 +228,15 @@ YouTubeAPI::searchVideo(const std::string &_query, std::string *_nextPageToken,
     return results;
 }
 
-void YouTubeAPI::load(std::shared_ptr<IMediaEntity> _obj) {
+bool YouTubeAPI::load(std::shared_ptr<IMediaEntity> _obj) {
     if (auto video = std::dynamic_pointer_cast<YouTube::Video>(_obj))
-        loadAdditionalData(video);
+        return loadAdditionalData(video);
+    return false;
 }
 
-void YouTubeAPI::loadAdditionalData(std::shared_ptr<Video> _video) {
+bool YouTubeAPI::loadAdditionalData(std::shared_ptr<Video> _video) {
     std::cerr << "Not yet implemented!" << std::endl;
-}
-
-// Check if artist name appears in video title
-bool YouTubeAPI::findInString(const std::string &title,
-                              const std::string &artist) {
-    return toLower(title).find(toLower(artist)) != std::string::npos;
+    return false;
 }
 
 // Function to extract the video duration from the YouTubeAPI API response
@@ -271,74 +272,78 @@ YouTubeAPI::parse_duration(const std::string &iso8601_duration) const {
 }
 
 // Select best match from YouTubeAPI results
-std::string YouTubeAPI::findBestMatch(std::shared_ptr<ITrack> _track,
-                                      std::function<void(int)> _onProgress) {
-    double bestScore = 0.0;
-    std::vector<std::string> topMatches;
-    std::string searchQuery = _track->get_artist() + " - " + _track->get_name();
-    std::cout << "Search query: " << searchQuery << std::endl;
+// std::string YouTubeAPI::findBestMatch(std::shared_ptr<ITrack> _track,
+//                                       std::function<void(int)> _onProgress) {
+//     double bestScore = 0.0;
+//     std::vector<std::string> topMatches;
+//     std::string searchQuery = _track->get_artist() + " - " +
+//     _track->get_name(); std::cout << "Search query: " << searchQuery <<
+//     std::endl;
 
-    bool googleAPI(true);
-    std::string nextPageToken;
-    int maxPages = 3; // limit how many times we page through results
+//     bool googleAPI(true);
+//     std::string nextPageToken;
+//     int maxPages = 3; // limit how many times we page through results
 
-    for (int page = 0; page < maxPages; ++page) {
-        _onProgress(1);
-        std::vector<std::shared_ptr<Video>> videos =
-            searchVideo(searchQuery, &nextPageToken, 5);
+//     for (int page = 0; page < maxPages; ++page) {
+//         _onProgress(1);
+//         std::vector<std::shared_ptr<Video>> videos =
+//             searchVideo(searchQuery, &nextPageToken, 5);
 
-        _onProgress(5);
-        for (const auto &video : videos) {
-            double score(0);
-            if (!video) {
-                continue;
-            }
+//         _onProgress(5);
+//         for (const auto &video : videos) {
+//             double score(0);
+//             if (!video) {
+//                 continue;
+//             }
 
-            score +=
-                similarityScore(_track->get_length(), video->get_duration());
-            if (score < 0.1) {
-                std::cout << "[" << video->get_id() << "]: video length "
-                          << video->get_duration() << " exceeds Spotify track "
-                          << _track->get_length() << std::endl;
-                continue;
-            }
+//             score +=
+//                 similarityScore(_track->get_length(), video->get_duration());
+//             if (score < 0.1) {
+//                 std::cout << "[" << video->get_id() << "]: video length "
+//                           << video->get_duration() << " exceeds Spotify track
+//                           "
+//                           << _track->get_length() << std::endl;
+//                 continue;
+//             }
 
-            score += similarityScore(video->get_name(), _track->get_name());
+//             score += similarityScore(video->get_name(), _track->get_name());
 
-            if (googleAPI && video->get_licensed())
-                score = 1.0;
+//             if (googleAPI && video->get_licensed())
+//                 score = 1.0;
 
-            if (findInString(video->get_name(), _track->get_artist()))
-                score += 1.0;
-            if (findInString(video->get_channelTitle(), _track->get_artist()))
-                score += 1.0;
+//             if (findInString(video->get_name(), _track->get_artist()))
+//                 score += 1.0;
+//             if (findInString(video->get_channelTitle(),
+//             _track->get_artist()))
+//                 score += 1.0;
 
-            if (findInString(video->get_uploadDate(),
-                             std::to_string(_track->get_year()))) {
-                score += 1.0;
-            }
+//             if (findInString(video->get_uploadDate(),
+//                              std::to_string(_track->get_year()))) {
+//                 score += 1.0;
+//             }
 
-            std::cout << "score: " << score << "\t" << video->get_id() << "\t"
-                      << video->get_name() << std::endl;
-            if (score > bestScore) {
-                bestScore = score;
-                topMatches.clear();
-                topMatches.push_back(video->get_id());
-            } else if (score == bestScore) {
-                topMatches.push_back(video->get_id());
-            }
-            _onProgress(5 / videos.size());
-        }
+//             std::cout << "score: " << score << "\t" << video->get_id() <<
+//             "\t"
+//                       << video->get_name() << std::endl;
+//             if (score > bestScore) {
+//                 bestScore = score;
+//                 topMatches.clear();
+//                 topMatches.push_back(video->get_id());
+//             } else if (score == bestScore) {
+//                 topMatches.push_back(video->get_id());
+//             }
+//             _onProgress(5 / videos.size());
+//         }
 
-        if (!topMatches.empty())
-            break; // Stop if we found something good
-    }
+//         if (!topMatches.empty())
+//             break; // Stop if we found something good
+//     }
 
-    if (topMatches.empty()) {
-        std::cerr << "No matches found!" << std::endl;
-        return "";
-    }
-    return topMatches[0];
-}
+//     if (topMatches.empty()) {
+//         std::cerr << "No matches found!" << std::endl;
+//         return "";
+//     }
+//     return topMatches[0];
+// }
 
 } // namespace YouTube

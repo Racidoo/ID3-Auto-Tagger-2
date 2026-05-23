@@ -1,13 +1,11 @@
 #include "Media/Track/LocalTrackPanel.h"
-#include "Downloader.h"
 #include "Interfaces/ITrack.h"
 #include "Local/LocalTrackService.h"
 #include "Media/Track/Renderers/DownloadStatusRenderer.h" // DownloadState
 #include "Media/Track/TrackModel.h"
 #include "Media/Track/TrackModelRow.h"
 
-LocalTrackPanel::LocalTrackPanel(wxWindow *_parent, Downloader *_downloader)
-    : TrackPanel(_parent), downloader(_downloader) {
+LocalTrackPanel::LocalTrackPanel(wxWindow *_parent) : TrackPanel(_parent) {
 
     ctrl->AppendBitmapColumn("Verify", TrackModel::COL_VERIFY,
                              wxDATAVIEW_CELL_INERT, 64, wxALIGN_CENTER);
@@ -15,8 +13,6 @@ LocalTrackPanel::LocalTrackPanel(wxWindow *_parent, Downloader *_downloader)
     ctrl->AppendBitmapColumn("Delete", TrackModel::COL_DELETE,
                              wxDATAVIEW_CELL_INERT, 64, wxALIGN_CENTER);
 }
-
-Downloader *LocalTrackPanel::get_downloader() const { return downloader; }
 
 void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
                                                 const std::string &_value) {
@@ -65,11 +61,11 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
             break;
         }
         case LocalTrack::tag_type_t::TRACK: {
-            local->set_trackNumber(std::stoi(_value));
+            local->set_trackNumber(std::stoul(_value));
             break;
         }
         case LocalTrack::tag_type_t::DISC: {
-            local->set_discNumber(std::stoi(_value));
+            local->set_discNumber(std::stoul(_value));
             break;
         }
         case LocalTrack::tag_type_t::FILENAME: {
@@ -84,7 +80,7 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
 }
 
 bool LocalTrackPanel::HandleColumnAction(
-    int _column, unsigned _rowIndex, const std::shared_ptr<TrackModelRow> &_row,
+    int _column, std::size_t _rowIndex, const std::shared_ptr<TrackModelRow> &_row,
     const std::shared_ptr<ITrack> &_track) {
 
     if (TrackPanel::HandleColumnAction(_column, _rowIndex, _row, _track)) {
@@ -108,15 +104,14 @@ bool LocalTrackPanel::HandleColumnAction(
     }
 
     if (_column == TrackModel::COL_VERIFY) {
-        if (!LocalTrackService::verify(local, downloader)) {
-            wxMessageBox("Unable to retrieve meta data from SpotifyAPI");
-            return true;
-        }
+        wxCommandEvent evt(EVT_TRACK_VERIFY);
+        wxPostEvent(GetParent(), evt);
 
-        model->RowChanged(_rowIndex);
+        // auto track = model->GetTrack(_row);
+        // TagService::researchMissingTags(track, searchService);
 
-        _row->RebuildSortCache();
-
+        // model->RowChanged(_rowIndex);
+        // _row->RebuildSortCache();
         return true;
     }
 

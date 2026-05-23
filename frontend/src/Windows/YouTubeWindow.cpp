@@ -2,8 +2,7 @@
 #include "Core/IconProvider.h"
 #include "Interfaces/IVideo.h"
 
-YouTubeWindow::YouTubeWindow(wxWindow *_parent, Downloader *_downloader)
-    : wxScrolledWindow(_parent), downloader(_downloader) {
+YouTubeWindow::YouTubeWindow(wxWindow *_parent) : wxScrolledWindow(_parent) {
     this->SetScrollRate(15, 15);
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -46,13 +45,13 @@ YouTubeWindow::YouTubeWindow(wxWindow *_parent, Downloader *_downloader)
 YouTubeWindow::~YouTubeWindow() {}
 
 void YouTubeWindow::search(const wxString &_searchText) {
-    if (!downloader || !downloader->initializeYouTube()) {
-        std::cerr << "Downloader/YouTube not fully initialized" << std::endl;
-        return;
-    }
-    ISearchResult result = downloader->fetchResource(
-        _searchText.ToStdString(), {ISearchResult::SearchCategory::Video});
-    showSearchResults(std::move(result));
+    // if (!downloader || !downloader->initializeYouTube()) {
+    //     std::cerr << "Downloader/YouTube not fully initialized" << std::endl;
+    //     return;
+    // }
+    // ISearchResult result = downloader->fetchResource(
+    //     _searchText.ToStdString(), {ISearchResult::SearchCategory::Video});
+    // showSearchResults(std::move(result));
 }
 
 void YouTubeWindow::showSearchResults(ISearchResult result) {
@@ -65,21 +64,21 @@ void YouTubeWindow::showSearchResults(ISearchResult result) {
 }
 
 void YouTubeWindow::startDownload(wxCommandEvent &_event) {
-    if (!downloader) {
-        std::cerr << "Downloader not fully initialized" << std::endl;
-        return;
-    }
+    // if (!downloader) {
+    //     std::cerr << "Downloader not fully initialized" << std::endl;
+    //     return;
+    // }
 
-    auto *label = dynamic_cast<MediaLabel *>(_event.GetEventObject());
-    if (!label)
-        return;
+    // auto *label = dynamic_cast<MediaLabel *>(_event.GetEventObject());
+    // if (!label)
+    //     return;
 
-    auto source = label->get_source();
+    // auto source = label->get_source();
 
-    if (auto video = std::dynamic_pointer_cast<IVideo>(source)) {
-        downloader->downloadResource({video}, [](int progress) {
-            wxLogDebug(wxString(std::to_string(progress)));
-            // chosenVideoLabel->get_ProgressBar()->SetProgress(progress);
-        });
-    }
+    // if (auto video = std::dynamic_pointer_cast<IVideo>(source)) {
+    //     downloader->downloadResource({video}, [](int progress) {
+    //         wxLogDebug(wxString(std::to_string(progress)));
+    //         // chosenVideoLabel->get_ProgressBar()->SetProgress(progress);
+    //     });
+    // }
 }

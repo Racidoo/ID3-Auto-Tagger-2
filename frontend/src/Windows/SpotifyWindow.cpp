@@ -1,6 +1,9 @@
 #include "Windows/SpotifyWindow.h"
 #include "Core/IconProvider.h"
 #include "Media/Track/TrackPanel.h"
+#include "Services/DownloadService.h"
+#include "Services/MediaServiceRegistry.h"
+#include "Services/TagService.h"
 
 enum {
     IDM_TOOLBAR_ALL = 200,
@@ -8,9 +11,14 @@ enum {
     IDM_TOOLBAR_ALBUM,
 };
 
-SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
-    : wxScrolledWindow(_parent), downloader(_downloader) {
+SpotifyWindow::SpotifyWindow(wxWindow *_parent, MediaServiceRegistry *_registry)
+    : wxScrolledWindow(_parent), registry(_registry) {
     this->SetScrollRate(15, 15);
+
+    if (!registry || !registry->get_searchService()) {
+        wxLogInfo(wxT("Spotify service is currently unavailable!"));
+        return;
+    }
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -45,11 +53,31 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
         this, wxID_ANY,
         wxArtProvider::GetBitmap(wxART_PLAYLIST, wxART_TOOLBAR));
     playlistButton->SetValue(true);
+    videoButton = new wxBitmapToggleButton(
+        this, wxID_ANY, wxArtProvider::GetBitmap(wxART_VIDEO, wxART_TOOLBAR));
+    videoButton->SetValue(true);
+
+    discogsButton = new wxBitmapToggleButton(
+        this, wxID_ANY,
+        wxArtProvider::GetBitmap(wxART_BRAND_DISCOGS, wxART_TOOLBAR));
+    discogsButton->SetValue(true);
+    spotifyButton = new wxBitmapToggleButton(
+        this, wxID_ANY,
+        wxArtProvider::GetBitmap(wxART_BRAND_SPOTIFY, wxART_TOOLBAR));
+    spotifyButton->SetValue(true);
+    youtubeButton = new wxBitmapToggleButton(
+        this, wxID_ANY,
+        wxArtProvider::GetBitmap(wxART_BRAND_YOUTUBE, wxART_TOOLBAR));
+    youtubeButton->SetValue(true);
 
     toolbarSizer->Add(trackButton, 0, wxALL, 2);
     toolbarSizer->Add(albumButton, 0, wxALL, 2);
     toolbarSizer->Add(artistButton, 0, wxALL, 2);
     toolbarSizer->Add(playlistButton, 0, wxALL, 2);
+    toolbarSizer->Add(videoButton, 0, wxALL, 2);
+    toolbarSizer->Add(discogsButton, 0, wxALL, 2);
+    toolbarSizer->Add(spotifyButton, 0, wxALL, 2);
+    toolbarSizer->Add(youtubeButton, 0, wxALL, 2);
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -57,6 +85,7 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
     albumWindow = new MediaWindow<MediaLabel>(this);
     artistWindow = new MediaWindow<MediaLabel>(this);
     playlistWindow = new MediaWindow<MediaLabel>(this);
+    videoWindow = new MediaWindow<MediaLabel>(this);
 
     mainSizer->Add(searchSizer, 0, wxEXPAND, 5);
     mainSizer->Add(toolbarSizer, 0, wxEXPAND | wxALL, 5);
@@ -64,11 +93,13 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
     mainSizer->Add(albumWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(artistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
     mainSizer->Add(playlistWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    mainSizer->Add(videoWindow, 1, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
     trackPanel->Hide();
     albumWindow->Hide();
     artistWindow->Hide();
     playlistWindow->Hide();
+    videoWindow->Hide();
 
     SetSizerAndFit(mainSizer);
 
@@ -91,8 +122,11 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
                             wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
             dialog.SetMinSize(wxSize(800, 600));
             auto sizer = new wxBoxSizer(wxVERTICAL);
-            sizer->Add(new AlbumDetailsPanel(&dialog, album, downloader), 1,
+            sizer->Add(new AlbumDetailsPanel(&dialog, album), 1,
                        wxEXPAND | wxALL, 5);
+            dialog.Bind(EVT_TRACK_DOWNLOAD, &SpotifyWindow::startDownload,
+                        this);
+
             dialog.SetSizer(sizer);
             dialog.Layout();
             dialog.SetSize(800, 600);
@@ -112,97 +146,119 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, Downloader *_downloader)
 SpotifyWindow::~SpotifyWindow() {}
 
 void SpotifyWindow::search(const wxString &_searchText) {
-    if (!downloader) {
-        std::cerr << "Downloader not fully initialized" << std::endl;
-        return;
-    }
-    std::set<ISearchResult::SearchCategory> activeCategories;
+    // if (!downloader) {
+    //     std::cerr << "Downloader not fully initialized" << std::endl;
+    //     return;
+    // }
+    SearchOptions options;
 
     if (trackButton->GetValue())
-        activeCategories.insert(ISearchResult::SearchCategory::Track);
+        options.categories.insert(ISearchResult::SearchCategory::Track);
     if (albumButton->GetValue())
-        activeCategories.insert(ISearchResult::SearchCategory::Album);
+        options.categories.insert(ISearchResult::SearchCategory::Album);
     if (artistButton->GetValue())
-        activeCategories.insert(ISearchResult::SearchCategory::Artist);
+        options.categories.insert(ISearchResult::SearchCategory::Artist);
     if (playlistButton->GetValue())
-        activeCategories.insert(ISearchResult::SearchCategory::Playlist);
+        options.categories.insert(ISearchResult::SearchCategory::Playlist);
+    if (videoButton->GetValue())
+        options.categories.insert(ISearchResult::SearchCategory::Video);
 
-    ISearchResult result = downloader->fetchResource(_searchText.ToStdString(),
-                                                     activeCategories, "DE", 5);
-    showSearchResults(result);
+    // if (discogsButton->GetValue())
+    //     options.sources.insert(IMediaService::MediaSourceId::Discogs);
+    if (spotifyButton->GetValue())
+        options.sources.insert(IMediaService::MediaSourceId::Spotify);
+    // if (youtubeButton->GetValue())
+    //     options.sources.insert(IMediaService::MediaSourceId::YouTube);
+
+    std::vector<ISearchResult> results;
+    if (registry->get_searchService()->supports(_searchText.ToStdString())) {
+        results = {
+            registry->get_searchService()->resolve(_searchText.ToStdString())};
+    } else {
+        results = registry->get_searchService()->search(
+            _searchText.ToStdString(), options);
+    }
+
+    showSearchResults(results);
 }
 
-void SpotifyWindow::showSearchResults(ISearchResult &result) {
+void SpotifyWindow::showSearchResults(
+    const std::vector<ISearchResult> &_results) {
 
     albumWindow->deleteChildren();
     trackPanel->MergeTracks({});
     artistWindow->deleteChildren();
     playlistWindow->deleteChildren();
 
-    if (!result.tracks.empty()) {
-        trackPanel->Show();
-        trackPanel->MergeTracks(result.tracks);
+    for (auto &&result : _results) {
 
-    } else {
-        trackPanel->Hide();
+        if (!result.tracks.empty()) {
+            trackPanel->Show();
+            trackPanel->MergeTracks(result.tracks);
+
+        } else {
+            // trackPanel->Hide();
+        }
+
+        if (!result.albums.empty()) {
+            albumWindow->Show();
+            for (auto album : result.albums)
+                albumWindow->appendChildren(new MediaLabel(
+                    albumWindow, album,
+                    {wxString(album->get_artist()),
+                     wxString(std::to_string(album->get_year()))}));
+        } else {
+            // albumWindow->Hide();
+        }
+        if (!result.artists.empty()) {
+            artistWindow->Show();
+            for (const auto &artist : result.artists)
+                artistWindow->appendChildren(
+                    new MediaLabel(artistWindow, artist, {wxT("Artist")}));
+        } else {
+            // artistWindow->Hide();
+        }
+        if (!result.playlists.empty()) {
+            playlistWindow->Show();
+            for (const auto &playlist : result.playlists)
+                playlistWindow->appendChildren(new MediaLabel(
+                    playlistWindow, playlist, {wxT("Playlist")}));
+        } else {
+            // playlistWindow->Hide();
+        }
+        if (!result.videos.empty()) {
+            videoWindow->Show();
+            for (const auto &video : result.videos)
+                videoWindow->appendChildren(
+                    new MediaLabel(videoWindow, video, {wxT("Videos")}));
+        } else {
+            // playlistWindow->Hide();
+        }
+        FitInside();
+        Layout();
     }
-
-    if (!result.albums.empty()) {
-        albumWindow->Show();
-        for (auto album : result.albums)
-            albumWindow->appendChildren(
-                new MediaLabel(albumWindow, album,
-                               {wxString(album->get_artist()),
-                                wxString(std::to_string(album->get_year()))}));
-    } else {
-        albumWindow->Hide();
-    }
-    if (!result.artists.empty()) {
-        artistWindow->Show();
-        for (const auto &artist : result.artists)
-            artistWindow->appendChildren(
-                new MediaLabel(artistWindow, artist, {wxT("Artist")}));
-    } else {
-        artistWindow->Hide();
-    }
-    if (!result.playlists.empty()) {
-        playlistWindow->Show();
-        for (const auto &playlist : result.playlists)
-            playlistWindow->appendChildren(
-                new MediaLabel(playlistWindow, playlist, {wxT("Playlist")}));
-    } else {
-        playlistWindow->Hide();
-    }
-
-    FitInside();
-    Layout();
-}
-
-void SpotifyWindow::loadAdditionalSearchResults(const wxString &_type) {
-    std::set<ISearchResult::SearchCategory> activeCategories;
-
-    if (_type == "track")
-        activeCategories.insert(ISearchResult::SearchCategory::Track);
-    if (_type == "album")
-        activeCategories.insert(ISearchResult::SearchCategory::Album);
-    if (_type == "artist")
-        activeCategories.insert(ISearchResult::SearchCategory::Artist);
-    if (_type == "playlist")
-        activeCategories.insert(ISearchResult::SearchCategory::Playlist);
 }
 
 void SpotifyWindow::startDownload(wxCommandEvent &_event) {
-    if (!downloader) {
-        std::cerr << "Downloader not fully initialized" << std::endl;
-        return;
-    }
     auto rows = trackPanel->GetSelectedRows();
 
     for (auto row : rows) {
         auto track = trackPanel->GetTrack(row);
 
-        downloader->downloadResource(track, [this, row](int progress) {
-            trackPanel->SetDownloadProgress(row, progress);
-        });
+        std::filesystem::path file =
+            registry->get_trackPath() / std::string(track->get_id() + ".mp3");
+
+        std::string youtubeId =
+            TagService::researchVideoId(track, registry->get_searchService());
+
+        if (youtubeId.empty()) {
+            continue;
+        }
+
+        DownloadService::downloadAudio(
+            track, youtubeId, file, registry->get_local(),
+            [this, row](int progress) {
+                trackPanel->SetDownloadProgress(row, progress);
+            });
     }
 }

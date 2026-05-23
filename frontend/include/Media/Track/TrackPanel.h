@@ -10,10 +10,10 @@
 class ITrack;
 class TrackModel;
 class TrackModelRow;
-class Downloader;
 
 wxDECLARE_EVENT(EVT_TRACK_SELECTION_CHANGED, wxCommandEvent);
 wxDECLARE_EVENT(EVT_TRACK_DOWNLOAD, wxCommandEvent);
+wxDECLARE_EVENT(EVT_TRACK_VERIFY, wxCommandEvent);
 
 class TrackPanel : public wxPanel {
   public:
@@ -23,7 +23,8 @@ class TrackPanel : public wxPanel {
     void MergeTracks(const std::vector<std::shared_ptr<ITrack>> &_batch);
     std::vector<std::size_t> GetSelectedRows() const;
     std::vector<std::shared_ptr<ITrack>> GetTracksOfSelectedRows() const;
-    void SetDownloadProgress(unsigned _row, int _progress);
+    void SetDownloadProgress(std::size_t _row, int _progress);
+    void UpdateRow(std::size_t _row);
     std::shared_ptr<ITrack> GetTrack(std::size_t _row) const;
 
     void Search(const wxString &_query, bool _showVerified,
@@ -37,7 +38,7 @@ class TrackPanel : public wxPanel {
     void OnActivated(wxDataViewEvent &event);
     void OnColumnSorted(wxDataViewEvent &_event);
     void OnLeftDown(wxMouseEvent &event);
-    virtual bool HandleColumnAction(int _column, unsigned _rowIndex,
+    virtual bool HandleColumnAction(int _column, std::size_t _rowIndex,
                                     const std::shared_ptr<TrackModelRow> &_row,
                                     const std::shared_ptr<ITrack> &_track);
 };

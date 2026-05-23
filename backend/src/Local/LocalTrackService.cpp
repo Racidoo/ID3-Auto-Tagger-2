@@ -1,17 +1,27 @@
 #include "Local/LocalTrackService.h"
-#include "Downloader.h"
 #include "Local/LocalTrack.h"
+#include "Spotify/SpotifyAPI.h"
+
+LocalTrackService::LocalTrackService(const std::filesystem::path &_trackPath)
+    : trackPath(_trackPath), stopRequested{false}, generation{0} {
+    loadOrCreateBlacklist();
+}
 
 LocalTrackService::~LocalTrackService() {
+    writeBlacklist();
     if (worker.joinable())
         worker.join();
 }
 
 size_t LocalTrackService::getGeneration() { return generation; }
+const std::filesystem::path &LocalTrackService::get_trackPath() const {
+    return trackPath;
+}
+void LocalTrackService::set_trackPath(const std::filesystem::path &_path) {
+    trackPath = _path;
+}
 
-void LocalTrackService::loadTracks(const std::filesystem::path &_path,
-                                   Downloader *_downloader,
-                                   bool recursiveSearch) {
+void LocalTrackService::loadTracks(bool recursiveSearch) {
     stopRequested = true;
 
     if (worker.joinable())
@@ -21,13 +31,14 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
 
     size_t myGen = ++generation;
 
-    worker = std::thread([this, myGen, _downloader, _path, recursiveSearch]() {
+    worker = std::thread([this, myGen, recursiveSearch]() {
         std::vector<std::shared_ptr<ITrack>> batch;
         batch.reserve(128);
 
         std::error_code ec;
 
-        for (std::filesystem::recursive_directory_iterator it(_path, ec), end;
+        for (std::filesystem::recursive_directory_iterator it(trackPath, ec),
+             end;
              it != end; it.increment(ec)) {
 
             if (stopRequested || myGen != generation) {
@@ -49,9 +60,9 @@ void LocalTrackService::loadTracks(const std::filesystem::path &_path,
             if (!file.is_regular_file() || file.path().extension() != ".mp3")
                 continue;
 
-            auto track = std::make_shared<LocalTrack>(file);
+            auto track = std::make_shared<LocalTrack>(file, this);
 
-            track->set_verified(_downloader->isBlocked(track->get_id()));
+            track->set_verified(isBlocked(track));
 
             batch.push_back(track);
 
@@ -72,71 +83,6 @@ void LocalTrackService::dispatchBatch(
     // Move batch to avoid copy
     auto movedBatch = std::move(_batch);
     onBatch(std::move(movedBatch), _gen);
-}
-
-bool LocalTrackService::verify(std::shared_ptr<LocalTrack> _local,
-                               Downloader *_downloader) {
-
-    if (!_local || !_downloader) {
-        return false;
-    }
-
-    const auto &filepath = _local->get_filepath();
-
-    auto spotifyTrack = _downloader->get_spotify()->researchTags(
-        {_local->get_name(), _local->get_artist(), _local->get_albumName(),
-         filepath.stem(), _local->get_length()});
-
-    if (!spotifyTrack || !spotifyTrack) {
-        std::cerr
-            << "Unable to retrieve meta data from SpotifyAPI. Will not add '"
-            << filepath << "' to blacklist!" << std::endl;
-        return false;
-    }
-
-    if (_downloader->initializeDiscogs()) {
-        Discogs::DiscogsAPI::SearchParams params{};
-
-        params.releaseTitle = spotifyTrack->get_albumName();
-        params.artist = spotifyTrack->get_albumArtist();
-        params.year = spotifyTrack->get_year();
-        params.categories.insert(ISearchResult::SearchCategory::Album);
-
-        auto releases = _downloader->get_discogs()->searchRelease(params);
-        if (releases.empty()) {
-            std::cerr << "Could not locate track details using DicogsAPI!"
-                      << std::endl;
-        } else {
-            std::unordered_set<std::string> styles;
-            for (auto &&release : releases) {
-                for (auto &&style : release->get_styles()) {
-                    styles.insert(style);
-                }
-            }
-            if (styles.size() == 1) {
-                spotifyTrack->set_genre(*styles.begin());
-            } else {
-                std::cout << "Cannot determine correct genre:" << std::endl;
-                for (auto &&style : styles) {
-                    std::cout << style << std::endl;
-                }
-            }
-        }
-    } else {
-        std::cerr << "DiscogsAPI unavailable. Cannot determine genre!"
-                  << std::endl;
-    }
-
-    _local->applyDifferences(spotifyTrack);
-
-    const auto &id = spotifyTrack->get_id();
-    if (filepath.stem() != id) {
-        _downloader->removeBlocked(_local);
-        renameTrack(_local, id);
-    }
-    _downloader->makeBlocked(_local);
-
-    return true;
 }
 
 bool LocalTrackService::renameTrack(std::shared_ptr<LocalTrack> _local,
@@ -177,10 +123,79 @@ bool LocalTrackService::deleteTrack(std::shared_ptr<LocalTrack> _local) {
     return true;
 }
 
-void LocalTrackService::load(std::shared_ptr<IMediaEntity> _obj) {
+bool LocalTrackService::load(std::shared_ptr<IMediaEntity> _obj) {
     if (auto local = std::dynamic_pointer_cast<LocalTrack>(_obj))
-        loadAdditionalData(local);
+        return loadAdditionalData(local);
+    return false;
 }
-void LocalTrackService::loadAdditionalData(std::shared_ptr<LocalTrack> _local) {
-    std::cerr << "Not yet implemented!" << std::endl;
+
+bool LocalTrackService::loadAdditionalData(std::shared_ptr<LocalTrack> _local) {
+    _local->ensureFullTagsLoaded();
+    return false;
+}
+
+bool LocalTrackService::loadOrCreateBlacklist() {
+    const std::filesystem::path path = "blacklist.json";
+
+    if (!std::filesystem::exists(path)) {
+        // Create missing blacklist.json with default object structure
+        blacklist = {
+            {"blacklist",
+             json::object()} // "blacklist" key maps to an empty array
+        };
+
+        std::ofstream file(path);
+        file << blacklist.dump(4);
+        return false;
+    }
+
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Could not open blacklist.json!" << std::endl;
+        return false;
+    }
+
+    file >> blacklist;
+    return true;
+}
+
+bool LocalTrackService::writeBlacklist() const {
+    std::ofstream blacklistFile("blacklist.json");
+    if (!blacklistFile.is_open()) {
+        std::cerr << "Could not write blacklist.json!" << std::endl;
+        return false;
+    }
+    blacklistFile << blacklist.dump(4);
+    return true;
+}
+
+bool LocalTrackService::isBlocked(std::shared_ptr<ITrack> _data) const {
+    if (!_data)
+        return false;
+    const auto &id = _data->get_id();
+    return blacklist.at("blacklist").contains(id);
+}
+
+void LocalTrackService::makeBlocked(std::shared_ptr<ITrack> _data) {
+    if (!_data)
+        return;
+    const auto &filename = _data->get_id();
+    if (!Spotify::SpotifyAPI::isValidIdFormat(filename)) {
+        return;
+    }
+
+    blacklist["blacklist"][filename]["title"] = _data->get_name();
+    blacklist["blacklist"][filename]["artist"] = _data->get_artist();
+    _data->set_verified(true);
+}
+
+void LocalTrackService::removeBlocked(std::shared_ptr<ITrack> _data) {
+    if (!_data)
+        return;
+
+    if (isBlocked(_data)) {
+        blacklist["blacklist"].erase(_data->get_id());
+        std::cout << "removed '" << _data->get_id() << "' from blocklist"
+                  << std::endl;
+    }
 }

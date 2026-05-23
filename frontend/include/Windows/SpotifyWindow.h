@@ -6,23 +6,16 @@
 #include <wx/wx.h>
 
 #include "Components/MediaLabel.h"
-#include "Downloader.h"
 #include "Interfaces/ISearchResult.hpp"
 #include "Media/Album/AlbumDetailsPanel.h"
 #include "Windows/MediaWindow.hpp"
 
-// class AlbumLabel;
-// class ArtistLabel;
-// class PlaylistLabel;
 class TrackPanel;
-
-// using AlbumWindow = MediaWindow<AlbumLabel>;
-// using ArtistWindow = MediaWindow<ArtistLabel>;
-// using PlaylistWindow = MediaWindow<PlaylistLabel>;
+class MediaServiceRegistry;
 
 class SpotifyWindow : public wxScrolledWindow {
   private:
-    Downloader *downloader;
+    MediaServiceRegistry *registry;
 
     wxStaticText *trackHeader;
     wxStaticText *albumHeader;
@@ -32,21 +25,26 @@ class SpotifyWindow : public wxScrolledWindow {
     MediaWindow<MediaLabel> *albumWindow;
     MediaWindow<MediaLabel> *artistWindow;
     MediaWindow<MediaLabel> *playlistWindow;
+    MediaWindow<MediaLabel> *videoWindow;
+
     AlbumDetailsPanel *albumDetailsPanel;
+
     wxBitmapToggleButton *trackButton;
     wxBitmapToggleButton *albumButton;
     wxBitmapToggleButton *artistButton;
     wxBitmapToggleButton *playlistButton;
+    wxBitmapToggleButton *videoButton;
+
+    wxBitmapToggleButton *discogsButton;
+    wxBitmapToggleButton *spotifyButton;
+    wxBitmapToggleButton *youtubeButton;
 
   public:
-    SpotifyWindow(wxWindow *_parent, Downloader *_downloader);
+    SpotifyWindow(wxWindow *_parent, MediaServiceRegistry *_registry);
     ~SpotifyWindow();
 
-    // inline TrackWindow *get_trackWindow() const { return trackWindow; };
-    // inline AlbumWindow *get_albumWindow() const { return albumWindow; };
-
     void search(const wxString &_searchText);
-    void showSearchResults(ISearchResult &result);
+    void showSearchResults(const std::vector<ISearchResult> &_results);
     void loadAdditionalSearchResults(const wxString &_type);
     void startDownload(wxCommandEvent &_event);
     void verifyTags(wxCommandEvent &_event);

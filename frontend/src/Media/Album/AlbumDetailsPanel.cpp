@@ -1,12 +1,11 @@
 #include "Media/Album/AlbumDetailsPanel.h"
 #include "Components/MediaLabel.h"
-#include "Downloader.h"
 #include "Interfaces/IAlbum.h"
+#include "Interfaces/ITrack.h"
 #include "Media/Track/TrackPanel.h"
 
 AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
-                                     std::shared_ptr<IMediaEntity> _source,
-                                     Downloader *_downloader)
+                                     std::shared_ptr<IMediaEntity> _source)
     : MediaDetailsPanel(_parent, _source) {
 
     if (!source) {
@@ -19,7 +18,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
         return;
     }
 
-    album->ensureLoaded(*_downloader->get_spotify());
+    album->ensureLoaded();
 
     std::size_t totalLength(0);
     for (auto &&track : album->get_tracklist()) {
@@ -38,12 +37,12 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
         this, wxID_ANY,
         MediaLabel::loadImage(album->get_image(), wxSize(256, 265)));
 
-    auto albumTypeText =
-        new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_type()));
-    auto typeFont = albumTypeText->GetFont();
-    typeFont.SetPointSize(8);
-    typeFont.SetWeight(wxFONTWEIGHT_LIGHT);
-    albumTypeText->SetFont(typeFont);
+    // auto albumTypeText =
+    //     new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_type()));
+    // auto typeFont = albumTypeText->GetFont();
+    // typeFont.SetPointSize(8);
+    // typeFont.SetWeight(wxFONTWEIGHT_LIGHT);
+    // albumTypeText->SetFont(typeFont);
 
     auto titleText =
         new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_name()));
@@ -86,7 +85,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
     artistSizer->Add(totalTracksText, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, 10);
     artistSizer->Add(totalDurationText, 0, wxALIGN_CENTER_VERTICAL);
 
-    infoSizer->Add(albumTypeText, 0, wxBOTTOM, 5);
+    // infoSizer->Add(albumTypeText, 0, wxBOTTOM, 5);
     infoSizer->Add(titleText, 0, wxBOTTOM, 15);
     infoSizer->AddStretchSpacer();
     infoSizer->Add(artistSizer, 0, wxBOTTOM, 5);

@@ -1,6 +1,5 @@
 #include "Core/MainFrame.h"
 #include "Core/IconProvider.h"
-#include "Downloader.h"
 #include "Windows/DiscogsWindow.h"
 #include "Windows/LocalTrackWindow.h"
 #include "Windows/SettingsWindow.h"
@@ -20,7 +19,7 @@ enum {
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "ID3 Auto Tagger 2", wxDefaultPosition,
               wxSize(800, 600)),
-      downloader(std::make_unique<Downloader>()) {
+      registry(std::make_unique<MediaServiceRegistry>()) {
     wxInitAllImageHandlers();
 
     auto toolBar = CreateToolBar(wxVERTICAL, wxID_ANY);
@@ -58,11 +57,12 @@ MainFrame::MainFrame()
     mainPanel->SetSizer(mainSizer);
 
     // Create panels for different screens (Initially hidden)
-    downloadPanel = new LocalTrackWindow(mainPanel, downloader.get());
-    spotifyPanel = new SpotifyWindow(mainPanel, downloader.get());
-    discogsPanel = new DiscogsWindow(mainPanel, downloader.get());
-    youtubePanel = new YouTubeWindow(mainPanel, downloader.get());
-    settingsPanel = new SettingsWindow(mainPanel, downloader.get());
+    downloadPanel = new LocalTrackWindow(mainPanel, registry->get_local(),
+                                         registry->get_searchService());
+    spotifyPanel = new SpotifyWindow(mainPanel, registry.get());
+    discogsPanel = new DiscogsWindow(mainPanel);
+    youtubePanel = new YouTubeWindow(mainPanel);
+    settingsPanel = new SettingsWindow(mainPanel, registry.get());
 
     mainSizer->Add(downloadPanel, 1, wxEXPAND);
     mainSizer->Add(spotifyPanel, 1, wxEXPAND);
@@ -84,7 +84,7 @@ MainFrame::MainFrame()
     SetSizer(sizer);
 
     // Set default screen
-    if (!downloader->is_initialized()) {
+    if (!registry->isInitialized()) {
         ShowPanel(settingsPanel);
     } else
         ShowPanel(downloadPanel);
@@ -107,7 +107,7 @@ void MainFrame::OnDownloadClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
-    if (!downloader->initializeSpotify()) {
+    if (!registry->initializeSpotify()) {
         wxLogError(wxT(
             "Provide credentials in the Settings, before using API-Services!"));
         return;
@@ -116,7 +116,7 @@ void MainFrame::OnSpotifyClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnDiscogsClicked(wxCommandEvent &event) {
-    if (!downloader->initializeDiscogs()) {
+    if (!registry->initializeDiscogs()) {
         wxLogError(wxT("Provide Discogs-credentials in the Settings, before "
                        "using API-Services!"));
         return;
@@ -125,7 +125,7 @@ void MainFrame::OnDiscogsClicked(wxCommandEvent &event) {
 }
 
 void MainFrame::OnYouTubeClicked(wxCommandEvent &event) {
-    if (!downloader->initializeYouTube()) {
+    if (!registry->initializeYouTube()) {
         wxLogError(wxT(
             "Provide credentials in the Settings, before using API-Services!"));
         return;

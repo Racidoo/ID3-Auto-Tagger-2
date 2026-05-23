@@ -23,21 +23,22 @@ class Track : public ITrack {
     Track(const std::string &_id, const std::string &_name, State _state,
           std::size_t _discNumber, std::size_t _length, bool _explicitContent,
           std::size_t _trackNumber, std::shared_ptr<IAlbum> _album,
-          const std::vector<std::shared_ptr<IArtist>> &_artists);
+          const std::vector<std::shared_ptr<IArtist>> &_artists,
+          IMediaService *_mediaService);
     ~Track() = default;
 
     const std::vector<std::shared_ptr<IArtist>> &get_artists();
     std::shared_ptr<IAlbum> get_album();
     std::string get_artist() const override;
     std::size_t get_trackNumber() const override;
-    std::size_t get_discNumber() override;
+    std::size_t get_discNumber() const override;
     std::size_t get_length() const override;
     const std::string &get_albumName() const override;
-    std::string get_albumArtist() override;
-    const std::string &get_copyright() override;
+    std::string get_albumArtist() const override;
+    const std::string &get_copyright() const override;
     const std::string &get_genre() const override;
     std::size_t get_year() const override;
-    const std::string &get_label() override;
+    const std::string &get_label() const override;
     bool is_verified() const override;
 
     void set_artist(const std::string &_artist) override;

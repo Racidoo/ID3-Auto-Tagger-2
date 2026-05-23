@@ -95,6 +95,11 @@ wxBitmap IconProvider::CreateBitmap(const wxArtID &_id,
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
                                     wxIMAGE_QUALITY_HIGH));
     }
+    if (_id == wxART_VIDEO) {
+        wxImage img(wxT("img/video_256.png"), wxBITMAP_TYPE_PNG);
+        return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),
+                                    wxIMAGE_QUALITY_HIGH));
+    }
     if (_id == wxART_ARROW_RIGHT) {
         wxImage img(wxT("img/angle-circle-right_256.png"), wxBITMAP_TYPE_PNG);
         return wxBitmap(img.Rescale(size.GetWidth(), size.GetHeight(),

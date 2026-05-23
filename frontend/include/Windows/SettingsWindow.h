@@ -4,18 +4,15 @@
 #include <filesystem>
 #include <wx/wx.h>
 
-class Downloader;
+#include "Services/MediaServiceRegistry.h"
 
 class SettingsWindow : public wxScrolledWindow {
   public:
-    SettingsWindow(wxWindow *_parent, Downloader *_downloader,
+    SettingsWindow(wxWindow *_parent, MediaServiceRegistry *_registry,
                    wxWindowID _winid = wxID_ANY,
                    const wxPoint &_pos = wxDefaultPosition,
                    const wxSize &_size = wxDefaultSize);
     ~SettingsWindow() = default;
-
-  private:
-    Downloader *downloader;
 };
 
 #endif // SETTINGS_WINDOW_H

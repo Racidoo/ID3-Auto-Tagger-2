@@ -1,10 +1,8 @@
 #include "Windows/DiscogsWindow.h"
 #include "Core/IconProvider.h"
-#include "Downloader.h"
 #include "Media/Track/TrackPanel.h"
 
-DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
-    : wxScrolledWindow(_parent), downloader(_downloader) {
+DiscogsWindow::DiscogsWindow(wxWindow *_parent) : wxScrolledWindow(_parent) {
     this->SetScrollRate(15, 15);
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -99,25 +97,25 @@ DiscogsWindow::DiscogsWindow(wxWindow *_parent, Downloader *_downloader)
 }
 
 void DiscogsWindow::search(const wxString &_searchText) {
-    if (!downloader || !downloader->initializeDiscogs()) {
-        std::cerr << "Discogs not fully initialized" << std::endl;
-        return;
-    }
-    Discogs::DiscogsAPI::SearchParams params{};
-    params.query = _searchText.ToStdString();
+    // if (!downloader || !downloader->initializeDiscogs()) {
+    //     std::cerr << "Discogs not fully initialized" << std::endl;
+    //     return;
+    // }
+    // Discogs::DiscogsAPI::SearchParams params{};
+    // params.query = _searchText.ToStdString();
 
-    if (trackButton->GetValue())
-        params.categories.insert(ISearchResult::SearchCategory::Track);
-    if (albumButton->GetValue())
-        params.categories.insert(ISearchResult::SearchCategory::Album);
-    if (artistButton->GetValue())
-        params.categories.insert(ISearchResult::SearchCategory::Artist);
-    if (playlistButton->GetValue())
-        params.categories.insert(ISearchResult::SearchCategory::Playlist);
+    // if (trackButton->GetValue())
+    //     params.categories.insert(ISearchResult::SearchCategory::Track);
+    // if (albumButton->GetValue())
+    //     params.categories.insert(ISearchResult::SearchCategory::Album);
+    // if (artistButton->GetValue())
+    //     params.categories.insert(ISearchResult::SearchCategory::Artist);
+    // if (playlistButton->GetValue())
+    //     params.categories.insert(ISearchResult::SearchCategory::Playlist);
 
-    auto results = downloader->get_discogs()->search(params);
+    // auto results = downloader->get_discogs()->search(params);
 
-    showSearchResults(results);
+    // showSearchResults(results);
 }
 
 void DiscogsWindow::showSearchResults(ISearchResult &result) {

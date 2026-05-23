@@ -7,28 +7,28 @@ class IArtist;
 class IAlbum;
 
 namespace Discogs {
-
+class Release;
 class ReleaseTrack : public ITrack {
   public:
     ReleaseTrack(const std::string &_id, const std::string &_name,
-                 std::weak_ptr<IAlbum> _release,
+                 std::weak_ptr<Release> _release,
                  const std::vector<std::shared_ptr<IArtist>> &_artists,
-                 const std::vector<std::shared_ptr<IArtist>> &_extraArtists,
-                 const std::vector<std::string> &_genres,
-                 const std::string &_imageUrl, std::size_t _duration,
-                 const std::string &_position);
+                 std::size_t _duration, const std::size_t &_discnumber,
+                 const std::size_t &_tracknumber, IMediaService *_mediaService);
     ~ReleaseTrack() = default;
 
     std::string get_artist() const override;
     const std::string &get_albumName() const override;
-    std::string get_albumArtist() override;
-    const std::string &get_copyright() override;
+    std::string get_albumArtist() const override;
+    const std::string &get_copyright() const override;
     const std::string &get_genre() const override;
     std::size_t get_year() const override;
-    const std::string &get_label() override;
+    const std::string &get_label() const override;
     std::size_t get_trackNumber() const override;
-    std::size_t get_discNumber() override;
+    std::size_t get_discNumber() const override;
     std::size_t get_length() const override;
+
+    const std::vector<std::byte> &get_image() override;
 
     bool is_verified() const override;
     void set_artist(const std::string &_artist) override;
@@ -44,18 +44,15 @@ class ReleaseTrack : public ITrack {
 
     std::weak_ptr<IAlbum> get_release() const;
     const std::vector<std::shared_ptr<IArtist>> &get_artists() const;
-    const std::vector<std::shared_ptr<IArtist>> &get_extraArtists() const;
 
     static int parseDuration(const std::string &_stringDuration);
 
   private:
-    std::weak_ptr<IAlbum> release;
+    std::weak_ptr<Release> release;
     std::vector<std::shared_ptr<IArtist>> artists;
-    std::vector<std::shared_ptr<IArtist>> extraArtists;
-    std::string genres;
-    std::size_t trackNumber;
     std::size_t duration;
-    std::string position;
+    std::size_t discnumber;
+    std::size_t tracknumber;
     bool verified;
 };
 

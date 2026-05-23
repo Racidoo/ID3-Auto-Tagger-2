@@ -10,15 +10,16 @@ namespace Spotify {
 class Album : public IAlbum {
   public:
     Album(const std::string &_id, const std::string &_name, State _state,
-          const std::string &_albumType, std::size_t _totalTracks,
+          IAlbum::album_type_t _albumType, std::size_t _totalTracks,
           const std::string &_releaseDate, std::size_t _year,
           const std::string &_imageURL,
-          const std::vector<std::shared_ptr<IArtist>> &_artists);
+          const std::vector<std::shared_ptr<IArtist>> &_artists,
+          IMediaService *_mediaService);
     ~Album() = default;
 
-    const std::string &get_type() const override;
+    IAlbum::album_type_t get_type() const override;
     std::string get_artist() const override;
-    const std::vector<std::byte> &get_artistImage();
+    std::vector<std::byte> get_artistImage();
     std::size_t get_year() const override;
     const std::string &get_label() const override;
     const std::string &get_copyright() const override;
@@ -36,7 +37,7 @@ class Album : public IAlbum {
     void set_year(std::size_t _year) override;
 
   private:
-    std::string type;
+    IAlbum::album_type_t type;
     size_t year;
     std::size_t totalTracks;
     std::string releaseDate;

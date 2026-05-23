@@ -14,7 +14,7 @@ class IMediaEntity : public std::enable_shared_from_this<IMediaEntity> {
     virtual const std::string &get_id() const = 0;
     virtual const std::string &get_name() const = 0;
     virtual const std::vector<std::byte> &get_image() = 0;
-    virtual void ensureLoaded(class IMediaService &_service) = 0;
+    virtual void ensureLoaded() = 0;
 
     template <typename T>
     static std::string vecToStr(const std::vector<T> &_objects,

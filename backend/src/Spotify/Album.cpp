@@ -6,17 +6,18 @@
 namespace Spotify {
 
 Album::Album(const std::string &_id, const std::string &_name, State _state,
-             const std::string &_albumType, std::size_t _totalTracks,
+             IAlbum::album_type_t _albumType, std::size_t _totalTracks,
              const std::string &_releaseDate, std::size_t _year,
              const std::string &_imageURL,
-             const std::vector<std::shared_ptr<IArtist>> &_artists)
-    : IAlbum(_id, _name, _state, _imageURL), type(_albumType), year(_year),
-      totalTracks(_totalTracks), releaseDate(_releaseDate), label(""),
-      copyright(""), artists(_artists), tracklist{} {}
+             const std::vector<std::shared_ptr<IArtist>> &_artists,
+             IMediaService *_mediaService)
+    : IAlbum(_id, _name, _state, _imageURL, _mediaService), type(_albumType),
+      year(_year), totalTracks(_totalTracks), releaseDate(_releaseDate),
+      label(""), copyright(""), artists(_artists), tracklist{} {}
 
-const std::string &Album::get_type() const { return type; }
+IAlbum::album_type_t Album::get_type() const { return type; }
 std::string Album::get_artist() const { return vecToStr(artists); }
-const std::vector<std::byte> &Album::get_artistImage() {
+std::vector<std::byte> Album::get_artistImage() {
     if (artists.empty()) {
         return std::vector<std::byte>{};
     }

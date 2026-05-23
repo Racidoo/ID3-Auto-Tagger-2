@@ -7,7 +7,7 @@ namespace Discogs {
 class Label : public MediaEntityBase {
   public:
     Label(int _id, const std::string &_name, State _state,
-          const std::string &_imageUrl);
+          const std::string &_imageUrl, IMediaService *_mediaService);
     ~Label() = default;
 };
 
