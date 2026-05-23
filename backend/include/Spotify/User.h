@@ -1,13 +1,21 @@
 #pragma once
 
-#include "Interfaces/MediaEntityBase.h"
+#include "Interfaces/IArtist.h"
+#include "Interfaces/IRemoteImageProvider.h"
 
 namespace Spotify {
-class User : public MediaEntityBase {
+class User : public IArtist {
   public:
     User(const std::string &_id, const std::string &_name, State _state,
          const std::string &_imageURL, IMediaService *_mediaService);
     ~User() = default;
+
+    const std::string &get_name() const override;
+    std::vector<std::byte> get_image() override;
+
+  private:
+    std::string name;
+    IRemoteImageProvider imageProvider;
 };
 
 } // namespace Spotify

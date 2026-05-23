@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Discogs/Label.h"
+#include "Interfaces/IRemoteImageProvider.h"
 #include "Interfaces/ITrack.h"
 
 class IArtist;
@@ -17,6 +18,7 @@ class ReleaseTrack : public ITrack {
                  const std::size_t &_tracknumber, IMediaService *_mediaService);
     ~ReleaseTrack() = default;
 
+    const std::string &get_name() const override;
     std::string get_artist() const override;
     const std::string &get_albumName() const override;
     std::string get_albumArtist() const override;
@@ -27,10 +29,10 @@ class ReleaseTrack : public ITrack {
     std::size_t get_trackNumber() const override;
     std::size_t get_discNumber() const override;
     std::size_t get_length() const override;
-
-    const std::vector<std::byte> &get_image() override;
-
+    std::vector<std::byte> get_image() override;
     bool is_verified() const override;
+
+    void set_name(const std::string &_name) override;
     void set_artist(const std::string &_artist) override;
     void set_albumName(const std::string &_albumName) override;
     void set_albumArtist(const std::string &_albumArtist) override;
@@ -41,6 +43,7 @@ class ReleaseTrack : public ITrack {
     void set_trackNumber(std::size_t _trackNumber) override;
     void set_discNumber(std::size_t _discNumber) override;
     void set_verified(bool _verified) override;
+    void set_image(const std::vector<std::byte> &_imageData) override;
 
     std::weak_ptr<IAlbum> get_release() const;
     const std::vector<std::shared_ptr<IArtist>> &get_artists() const;
@@ -48,6 +51,8 @@ class ReleaseTrack : public ITrack {
     static int parseDuration(const std::string &_stringDuration);
 
   private:
+    IRemoteImageProvider imageProvider;
+    std::string name;
     std::weak_ptr<Release> release;
     std::vector<std::shared_ptr<IArtist>> artists;
     std::size_t duration;

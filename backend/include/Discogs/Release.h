@@ -2,6 +2,7 @@
 
 #include "Discogs/Label.h"
 #include "Interfaces/IAlbum.h"
+#include "Interfaces/IRemoteImageProvider.h"
 
 class IArtist;
 namespace Discogs {
@@ -24,6 +25,7 @@ class Release : public IAlbum {
             bool _verified, IMediaService *_mediaService);
     ~Release() = default;
 
+    const std::string &get_name() const override;
     IAlbum::album_type_t get_type() const override;
     std::string get_artist() const override;
     std::vector<std::byte> get_artistImage() override;
@@ -31,6 +33,7 @@ class Release : public IAlbum {
     const std::string &get_label() const override;
     const std::string &get_copyright() const override;
     const std::vector<std::shared_ptr<ITrack>> &get_tracklist() const override;
+    std::vector<std::byte> get_image() override;
 
     const std::vector<std::shared_ptr<IArtist>> &get_artists() const;
     std::vector<std::shared_ptr<IArtist>> &get_artists();
@@ -44,6 +47,8 @@ class Release : public IAlbum {
     const std::string &get_releaseDate() const;
     bool isVerified() const;
 
+    const IRemoteImageProvider &get_imageProvider() const;
+
     void set_year(std::size_t _year) override;
     void set_copyright(const std::string &_copyright) override;
     void set_label(const std::string &_label) override;
@@ -53,6 +58,8 @@ class Release : public IAlbum {
     void set_artists(std::vector<std::shared_ptr<IArtist>> _artists);
 
   private:
+    std::string name;
+    IRemoteImageProvider imageProvider;
     std::vector<std::shared_ptr<IArtist>> artists;
     std::string stringGenres;
     std::vector<std::string> genres;

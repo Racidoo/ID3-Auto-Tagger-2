@@ -9,8 +9,10 @@ set(SOURCES
     src/Discogs/ReleaseTrack.cpp
     src/Interfaces/IAlbum.cpp
     src/Interfaces/IArtist.cpp
+    src/Interfaces/IFileImageProvider.cpp
     src/Interfaces/ITrack.cpp
     src/Interfaces/IPlaylist.cpp
+    src/Interfaces/IRemoteImageProvider.cpp
     src/Interfaces/IVideo.cpp
     src/Interfaces/MediaEntityBase.cpp
     src/Local/LocalTrack.cpp

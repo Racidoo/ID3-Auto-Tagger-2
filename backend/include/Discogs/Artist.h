@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interfaces/IArtist.h"
+#include "Interfaces/IRemoteImageProvider.h"
 
 namespace Discogs {
 
@@ -9,6 +10,13 @@ class Artist : public IArtist {
     Artist(int _id, const std::string &_name, State _state,
            const std::string &_imageUrl, IMediaService *_mediaService);
     ~Artist() = default;
+
+    const std::string &get_name() const override;
+    std::vector<std::byte> get_image() override;
+
+  private:
+    std::string name;
+    IRemoteImageProvider imageProvider;
 };
 
 } // namespace Discogs

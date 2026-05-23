@@ -13,11 +13,12 @@ ReleaseTrack::ReleaseTrack(
     const std::size_t &_tracknumber, IMediaService *_mediaService)
     : ITrack(_id + "_" + std::to_string(_discnumber) + "_" +
                  std::to_string(_tracknumber),
-             _name, State::Full, _release.lock()->get_imageUrl(),
-             _mediaService),
-      release(_release), artists(_artists), duration(_duration),
+             State::Full, _mediaService),
+      imageProvider(_release.lock()->get_imageProvider().get_imageUrl(),
+                    _release.lock()->get_image()),
+      name(_name), release(_release), artists(_artists), duration(_duration),
       discnumber(_discnumber), tracknumber(_tracknumber), verified(false) {}
-
+const std::string &ReleaseTrack::get_name() const { return name; }
 std::string ReleaseTrack::get_artist() const {
     if (artists.empty()) {
         return release.lock()->get_artist();
@@ -46,11 +47,14 @@ std::size_t ReleaseTrack::get_trackNumber() const { return tracknumber; }
 std::size_t ReleaseTrack::get_discNumber() const { return discnumber; }
 std::size_t ReleaseTrack::get_length() const { return duration; }
 
-const std::vector<std::byte> &ReleaseTrack::get_image() {
-    return release.lock()->get_image();
+std::vector<std::byte> ReleaseTrack::get_image() {
+    return imageProvider.get_image();
 }
-
 bool ReleaseTrack::is_verified() const { return verified; }
+
+void ReleaseTrack::set_name(const std::string &_name) {
+    static_assert("Discogs Object is not mutable!");
+}
 void ReleaseTrack::set_artist(const std::string &_artist) {
     static_assert("Discogs Object is not mutable!");
 }
@@ -79,6 +83,9 @@ void ReleaseTrack::set_discNumber(std::size_t _discNumber) {
     static_assert("Discogs Object is not mutable!");
 }
 void ReleaseTrack::set_verified(bool _verified) { verified = _verified; }
+void ReleaseTrack::set_image(const std::vector<std::byte> &_imageData) {
+    imageProvider.set_image(_imageData);
+}
 
 std::weak_ptr<IAlbum> ReleaseTrack::get_release() const { return release; }
 

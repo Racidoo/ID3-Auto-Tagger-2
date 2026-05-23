@@ -5,19 +5,17 @@
 
 class MediaEntityBase : public IMediaEntity {
   public:
-    explicit MediaEntityBase(const std::string &_id, const std::string &_name,
-                             State _state, const std::string &_imageURL,
+    explicit MediaEntityBase(const std::string &_id, State _state,
                              IMediaService *_mediaService);
 
     const std::string &get_id() const override;
-    const std::string &get_name() const override;
+    // const std::string &get_name() const override;
     State get_state() const;
-    const std::string &get_imageUrl() const;
-    const std::vector<std::byte> &get_image() override;
+    // const std::string &get_imageUrl() const;
+    // const std::vector<std::byte> &get_image() override;
 
-    void set_name(const std::string &_name);
+    // void set_name(const std::string &_name);
     void set_state(State _state);
-    void set_image(const std::vector<std::byte> &_imageData);
 
     void ensureLoaded() override;
     IMediaService::MediaSourceId get_mediaSourceId() const;
@@ -25,9 +23,8 @@ class MediaEntityBase : public IMediaEntity {
   protected:
     std::string id;
     State state = State::Preview;
-    std::string name;
-    std::string imageURL;
-    std::vector<std::byte> cachedImage;
+    // std::string imageURL;
+    // std::vector<std::byte> cachedImage;
 
     IMediaService *mediaService;
 };

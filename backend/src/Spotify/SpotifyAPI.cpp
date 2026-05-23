@@ -105,7 +105,7 @@ std::string SpotifyAPI::prepareUrl(const std::string &_url) {
     return urlAPI + _url;
 }
 
-bool SpotifyAPI::insertTracklist(std::shared_ptr<IAlbum> _album,
+bool SpotifyAPI::insertTracklist(std::shared_ptr<Album> _album,
                                  const json &_jsonAlbum) {
     if (!_jsonAlbum.contains("tracks") ||
         _jsonAlbum["tracks"]["items"].empty()) {
@@ -161,7 +161,7 @@ IAlbum::album_type_t SpotifyAPI::parseAlbumType(const json &_jsonAlbum) {
     return IAlbum::album_type_t::UNDEFINED;
 }
 
-std::shared_ptr<IAlbum> SpotifyAPI::createAlbum(const json &_jsonAlbum,
+std::shared_ptr<Album> SpotifyAPI::createAlbum(const json &_jsonAlbum,
                                                 bool _fullTags) {
     auto album = std::make_shared<Album>(
         _jsonAlbum.at("id").get<std::string>(),
@@ -210,7 +210,7 @@ SpotifyAPI::createPlaylist(const json &_jsonPlaylist) {
 
 std::shared_ptr<ITrack>
 SpotifyAPI::createTrack(const json &_jsonTrack,
-                        std::shared_ptr<IAlbum> _album) {
+                        std::shared_ptr<Album> _album) {
     return std::make_shared<Track>(
         _jsonTrack.at("id").get<std::string>(),
         _jsonTrack.at("name").get<std::string>(), Track::State::Partial,

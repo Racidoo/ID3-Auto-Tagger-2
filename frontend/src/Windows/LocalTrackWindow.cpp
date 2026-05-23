@@ -78,6 +78,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
         for (auto row : rows) {
             auto track = trackPanel->GetTrack(row);
             TagService::researchMissingTags(track, _searchService);
+            trackPanel->UpdateRow(row);
         }
     });
 

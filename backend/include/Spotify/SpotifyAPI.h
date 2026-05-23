@@ -95,21 +95,20 @@ class SpotifyAPI : public Query, public IMediaService {
                 const std::string &_market = "", unsigned int _limit = 0,
                 const std::string &_offset = "");
 
-    bool insertTracklist(std::shared_ptr<IAlbum> _album,
-                         const json &_jsonAlbum);
+    bool insertTracklist(std::shared_ptr<Album> _album, const json &_jsonAlbum);
     bool insertLabel(std::shared_ptr<Album> _album, const json &_jsonAlbum);
     bool insertCopyright(std::shared_ptr<Album> _album, const json &_jsonAlbum);
-    
-     IAlbum::album_type_t parseAlbumType(const json&_jsonAlbum);
 
-    std::shared_ptr<IAlbum> createAlbum(const json &_jsonAlbum,
-                                        bool _fullTags = false);
+    IAlbum::album_type_t parseAlbumType(const json &_jsonAlbum);
+
+    std::shared_ptr<Album> createAlbum(const json &_jsonAlbum,
+                                       bool _fullTags = false);
     std::shared_ptr<IArtist> createArtist(const json &_jsonArtist);
     std::vector<std::shared_ptr<IArtist>>
     createArtists(const json &_jsonArtists);
     std::shared_ptr<IPlaylist> createPlaylist(const json &_jsonPlaylist);
     std::shared_ptr<ITrack> createTrack(const json &_jsonTrack,
-                                        std::shared_ptr<IAlbum> _album);
+                                        std::shared_ptr<Album> _album);
     std::shared_ptr<User> createUser(const json &_jsonUser);
 };
 

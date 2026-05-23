@@ -17,8 +17,8 @@ Release::Release(int _id, const std::string &_name, State _state,
                  //  const std::vector<std::string> &_styles,
                  std::size_t _year, const std::vector<Video> &_videos,
                  bool _verified, IMediaService *_mediaService)
-    : IAlbum(std::to_string(_id), _name, _state, _imageUrl, _mediaService),
-      artists(_artists), genres(_genres),
+    : IAlbum(std::to_string(_id), _state, _mediaService), name(_name),
+      imageProvider(_imageUrl), artists(_artists), genres(_genres),
       //   styles(_styles),
       year(_year), videos(_videos), masterId(_masterId), type(_type),
       //   country(_country),
@@ -36,7 +36,10 @@ Release::Release(int _id, const std::string &_name, State _state,
         stringLabels += label.get_name();
     }
 }
-
+const std::string &Release::get_name() const { return name; }
+std::vector<std::byte> Release::get_image() {
+    return imageProvider.get_image();
+}
 IAlbum::album_type_t Release::get_type() const { return type; }
 std::string Release::get_artist() const { return vecToStr(artists); }
 std::vector<std::byte> Release::get_artistImage() {
@@ -81,6 +84,9 @@ std::string Release::get_stringLabels() const {
 }
 // const std::string &Release::get_releaseDate() const { return releaseDate; }
 bool Release::isVerified() const { return verified; }
+const IRemoteImageProvider &Release::get_imageProvider() const {
+    return imageProvider;
+}
 
 void Release::set_year(std::size_t _year) { year = _year; }
 void Release::set_copyright(const std::string &_copyright) {

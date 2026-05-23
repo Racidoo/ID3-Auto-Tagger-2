@@ -11,10 +11,13 @@ Album::Album(const std::string &_id, const std::string &_name, State _state,
              const std::string &_imageURL,
              const std::vector<std::shared_ptr<IArtist>> &_artists,
              IMediaService *_mediaService)
-    : IAlbum(_id, _name, _state, _imageURL, _mediaService), type(_albumType),
-      year(_year), totalTracks(_totalTracks), releaseDate(_releaseDate),
-      label(""), copyright(""), artists(_artists), tracklist{} {}
+    : IAlbum(_id, _state, _mediaService), name(_name), imageProvider(_imageURL),
+      type(_albumType), year(_year), totalTracks(_totalTracks),
+      releaseDate(_releaseDate), label(""), copyright(""), artists(_artists),
+      tracklist{} {}
 
+const std::string &Album::get_name() const { return name; }
+std::vector<std::byte> Album::get_image() { return imageProvider.get_image(); }
 IAlbum::album_type_t Album::get_type() const { return type; }
 std::string Album::get_artist() const { return vecToStr(artists); }
 std::vector<std::byte> Album::get_artistImage() {
@@ -34,6 +37,9 @@ const std::vector<std::shared_ptr<IArtist>> &Album::get_artists() const {
 std::vector<std::shared_ptr<IArtist>> &Album::get_artists() { return artists; }
 const std::vector<std::shared_ptr<ITrack>> &Album::get_tracklist() const {
     return tracklist;
+}
+const IRemoteImageProvider &Album::get_imageProvider() const {
+    return imageProvider;
 }
 
 void Album::set_label(const std::string &_label) { label = _label; }

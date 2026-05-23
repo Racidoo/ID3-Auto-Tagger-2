@@ -8,10 +8,9 @@
 class ITrack : public MediaEntityBase {
 
   public:
-    explicit ITrack(const std::string &_id, const std::string &_name,
-                    State _state, const std::string &_imageURL,
+    explicit ITrack(const std::string &_id, State _state,
                     IMediaService *_mediaService)
-        : MediaEntityBase(_id, _name, _state, _imageURL, _mediaService) {}
+        : MediaEntityBase(_id, _state, _mediaService) {}
     ~ITrack() = default;
 
     virtual std::string get_artist() const = 0;
@@ -27,6 +26,7 @@ class ITrack : public MediaEntityBase {
 
     virtual bool is_verified() const = 0;
 
+    virtual void set_name(const std::string &_name) = 0;
     virtual void set_artist(const std::string &_artist) = 0;
     virtual void set_albumName(const std::string &_albumName) = 0;
     virtual void set_albumArtist(const std::string &_albumArtist) = 0;
@@ -36,8 +36,7 @@ class ITrack : public MediaEntityBase {
     virtual void set_label(const std::string &_label) = 0;
     virtual void set_trackNumber(std::size_t _trackNumber) = 0;
     virtual void set_discNumber(std::size_t _discNumber) = 0;
+    virtual void set_image(const std::vector<std::byte> &_imageDate) = 0;
 
     virtual void set_verified(bool _verified) = 0;
-
-    void applyDifferences(std::shared_ptr<ITrack> _template);
 };

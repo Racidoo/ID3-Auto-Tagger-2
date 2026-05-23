@@ -2,6 +2,103 @@
 #include "Services/TrackIdentificationService.h"
 #include "Spotify/SpotifyAPI.h"
 
+const std::unordered_map<IMediaService::MediaSourceId, TagService::SourcePolicy>
+    TagService::policies = {
+        {IMediaService::MediaSourceId::Discogs,
+         {{}, {TagField::AlbumCover, TagField::Genre, TagField::Label}}},
+        {IMediaService::MediaSourceId::Local,
+         {{TagField::Title, TagField::Artist, TagField::Album,
+           TagField::AlbumArtist, TagField::Year, TagField::TrackNumber,
+           TagField::DiscNumber, TagField::Copyright, TagField::Genre,
+           TagField::Label},
+          {TagField::AlbumCover}}},
+        {IMediaService::MediaSourceId::Spotify,
+         {{TagField::Title, TagField::Artist, TagField::Album,
+           TagField::AlbumArtist, TagField::Year, TagField::TrackNumber,
+           TagField::DiscNumber, TagField::Copyright, TagField::Label},
+          {TagField::AlbumCover, TagField::Genre}}},
+};
+
+const std::vector<std::unique_ptr<TagService::ITrackFieldDescriptor>>
+    TagService::trackFields = [] {
+        std::vector<std::unique_ptr<ITrackFieldDescriptor>> fields;
+
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Title, "title",
+            [](std::shared_ptr<ITrack> t) { return t->get_name(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_name(v);
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Artist, "artist",
+            [](std::shared_ptr<ITrack> t) { return t->get_artist(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_artist(v);
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Album, "album",
+            [](std::shared_ptr<ITrack> t) { return t->get_albumName(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_albumName(v);
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::AlbumArtist, "albumArtist",
+            [](std::shared_ptr<ITrack> t) { return t->get_albumArtist(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_albumArtist(v);
+            }));
+        fields.push_back(
+            std::make_unique<TrackFieldDescriptor<std::vector<std::byte>>>(
+                TagField::AlbumCover, "albumCover",
+                [](std::shared_ptr<ITrack> t) { return t->get_image(); },
+                [](std::shared_ptr<ITrack> t, const std::vector<std::byte> &v) {
+                    t->set_image(v);
+                }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Genre, "genre",
+            [](std::shared_ptr<ITrack> t) { return t->get_genre(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_genre(v);
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Copyright, "copyright",
+            [](std::shared_ptr<ITrack> t) { return t->get_copyright(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_copyright(v);
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Year, "year",
+            [](std::shared_ptr<ITrack> t) {
+                return std::to_string(t->get_year());
+            },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_year(std::stoi(v));
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::Label, "label",
+            [](std::shared_ptr<ITrack> t) { return t->get_label(); },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_label(v);
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::TrackNumber, "trackNumber",
+            [](std::shared_ptr<ITrack> t) {
+                return std::to_string(t->get_trackNumber());
+            },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_trackNumber(std::stoi(v));
+            }));
+        fields.push_back(std::make_unique<TrackFieldDescriptor<std::string>>(
+            TagField::DiscNumber, "discNumber",
+            [](std::shared_ptr<ITrack> t) {
+                return std::to_string(t->get_discNumber());
+            },
+            [](std::shared_ptr<ITrack> t, const std::string &v) {
+                t->set_discNumber(std::stoi(v));
+            }));
+        return fields;
+    }();
+
 bool TagService::researchMissingTags(std::shared_ptr<ITrack> _track,
                                      SearchService *_searchService) {
 
@@ -23,8 +120,13 @@ bool TagService::researchMissingTags(std::shared_ptr<ITrack> _track,
     }
 
     for (auto &&source : merged.sources) {
-
         source->ensureLoaded();
+        if (source->get_image().empty()) {
+            std::cout << "get empty image!" << std::endl;
+        } else {
+            std::cout << "image present!" << std::endl;
+        }
+
         applyDifferences(merged.primary, source);
     }
     return true;
@@ -63,73 +165,7 @@ void TagService::applyDifferences(std::shared_ptr<ITrack> _primary,
     }
     const auto &policy = it->second;
 
-    for (const auto &[field, desc] : trackFields) {
-        checkField(field, _primary, _incoming, policy);
+    for (const auto &desc : trackFields) {
+        desc->apply(_primary, _incoming, policy);
     }
-    checkField(TagField::AlbumCover, _primary, _incoming, policy);
-}
-
-bool TagService::shouldApply(TagField _field, const std::string &_current,
-                             const std::string &_incoming,
-                             const SourcePolicy &_policy) {
-
-    if (_incoming.empty())
-        return false;
-
-    if (_policy.trustedFields.find(_field) != _policy.trustedFields.end())
-        return _current != _incoming;
-
-    if (_policy.emptyOnlyFields.find(_field) != _policy.emptyOnlyFields.end())
-        return _current.empty() && _current != _incoming;
-
-    return false;
-}
-
-bool TagService::shouldApply(TagField _field,
-                             const std::vector<std::byte> &_current,
-                             const std::vector<std::byte> &_incoming,
-                             const SourcePolicy &_policy) {
-
-    if (_incoming.empty())
-        return false;
-
-    if (_policy.trustedFields.find(_field) != _policy.trustedFields.end())
-        return _current != _incoming;
-
-    if (_policy.emptyOnlyFields.find(_field) != _policy.emptyOnlyFields.end())
-        return _current.empty() && _current != _incoming;
-
-    return false;
-}
-
-void TagService::checkField(TagField _field, std::shared_ptr<ITrack> _target,
-                            std::shared_ptr<ITrack> _source,
-                            const SourcePolicy &_policy) {
-    // image needs to be handled separately
-    if (_field == TagField::AlbumCover) {
-        if (!shouldApply(_field, _target->get_image(), _source->get_image(),
-                         _policy))
-            return;
-        std::cout << "Changed albumCover\n";
-        _target->set_image(_source->get_image());
-        return;
-    }
-
-    auto it = trackFields.find(_field);
-
-    if (it == trackFields.end())
-        return;
-
-    const auto &desc = it->second;
-
-    auto current = (desc.getter)(_target);
-    auto incoming = (desc.getter)(_source);
-
-    if (!shouldApply(_field, current, incoming, _policy))
-        return;
-
-    std::cout << "Changed " << desc.name << " from '" << current << "' to '"
-              << incoming << "'\n";
-
-    (desc.setter)(_target, incoming);
 }

@@ -6,14 +6,17 @@ namespace Spotify {
 Track::Track(const std::string &_id, const std::string &_name, State _state,
              std::size_t _discNumber, std::size_t _length,
              bool _explicitContent, std::size_t _trackNumber,
-             std::shared_ptr<IAlbum> _album,
+             std::shared_ptr<Album> _album,
              const std::vector<std::shared_ptr<IArtist>> &_artists,
              IMediaService *_mediaService)
-    : ITrack(_id, _name, _state, _album->get_imageUrl(), _mediaService),
+    : ITrack(_id, _state, _mediaService), name(_name),
+      imageProvider(_album->get_imageProvider().get_imageUrl(),
+                    _album->get_image()),
       discNumber(_discNumber), length(_length),
       explicitContent(_explicitContent), trackNumber(_trackNumber),
       album(_album), artists(_artists), genre(""), downloaded(false) {}
 
+const std::string &Track::get_name() const { return name; }
 const std::vector<std::shared_ptr<IArtist>> &Track::get_artists() {
     return artists;
 }
@@ -31,12 +34,16 @@ const std::string &Track::get_genre() const { return genre; }
 std::size_t Track::get_year() const { return album->get_year(); }
 const std::string &Track::get_label() const { return album->get_label(); }
 bool Track::is_verified() const { return downloaded; }
+std::vector<std::byte> Track::get_image() { return imageProvider.get_image(); }
 
+void Track::set_name(const std::string &_name) {
+    static_assert("Spotify Object is not mutable!");
+}
 void Track::set_artist(const std::string &_artist) {
     static_assert("Spotify Object is not mutable!");
 }
 void Track::set_albumName(const std::string &_albumName) {
-    album->set_name(_albumName);
+    static_assert("Spotify Object is not mutable!");
 }
 void Track::set_albumArtist(const std::string &_albumArtist) {
     static_assert("Spotify Object is not mutable!");
@@ -54,6 +61,9 @@ void Track::set_discNumber(std::size_t _discNumber) {
     static_assert("Spotify Object is not mutable!");
 }
 void Track::set_verified(bool _verified) { downloaded = _verified; }
+void Track::set_image(const std::vector<std::byte> &_imageData) {
+    imageProvider.set_image(_imageData);
+}
 // const std::string &Track::get_genre() const { return genre; }
 
 // bool Track::isDownloaded() const { return downloaded; }

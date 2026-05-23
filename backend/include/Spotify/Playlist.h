@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interfaces/IPlaylist.h"
+#include "Interfaces/IRemoteImageProvider.h"
 
 namespace Spotify {
 class User;
@@ -11,9 +12,13 @@ class Playlist : public IPlaylist {
              IMediaService *_mediaService);
     ~Playlist() = default;
 
+    const std::string &get_name() const override;
+    std::vector<std::byte> get_image() override;
     inline std::shared_ptr<User> get_creator() const { return creator; }
 
   private:
+    std::string name;
+    IRemoteImageProvider imageProvider;
     std::shared_ptr<User> creator;
 };
 

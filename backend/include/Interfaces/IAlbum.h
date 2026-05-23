@@ -6,10 +6,9 @@ class ITrack;
 
 class IAlbum : public MediaEntityBase {
   public:
-    explicit IAlbum(const std::string &_id, const std::string &_name,
-                    State _state, const std::string &_imageURL,
+    explicit IAlbum(const std::string &_id, State _state,
                     IMediaService *_mediaService)
-        : MediaEntityBase(_id, _name, _state, _imageURL, _mediaService) {}
+        : MediaEntityBase(_id, _state, _mediaService) {}
     ~IAlbum() = default;
 
     enum album_type_t { UNDEFINED, ALBUM, SINGLE, COMPILATION };

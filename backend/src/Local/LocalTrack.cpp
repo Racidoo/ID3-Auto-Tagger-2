@@ -2,13 +2,14 @@
 
 LocalTrack::LocalTrack(const std::filesystem::path &_path,
                        IMediaService *_mediaService)
-    : ITrack(_path.stem(), "", IMediaEntity::State::None, "", _mediaService),
-      filepath(_path), length(0) {
+    : ITrack(_path.stem(), IMediaEntity::State::None, _mediaService),
+      filepath(_path), imageProvider(_path), length(0) {
     ensurePreviewTagsLoaded();
 }
 
 LocalTrack::~LocalTrack() {}
 
+const std::string &LocalTrack::get_name() const { return name; }
 std::string LocalTrack::get_artist() const { return artist; }
 const std::string &LocalTrack::get_albumName() const { return album; }
 const std::string &LocalTrack::get_genre() const { return genre; }
@@ -27,54 +28,10 @@ std::string LocalTrack::get_channels() const {
     return std::to_string(channels);
 }
 
-// IMediaEntity::State LocalTrack::get_state() const { return state; }
-
-const std::vector<std::byte> &LocalTrack::get_image() {
-    if (!cachedImage.empty()) {
-        return cachedImage;
-    }
-
-    TagLib::MPEG::File _track(get_filepath().c_str());
-
-    if (!_track.hasID3v2Tag()) {
-        return cachedImage;
-    }
-    // Get ID3v2 tag
-    auto *tag = _track.ID3v2Tag();
-    if (!tag) {
-        std::cerr << "No ID3v2 tag found in: " << _track.name() << std::endl;
-        return cachedImage;
-    }
-
-    // Search for an APIC (Attached Picture) frame
-    auto frames = tag->frameListMap()["APIC"];
-    if (frames.isEmpty()) {
-        std::cerr << "No album cover found in: " << _track.name() << std::endl;
-        return cachedImage;
-    }
-
-    // Extract image data
-    auto *apic =
-        dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frames.front());
-    if (!apic) {
-        std::cerr << "Invalid APIC frame in: " << _track.name() << std::endl;
-        return cachedImage;
-    }
-
-    // Get raw image data
-    const auto &imageData = apic->picture();
-    if (imageData.isEmpty()) {
-        std::cerr << "APIC frame contains no image data in: " << std::endl;
-        return cachedImage;
-    }
-
-    cachedImage.reserve(imageData.size());
-
-    for (auto c : imageData)
-        cachedImage.push_back(static_cast<std::byte>(c));
-
-    return cachedImage;
+std::vector<std::byte> LocalTrack::get_image() {
+    return imageProvider.get_image();
 }
+
 bool LocalTrack::is_verified() const { return verified; }
 
 const std::filesystem::path &LocalTrack::get_filepath() const {
@@ -168,71 +125,14 @@ void LocalTrack::set_discNumber(std::size_t _discNumber) {
 }
 
 void LocalTrack::set_image(const std::vector<std::byte> &_imageData) {
-
-    auto detectMime = [](const std::vector<std::byte> &data) -> const char * {
-        if (data.size() >= 4) {
-            // JPEG
-            if ((unsigned char)data[0] == 0xFF &&
-                (unsigned char)data[1] == 0xD8)
-                return "image/jpeg";
-
-            // PNG
-            if ((unsigned char)data[0] == 0x89 &&
-                (unsigned char)data[1] == 0x50 &&
-                (unsigned char)data[2] == 0x4E &&
-                (unsigned char)data[3] == 0x47)
-                return "image/png";
-        }
-        return "image/jpeg"; // fallback
-    };
-
-    if (_imageData.empty()) {
-        std::cerr << "Image is empty" << std::endl;
-        return;
-    }
-
-    TagLib::MPEG::File file(filepath.c_str());
-
-    if (!file.isValid()) {
-        std::cerr << "Invalid MP3 file: " << filepath << std::endl;
-        return;
-    }
-
-    // Get the ID3v2 tag (create one if it doesn’t exist)
-    TagLib::ID3v2::Tag *tag = file.ID3v2Tag(true);
-    if (!tag) {
-        std::cerr << "Failed to get ID3v2 tag!" << std::endl;
-        return;
-    }
-
-    // Remove existing album art
-    auto frames = tag->frameListMap()["APIC"];
-    for (auto *frame : frames) {
-        tag->removeFrame(frame, true);
-    }
-
-    // Create new APIC frame
-    auto *pictureFrame = new TagLib::ID3v2::AttachedPictureFrame();
-    pictureFrame->setMimeType(detectMime(_imageData));
-    pictureFrame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
-    pictureFrame->setPicture(
-        TagLib::ByteVector(reinterpret_cast<const char *>(_imageData.data()),
-                           static_cast<unsigned int>(_imageData.size())));
-
-    tag->addFrame(pictureFrame);
-
-    // Save the changes
-    if (!file.save()) {
-        std::cerr << "Failed to save changes!" << std::endl;
-        return;
-    }
-    cachedImage = _imageData;
+    imageProvider.set_image(_imageData);
 }
 
 void LocalTrack::set_verified(bool _verified) { verified = _verified; }
 
 void LocalTrack::set_filepath(const std::filesystem::path &_filepath) {
     filepath = _filepath;
+    imageProvider.set_filepath(filepath);
     id = filepath.stem();
     state = IMediaEntity::State::None;
     ensurePreviewTagsLoaded();

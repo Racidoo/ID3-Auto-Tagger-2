@@ -6,9 +6,8 @@
 
 class IPlaylist : public MediaEntityBase {
   public:
-    explicit IPlaylist(const std::string &_id, const std::string &_name,
-                       State _state, const std::string &_imageURL,
+    explicit IPlaylist(const std::string &_id, State _state,
                        IMediaService *_mediaService)
-        : MediaEntityBase(_id, _name, _state, _imageURL, _mediaService) {}
+        : MediaEntityBase(_id, _state, _mediaService) {}
     ~IPlaylist() = default;
 };
