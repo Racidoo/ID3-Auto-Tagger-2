@@ -24,7 +24,7 @@ class TrackModelRow {
     std::string sortArtist;
     std::string sortAlbum;
     std::string sortGenre;
-    std::size_t sortTracknumber;
+    std::optional<std::size_t> sortTracknumber;
     std::size_t sortLength;
 
   public:
@@ -44,14 +44,14 @@ class TrackModelRow {
     const wxString &get_album() const;
     const wxString &get_genre() const;
     const wxString &get_length() const;
-    const wxString& get_tracknumber() const;
+    const wxString &get_tracknumber() const;
 
     const std::string &get_sortTitle() const;
     const std::string &get_sortArtist() const;
     const std::string &get_sortAlbum() const;
     const std::string &get_sortGenre() const;
     std::size_t get_sortLength() const;
-    std::size_t get_sortTracknumber() const;
+    std::optional<std::size_t> get_sortTracknumber() const;
 
     void set_status(const DownloadStatus &_status);
 

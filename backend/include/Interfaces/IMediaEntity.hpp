@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -12,13 +13,16 @@ class IMediaEntity : public std::enable_shared_from_this<IMediaEntity> {
     virtual ~IMediaEntity() = default;
 
     virtual const std::string &get_id() const = 0;
-    virtual const std::string &get_name() const = 0;
-    virtual std::vector<std::byte> get_image() = 0;
+    virtual std::optional<std::string> get_name() const = 0;
+    virtual std::optional<std::vector<std::byte>> get_image() = 0;
     virtual void ensureLoaded() = 0;
 
     template <typename T>
-    static std::string vecToStr(const std::vector<T> &_objects,
-                                const std::string &_sep = ", ") {
+    static std::optional<std::string> vecToStr(const std::vector<T> &_objects,
+                                               const std::string &_sep = ", ") {
+        if (_objects.empty())
+            return std::nullopt;
+            
         using RawT = typename std::remove_reference<decltype(deref(
             std::declval<T>()))>::type;
 
@@ -31,7 +35,7 @@ class IMediaEntity : public std::enable_shared_from_this<IMediaEntity> {
             if (i != 0)
                 ss << _sep;
 
-            ss << deref(_objects[i]).get_name();
+            ss << deref(_objects[i]).get_name().value();
         }
 
         return ss.str();

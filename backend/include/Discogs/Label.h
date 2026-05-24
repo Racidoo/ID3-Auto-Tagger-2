@@ -7,15 +7,15 @@ namespace Discogs {
 
 class Label : public MediaEntityBase {
   public:
-    Label(int _id, const std::string &_name, State _state,
+    Label(int _id, const std::optional<std::string> &_name, State _state,
           const std::string &_imageUrl, IMediaService *_mediaService);
     ~Label() = default;
 
-    const std::string &get_name() const override;
-    std::vector<std::byte> get_image() override;
+    std::optional<std::string> get_name() const override;
+    std::optional<std::vector<std::byte>> get_image() override;
 
   private:
-    std::string name;
+    std::optional<std::string> name;
     IRemoteImageProvider imageProvider;
 };
 } // namespace Discogs

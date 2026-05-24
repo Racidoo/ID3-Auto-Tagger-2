@@ -7,12 +7,14 @@ wxDEFINE_EVENT(EVT_MEDIA_LABEL_CLICKED, wxCommandEvent);
 MediaLabel::MediaLabel(wxWindow *_parent, std::shared_ptr<IMediaEntity> _source,
                        const std::vector<wxString> &_infoLines)
     : wxPanel(_parent, wxID_ANY, wxDefaultPosition), source(_source) {
-    auto coverBitmap = new wxStaticBitmap(
-        this, wxID_ANY,
-        MediaLabel::loadImage(_source->get_image(), wxSize(150, 150)));
-    auto titleText =
-        new ScrollText(this, wxID_ANY, wxString::FromUTF8(_source->get_name()),
-                       wxDefaultPosition, wxSize(150, -1));
+    auto coverBitmap =
+        new wxStaticBitmap(this, wxID_ANY,
+                           MediaLabel::loadImage(_source->get_image().value_or(
+                                                     std::vector<std::byte>{}),
+                                                 wxSize(150, 150)));
+    auto titleText = new ScrollText(
+        this, wxID_ANY, wxString::FromUTF8(_source->get_name().value()),
+        wxDefaultPosition, wxSize(150, -1));
     // titleText->Wrap(150);
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);

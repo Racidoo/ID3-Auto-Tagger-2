@@ -23,7 +23,7 @@ SettingsWindow::SettingsWindow(wxWindow *_parent,
     auto googleAuthTokenButton =
         new wxButton(this, wxID_ANY, wxT("Google API Authentication"));
     googleAuthTokenButton->Bind(wxEVT_BUTTON, [googleAuthTokenDialog,
-                                               googleAuthIcon, &_registry,
+                                               googleAuthIcon, _registry,
                                                this](wxCommandEvent &event) {
         if (googleAuthTokenDialog->ShowModal() == wxID_OK) {
             googleAuthIcon->SetBitmap(
@@ -49,7 +49,7 @@ SettingsWindow::SettingsWindow(wxWindow *_parent,
         new wxButton(this, wxID_ANY, wxT("Spotify API Authentication"));
     spotifyCredentialsButton->Bind(
         wxEVT_BUTTON, [spotifyCredentialsDialog, spotifyCredentialsIcon,
-                       &_registry, this](wxCommandEvent &event) {
+                       _registry, this](wxCommandEvent &event) {
             if (spotifyCredentialsDialog->ShowModal() == wxID_OK) {
                 spotifyCredentialsIcon->SetBitmap(
                     _registry->initializeSpotify(
@@ -77,7 +77,7 @@ SettingsWindow::SettingsWindow(wxWindow *_parent,
         new wxButton(this, wxID_ANY, wxT("Discogs API Authentication"));
     discogsCredentialsButton->Bind(
         wxEVT_BUTTON, [discogsCredentialsDialog, discogsCredentialsIcon,
-                       &_registry, this](wxCommandEvent &event) {
+                       _registry, this](wxCommandEvent &event) {
             if (discogsCredentialsDialog->ShowModal() == wxID_OK) {
                 discogsCredentialsIcon->SetBitmap(
                     _registry->initializeDiscogs(
@@ -95,7 +95,7 @@ SettingsWindow::SettingsWindow(wxWindow *_parent,
     auto musicPathButton =
         new wxButton(this, wxID_ANY, wxT("Select save folder"));
     musicPathButton->Bind(
-        wxEVT_BUTTON, [this, &_registry](wxCommandEvent &event) {
+        wxEVT_BUTTON, [this, _registry](wxCommandEvent &event) {
             wxDirDialog dlg(this, "Select folder", "",
                             wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 

@@ -2,11 +2,13 @@
 
 namespace Discogs {
 
-Label::Label(int _id, const std::string &_name, State _state,
+Label::Label(int _id, const std::optional<std::string> &_name, State _state,
              const std::string &_imageUrl, IMediaService *_mediaService)
     : MediaEntityBase(std::to_string(_id), _state, _mediaService), name(_name),
       imageProvider(_imageUrl) {}
 
-const std::string &Label::get_name() const { return name; }
-std::vector<std::byte> Label::get_image() { return imageProvider.get_image(); }
+std::optional<std::string> Label::get_name() const { return name; }
+std::optional<std::vector<std::byte>> Label::get_image() {
+    return imageProvider.get_image();
+}
 } // namespace Discogs

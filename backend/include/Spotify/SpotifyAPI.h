@@ -41,14 +41,6 @@ class SpotifyAPI : public Query, public IMediaService {
         // AUDIOBOOK
     };
 
-    // struct TrackSearchContext {
-    //     std::string title;
-    //     std::string artist;
-    //     std::string album;
-    //     std::string filename;
-    //     std::size_t durationSeconds = 0;
-    // };
-
     std::vector<std::shared_ptr<ITrack>>
     searchTrack(const std::string &_query, const std::string &_market = "",
                 unsigned int _limit = 0, const std::string &_offset = "");
@@ -87,6 +79,10 @@ class SpotifyAPI : public Query, public IMediaService {
     std::string accessToken;
     std::string clientId;
     std::string clientSecret;
+
+    std::unordered_map<std::string, std::shared_ptr<Album>> cachedAlbums;
+    std::unordered_map<std::string, std::shared_ptr<Artist>> cachedArtists;
+    std::unordered_map<std::string, std::shared_ptr<Track>> cachedTracks;
 
     void prepareHeaders(struct curl_slist *&_headers) override;
     std::string prepareUrl(const std::string &_url) override;

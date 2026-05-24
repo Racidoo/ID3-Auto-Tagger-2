@@ -1,7 +1,6 @@
 #include "Windows/TrackEditWindow.h"
 #include "Components/LabeledTextCtrl.h"
 #include "Components/MediaLabel.h"
-#include "Interfaces/ITrack.h"
 
 TrackEditWindow::TrackEditWindow(wxWindow *_parent, wxWindowID _winid,
                                  const wxPoint &_pos, const wxSize &_size)
@@ -104,28 +103,37 @@ void TrackEditWindow::set_selected(
 
 void TrackEditWindow::Update() {
 
-    albumCover->SetBitmap(getCommonBitmap(
-        wxSize(300, 300), [](auto t) { return t->get_image(); }));
+    albumCover->SetBitmap(getCommonBitmap(wxSize(300, 300), [](auto t) {
+        return t->get_image().value_or(std::vector<std::byte>{});
+    }));
     titleText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_name(); }));
+        getCommonAttribute([](auto t) { return t->get_name().value(); }));
     artistText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_artist(); }));
+        getCommonAttribute([](auto t) { return t->get_artist().value(); }));
     albumText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_albumName(); }));
-    yearText->SetValue(getCommonAttribute(
-        [](auto t) { return std::to_string(t->get_year()); }));
-    trackNumberText->SetValue(getCommonAttribute(
-        [](auto t) { return std::to_string(t->get_trackNumber()); }));
+        getCommonAttribute([](auto t) { return t->get_albumName().value(); }));
+    yearText->SetValue(getCommonAttribute([](auto t) {
+        return t->get_year().has_value() ? std::to_string(t->get_year().value())
+                                         : "";
+    }));
+    trackNumberText->SetValue(getCommonAttribute([](auto t) {
+        return t->get_trackNumber().has_value()
+                   ? std::to_string(t->get_trackNumber().value())
+                   : "";
+    }));
     genreText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_genre(); }));
-    albumArtistsText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_albumArtist(); }));
-    discNumberText->SetValue(getCommonAttribute(
-        [](auto t) { return std::to_string(t->get_discNumber()); }));
+        getCommonAttribute([](auto t) { return t->get_genre().value(); }));
+    albumArtistsText->SetValue(getCommonAttribute(
+        [](auto t) { return t->get_albumArtist().value(); }));
+    discNumberText->SetValue(getCommonAttribute([](auto t) {
+        return t->get_discNumber().has_value()
+                   ? std::to_string(t->get_discNumber().value())
+                   : "";
+    }));
     labelText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_label(); }));
+        getCommonAttribute([](auto t) { return t->get_label().value(); }));
     copyrightText->SetValue(
-        getCommonAttribute([](auto t) { return t->get_copyright(); }));
+        getCommonAttribute([](auto t) { return t->get_copyright().value(); }));
     filenameText->SetValue(
         getCommonAttribute([](auto t) { return t->get_id(); }));
     // bitrateText->SetValue(getCommonAttribute([](auto t) {

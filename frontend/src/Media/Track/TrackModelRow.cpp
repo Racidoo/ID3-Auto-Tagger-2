@@ -26,7 +26,7 @@ const std::string &TrackModelRow::get_sortArtist() const { return sortArtist; }
 const std::string &TrackModelRow::get_sortAlbum() const { return sortAlbum; }
 const std::string &TrackModelRow::get_sortGenre() const { return sortGenre; }
 std::size_t TrackModelRow::get_sortLength() const { return sortLength; }
-std::size_t TrackModelRow::get_sortTracknumber() const {
+std::optional<std::size_t> TrackModelRow::get_sortTracknumber() const {
     return sortTracknumber;
 }
 
@@ -71,12 +71,15 @@ const wxBitmap &TrackModelRow::GetDeleteBitmap() {
 
 void TrackModelRow::RebuildSortCache() {
 
-    cover = MediaLabel::loadImage(track->get_image(), wxSize(64, 64));
-    title = wxString::FromUTF8(track->get_name());
-    artist = wxString::FromUTF8(track->get_artist());
-    album = wxString::FromUTF8(track->get_albumName());
-    genre = wxString::FromUTF8(track->get_genre());
-    tracknumber = std::to_string(track->get_trackNumber());
+    cover = MediaLabel::loadImage(
+        track->get_image().value_or(std::vector<std::byte>{}), wxSize(64, 64));
+    title = wxString::FromUTF8(track->get_name().value());
+    artist = wxString::FromUTF8(track->get_artist().value());
+    album = wxString::FromUTF8(track->get_albumName().value());
+    genre = wxString::FromUTF8(track->get_genre().value());
+    tracknumber = track->get_trackNumber().has_value()
+                      ? std::to_string(track->get_trackNumber().value())
+                      : "";
 
     if (track->is_verified()) {
         status = {100, DownloadState::Verified};

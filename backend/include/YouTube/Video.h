@@ -16,15 +16,15 @@ class Video : public IVideo {
           IMediaService *_mediaService);
     ~Video() = default;
 
-    const std::string &get_name() const override;
-    std::vector<std::byte> get_image() override;
+    std::optional<std::string> get_name() const override;
+    std::optional<std::vector<std::byte>> get_image() override;
     const std::string &get_channelTitle() const;
     const std::string &get_uploadDate() const;
     std::size_t get_length() const override;
     bool get_licensed() const;
 
   private:
-    std::string name;
+    std::optional<std::string> name;
     IRemoteImageProvider imageProvider;
     std::string channelTitle;
     std::string uploadDate;

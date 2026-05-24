@@ -111,7 +111,7 @@ class DiscogsAPI : public Query, public IMediaService {
 
     static std::string normalizeArtistName(std::string _name);
     static std::string normalizeReleaseName(std::string _name);
-    static std::pair<std::size_t, std::size_t>
+    static std::pair<std::optional<std::size_t>, std::optional<std::size_t>>
     normalizePosition(std::string _position);
 };
 

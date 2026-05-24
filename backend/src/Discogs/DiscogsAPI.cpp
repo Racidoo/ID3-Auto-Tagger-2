@@ -300,12 +300,12 @@ std::vector<Label> DiscogsAPI::createLabels(const json &_jsonLabels,
 
 std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
     bool fallbackUsed(false);
-    std::size_t year(0);
+    std::optional<std::size_t> year;
     if (_jsonRelease.contains("year")) {
         if (_jsonRelease["year"].is_string()) {
-            year = std::stoi(_jsonRelease["year"].get<std::string>());
+            year.emplace(std::stoi(_jsonRelease["year"].get<std::string>()));
         } else {
-            year = _jsonRelease["year"].get<std::size_t>();
+            year.emplace(_jsonRelease["year"].get<std::size_t>());
         }
     }
 
@@ -317,14 +317,11 @@ std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
             getOptional<json>(_jsonRelease, "artists", {}, fallbackUsed)),
         getOptional<int>(_jsonRelease, "master_id", 0, fallbackUsed),
         IAlbum::album_type_t::UNDEFINED,
-        // getOptional<std::string>(_jsonRelease, "country", "", fallbackUsed),
         parseStyles(_jsonRelease, fallbackUsed),
         createLabels(
             getOptional<json>(_jsonRelease, "labels", {}, fallbackUsed),
             fallbackUsed),
-        "<copyright>",
-        // getOptional<std::string>(_jsonRelease, "released", "", fallbackUsed),
-        year, parseVideos(_jsonRelease, fallbackUsed),
+        "<copyright>", year, parseVideos(_jsonRelease, fallbackUsed),
         getOptional<std::string>(_jsonRelease, "data_quality", "",
                                  fallbackUsed) == "Correct",
         this);
@@ -500,7 +497,7 @@ std::string DiscogsAPI::normalizeReleaseName(std::string _name) {
  * @param _position
  * @return discnumber, tracknumber
  */
-std::pair<std::size_t, std::size_t>
+std::pair<std::optional<std::size_t>, std::optional<std::size_t>>
 DiscogsAPI::normalizePosition(std::string _position) {
 
     std::smatch match;
@@ -536,7 +533,7 @@ DiscogsAPI::normalizePosition(std::string _position) {
         return {1, std::stoul(match[1].str())};
     }
 
-    return {0, 0};
+    return {std::nullopt, std::nullopt};
 }
 
 } // namespace Discogs

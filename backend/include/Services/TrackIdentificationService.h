@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,8 +23,8 @@ class TrackIdentificationService {
     };
 
     struct AggregatedTrack {
-        std::vector<std::shared_ptr<ITrack>> sources;
-        std::vector<std::shared_ptr<IVideo>> videos;
+        std::map<double, std::shared_ptr<ITrack>> sources;
+        std::map<double, std::shared_ptr<IVideo>> videos;
 
         // std::string title;
         // std::string album;

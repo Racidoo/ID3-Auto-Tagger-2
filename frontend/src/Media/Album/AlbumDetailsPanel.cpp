@@ -35,17 +35,18 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
 
     auto albumCoverBitmap = new wxStaticBitmap(
         this, wxID_ANY,
-        MediaLabel::loadImage(album->get_image(), wxSize(256, 265)));
+        MediaLabel::loadImage(album->get_image().value(), wxSize(256, 265)));
 
     // auto albumTypeText =
-    //     new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_type()));
+    //     new wxStaticText(this, wxID_ANY,
+    //     wxString::FromUTF8(album->get_type()));
     // auto typeFont = albumTypeText->GetFont();
     // typeFont.SetPointSize(8);
     // typeFont.SetWeight(wxFONTWEIGHT_LIGHT);
     // albumTypeText->SetFont(typeFont);
 
-    auto titleText =
-        new wxStaticText(this, wxID_ANY, wxString::FromUTF8(album->get_name()));
+    auto titleText = new wxStaticText(
+        this, wxID_ANY, wxString::FromUTF8(album->get_name().value()));
     auto titleFont = titleText->GetFont();
     // ToDo: Adjust later, based of the length and available space from parent
     // window
@@ -55,11 +56,15 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
 
     auto artistCoverBitmap = new wxStaticBitmap(
         this, wxID_ANY,
-        MediaLabel::loadImage(album->get_artistImage(), wxSize(32, 32)));
-    auto artistText = new wxStaticText(this, wxID_ANY,
-                                       wxString::FromUTF8(album->get_artist()));
+        MediaLabel::loadImage(album->get_artistImage().value(),
+                              wxSize(32, 32)));
+    auto artistText = new wxStaticText(
+        this, wxID_ANY, wxString::FromUTF8(album->get_artist().value()));
     auto yearText = new wxStaticText(
-        this, wxID_ANY, wxString::FromUTF8(std::to_string(album->get_year())));
+        this, wxID_ANY,
+        wxString::FromUTF8(album->get_year().has_value()
+                               ? std::to_string(album->get_year().value())
+                               : ""));
     auto totalTracksText = new wxStaticText(
         this, wxID_ANY,
         wxString(std::to_string(album->get_tracklist().size()) + " tracks"));

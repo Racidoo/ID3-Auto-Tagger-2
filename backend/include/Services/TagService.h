@@ -2,8 +2,9 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 
-#include "Interfaces/ITrack.h"
+#include "Interfaces/ITrackMutable.h"
 #include "Services/SearchService.h"
 
 class TagService {
@@ -49,7 +50,7 @@ class TagService {
     struct ITrackFieldDescriptor {
         virtual ~ITrackFieldDescriptor() = default;
 
-        virtual void apply(std::shared_ptr<ITrack> _target,
+        virtual void apply(std::shared_ptr<ITrackMutable> _target,
                            std::shared_ptr<ITrack> _source,
                            const SourcePolicy &_policy) const = 0;
     };
@@ -59,22 +60,21 @@ class TagService {
         const char *name;
 
         std::function<T(std::shared_ptr<ITrack>)> getter;
-        std::function<void(std::shared_ptr<ITrack>, const T &)> setter;
+        std::function<void(std::shared_ptr<ITrackMutable>, const T &)> setter;
 
         TrackFieldDescriptor(
             TagField _field, const char *_name,
             std::function<T(std::shared_ptr<ITrack>)> _getter,
-            std::function<void(std::shared_ptr<ITrack>, const T &)> _setter)
+            std::function<void(std::shared_ptr<ITrackMutable>, const T &)>
+                _setter)
             : field(_field), name(_name), getter(std::move(_getter)),
               setter(std::move(_setter)) {}
 
-        void apply(std::shared_ptr<ITrack> _target,
+        void apply(std::shared_ptr<ITrackMutable> _target,
                    std::shared_ptr<ITrack> _source,
                    const SourcePolicy &_policy) const override {
             auto current = getter(_target);
             auto incoming = getter(_source);
-            std::cout << "incoming image size: " << incoming.size()
-                      << std::endl;
             if (!TagService::shouldApply(field, current, incoming, _policy))
                 return;
 
@@ -83,16 +83,18 @@ class TagService {
         }
     };
 
-    static bool researchMissingTags(std::shared_ptr<ITrack> _track,
-                                    SearchService *_searchService);
+    static std::string
+    researchMissingTags(std::shared_ptr<ITrackMutable> _track,
+                        SearchService *_searchService);
     static std::string researchVideoId(std::shared_ptr<ITrack> _track,
                                        SearchService *_searchService);
-    static void applyDifferences(std::shared_ptr<ITrack> _current,
+    static void applyDifferences(std::shared_ptr<ITrackMutable> _current,
                                  std::shared_ptr<ITrack> _incoming);
     template <typename T>
-    static bool shouldApply(TagField _field, const T &_current,
-                            const T &_incoming, const SourcePolicy &_policy) {
-        if (_incoming.empty())
+    static bool shouldApply(TagField _field, const std::optional<T> &_current,
+                            const std::optional<T> &_incoming,
+                            const SourcePolicy &_policy) {
+        if (!_incoming.has_value())
             return false;
 
         if (_policy.trustedFields.find(_field) != _policy.trustedFields.end())
@@ -100,7 +102,7 @@ class TagService {
 
         if (_policy.emptyOnlyFields.find(_field) !=
             _policy.emptyOnlyFields.end())
-            return _current.empty() && _current != _incoming;
+            return !_current.has_value() && _current != _incoming;
 
         return false;
     }

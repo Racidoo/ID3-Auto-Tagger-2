@@ -9,8 +9,8 @@ Playlist::Playlist(const std::string &_id, const std::string &_name,
     : IPlaylist(_id, _state, _mediaService), name(_name),
       imageProvider(_imageURL), creator(_creator) {}
 
-const std::string &Playlist::get_name() const { return name; }
-std::vector<std::byte> Playlist::get_image() {
+std::optional<std::string> Playlist::get_name() const { return name; }
+std::optional<std::vector<std::byte>> Playlist::get_image() {
     return imageProvider.get_image();
 }
 } // namespace Spotify

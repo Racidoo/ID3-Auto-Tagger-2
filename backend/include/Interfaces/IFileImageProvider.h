@@ -17,12 +17,13 @@ class IFileImageProvider : public IImageProvider {
   public:
     explicit IFileImageProvider(const std::filesystem::path &_path);
 
-    std::vector<std::byte> get_image() override;
+    std::optional<std::vector<std::byte>> get_image() override;
 
     void set_filepath(const std::filesystem::path &_filepath);
-    void set_image(const std::vector<std::byte> &_imageData) override;
+    void
+    set_image(const std::optional<std::vector<std::byte>> &_imageData) override;
 
   private:
     std::filesystem::path filepath;
-    std::vector<std::byte> cachedImage;
+    std::optional<std::vector<std::byte>> cachedImage;
 };

@@ -117,7 +117,7 @@ SpotifyWindow::SpotifyWindow(wxWindow *_parent, MediaServiceRegistry *_registry)
         } else if (auto album = std::dynamic_pointer_cast<IAlbum>(source)) {
             wxLogDebug(wxT("album"));
             wxDialog dialog(this, wxID_ANY,
-                            "Albumdetails: " + album->get_name(),
+                            "Albumdetails: " + album->get_name().value(),
                             wxDefaultPosition, wxSize(800, 600),
                             wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
             dialog.SetMinSize(wxSize(800, 600));
@@ -205,8 +205,10 @@ void SpotifyWindow::showSearchResults(
             for (auto album : result.albums)
                 albumWindow->appendChildren(new MediaLabel(
                     albumWindow, album,
-                    {wxString(album->get_artist()),
-                     wxString(std::to_string(album->get_year()))}));
+                    {wxString(album->get_artist().value()),
+                     wxString(album->get_year().has_value()
+                                  ? std::to_string(album->get_year().value())
+                                  : "")}));
         } else {
             // albumWindow->Hide();
         }

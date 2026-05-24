@@ -4,66 +4,69 @@
 
 TrackIdentificationService::SearchQuery::SearchQuery(
     std::shared_ptr<ITrack> _track) {
-    title = _track->get_name();
-    album = _track->get_albumName();
+    title = _track->get_name().value_or("");
+    album = _track->get_albumName().value_or("");
     filename = _track->get_id();
     durationSeconds = _track->get_length();
 }
 
-std::shared_ptr<ITrack> TrackIdentificationService::findBestMatch(
-    const SearchQuery &_query,
-    const std::vector<std::shared_ptr<ITrack>> &_candidates) {
+// std::shared_ptr<ITrack> TrackIdentificationService::findBestMatch(
+//     const SearchQuery &_query,
+//     const std::vector<std::shared_ptr<ITrack>> &_candidates) {
 
-    double bestScore(0.0);
-    std::vector<std::shared_ptr<ITrack>> topMatches;
-    int num_res(0);
-    double allScores(0.0);
-    for (auto &&track : _candidates) {
-        num_res++;
-        double score(0.0);
-        score += similarityScore(_query.title, track->get_name());
-        score += similarityScore(_query.durationSeconds, track->get_length());
+//     double bestScore(0.0);
+//     std::vector<std::shared_ptr<ITrack>> topMatches;
+//     int num_res(0);
+//     double allScores(0.0);
+//     for (auto &&track : _candidates) {
+//         num_res++;
+//         double score(0.0);
+//         score += similarityScore(_query.title,
+//         track->get_name().value_or("")); score +=
+//         similarityScore(_query.durationSeconds, track->get_length());
 
-        if (!_query.album.empty()) {
-            score += similarityScore(_query.album, track->get_albumName());
-        }
+//         if (!_query.album.empty()) {
+//             score +=
+//                 similarityScore(_query.album,
+//                 track->get_albumName().value_or(""));
+//         }
 
-        // Bonus, if album is single
-        if (auto spotifyTrack =
-                std::dynamic_pointer_cast<Spotify::Track>(track)) {
-            if (spotifyTrack->get_album()->get_type() ==
-                IAlbum::album_type_t::SINGLE) {
-                score += 1;
-            }
-        }
-        if (auto discogsTrack =
-                std::dynamic_pointer_cast<Discogs::ReleaseTrack>(track)) {
-            if (discogsTrack->get_release().lock()->get_type() ==
-                IAlbum::album_type_t::SINGLE) {
-                score += 1;
-            }
-        }
-        std::cout << track->get_id() << "\tscore: " << score << std::endl;
+//         // Bonus, if album is single
+//         if (auto spotifyTrack =
+//                 std::dynamic_pointer_cast<Spotify::Track>(track)) {
+//             if (spotifyTrack->get_album()->get_type() ==
+//                 IAlbum::album_type_t::SINGLE) {
+//                 score += 1;
+//             }
+//         }
+//         if (auto discogsTrack =
+//                 std::dynamic_pointer_cast<Discogs::ReleaseTrack>(track)) {
+//             if (discogsTrack->get_release().lock()->get_type() ==
+//                 IAlbum::album_type_t::SINGLE) {
+//                 score += 1;
+//             }
+//         }
+//         std::cout << track->get_id() << "\tscore: " << score << std::endl;
 
-        if (score > bestScore) {
-            bestScore = score;
-            topMatches.clear();
-            topMatches.push_back(track);
-        } else if (score == bestScore) {
-            topMatches.push_back(track);
-        }
-        allScores += score;
-    }
-    double middle = allScores / num_res;
+//         if (score > bestScore) {
+//             bestScore = score;
+//             topMatches.clear();
+//             topMatches.push_back(track);
+//         } else if (score == bestScore) {
+//             topMatches.push_back(track);
+//         }
+//         allScores += score;
+//     }
+//     double middle = allScores / num_res;
 
-    std::cout << "Mean deviation: " << bestScore - middle << std::endl;
+//     std::cout << "Mean deviation: " << bestScore - middle << std::endl;
 
-    if (bestScore < 1.4) {
-        return nullptr;
-    }
+//     if (bestScore < 1.4) {
+//         return nullptr;
+//     }
 
-    return topMatches[0];
-}
+//     return topMatches[0];
+// }
 
 std::vector<TrackIdentificationService::AggregatedTrack>
 TrackIdentificationService::aggregate(
@@ -88,7 +91,8 @@ TrackIdentificationService::aggregate(
         for (auto &group : aggregated) {
 
             if (isSameTrack(track, group.primary)) {
-                group.sources.push_back(track);
+                group.sources.insert(
+                    {scoreTracks(track, group.primary), track});
                 merged = true;
                 break;
             }
@@ -97,7 +101,7 @@ TrackIdentificationService::aggregate(
         if (!merged) {
             AggregatedTrack group;
             group.primary = track;
-            group.sources.push_back(track);
+            group.sources.insert({scoreTracks(track, group.primary), track});
 
             aggregated.push_back(group);
         }
@@ -125,16 +129,18 @@ TrackIdentificationService::merge(std::shared_ptr<ITrack> _master,
     }
 
     for (auto &&track : allTracks) {
-        if (isSameTrack(track, aggregated.primary)) {
-            aggregated.sources.push_back(track);
+        if (auto score = scoreTracks(track, aggregated.primary); score >= 0.8) {
+            auto it = aggregated.sources.insert({score, track});
+            std::cout << (it.first)->second->get_id() << ": "
+                      << (it.first)->first << std::endl;
         } else {
-            std::cout << track->get_id() << " is not similar to "
-                      << aggregated.primary->get_id() << std::endl;
+            // std::cout << track->get_id() << " is not similar to "
+            //           << aggregated.primary->get_id() << std::endl;
         }
     }
     for (auto &&video : allVideos) {
-        if (isSameTrack(video, aggregated.primary)) {
-            aggregated.videos.push_back(video);
+        if (auto score = scoreTracks(video, aggregated.primary); score >= 0.8) {
+            auto it = aggregated.videos.insert({score, video});
         } else {
             std::cout << video->get_id() << " is not similar to "
                       << aggregated.primary->get_id() << std::endl;
@@ -158,22 +164,27 @@ double
 TrackIdentificationService::scoreTracks(const std::shared_ptr<ITrack> &_a,
                                         const std::shared_ptr<ITrack> &_b) {
 
-    auto nameScore = similarityScore(_a->get_name(), _b->get_name()) * 0.35;
-    auto artistScore =
-        similarityScore(_a->get_artist(), _b->get_artist()) * 0.35;
-    auto albumNameScore =
-        similarityScore(_a->get_albumName(), _b->get_albumName()) * 0.1;
+    auto nameScore = similarityScore(_a->get_name().value_or(""),
+                                     _b->get_name().value_or("")) *
+                     0.35;
+    auto artistScore = similarityScore(_a->get_artist().value_or(""),
+                                       _b->get_artist().value_or("")) *
+                       0.35;
+    auto albumNameScore = similarityScore(_a->get_albumName().value_or(""),
+                                          _b->get_albumName().value_or("")) *
+                          0.1;
     auto lengthScore =
         similarityScore(_a->get_length(), _b->get_length()) * 0.2;
     auto score = nameScore + artistScore + albumNameScore + lengthScore;
 
     std::cout << _a->get_id() << " == " << _b->get_id() << ": " << score
-              << "\n\tname: " << _a->get_name() << " == " << _b->get_name()
-              << ": " << nameScore << "\n\tartist: " << _a->get_artist()
-              << " == " << _b->get_artist() << ": " << artistScore
-              << "\n\talbumName: " << _a->get_albumName()
-              << " == " << _b->get_albumName() << ": " << albumNameScore
-              << "\n\tlength: " << _a->get_length()
+              << "\n\tname: " << _a->get_name().value_or("")
+              << " == " << _b->get_name().value_or("") << ": " << nameScore
+              << "\n\tartist: " << _a->get_artist().value_or("")
+              << " == " << _b->get_artist().value_or("") << ": " << artistScore
+              << "\n\talbumName: " << _a->get_albumName().value_or("")
+              << " == " << _b->get_albumName().value_or("") << ": "
+              << albumNameScore << "\n\tlength: " << _a->get_length()
               << " == " << _b->get_length() << ": " << lengthScore << std::endl;
     return score;
 }
@@ -182,18 +193,25 @@ double
 TrackIdentificationService::scoreTracks(const std::shared_ptr<IVideo> &_a,
                                         const std::shared_ptr<ITrack> &_b) {
     auto nameScore =
-        static_cast<double>(findInString(_a->get_name(), _b->get_name())) * 0.4;
-    auto artistScore = scoreArtistMatch(_a->get_name(), _b->get_artist()) * 0.4;
+        static_cast<double>(findInString(_a->get_name().value_or(""),
+                                         _b->get_name().value_or(""))) *
+        0.4;
+    auto artistScore = scoreArtistMatch(_a->get_name().value_or(""),
+                                        _b->get_artist().value_or("")) *
+                       0.4;
     auto lengthScore =
         similarityScore(_a->get_length(), _b->get_length()) * 0.2;
     auto score = nameScore + artistScore + lengthScore;
 
-    std::cout << _a->get_id() << " == " << _b->get_id() << ": " << score
-              << "\n\tname: " << _a->get_name() << " == " << _b->get_name()
-              << ": " << nameScore << "\n\tartist: " << _a->get_name()
-              << " == " << _b->get_artist() << ": " << artistScore
-              << "\n\tlength: " << _a->get_length()
-              << " == " << _b->get_length() << ": " << lengthScore << std::endl;
+    // std::cout << _a->get_id() << " == " << _b->get_id() << ": " << score
+    //           << "\n\tname: " << _a->get_name().value_or("")
+    //           << " == " << _b->get_name().value_or("") << ": " << nameScore
+    //           << "\n\tartist: " << _a->get_name().value_or("")
+    //           << " == " << _b->get_artist().value_or("") << ": " <<
+    //           artistScore
+    //           << "\n\tlength: " << _a->get_length()
+    //           << " == " << _b->get_length() << ": " << lengthScore <<
+    //           std::endl;
     return score;
 }
 

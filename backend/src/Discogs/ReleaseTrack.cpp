@@ -6,92 +6,90 @@
 namespace Discogs {
 
 ReleaseTrack::ReleaseTrack(
-    const std::string &_id, const std::string &_name,
+    const std::string &_id, const std::optional<std::string> &_name,
     std::weak_ptr<Release> _release,
     const std::vector<std::shared_ptr<IArtist>> &_artists,
-    std::size_t _duration, const std::size_t &_discnumber,
-    const std::size_t &_tracknumber, IMediaService *_mediaService)
-    : ITrack(_id + "_" + std::to_string(_discnumber) + "_" +
-                 std::to_string(_tracknumber),
+    std::size_t _duration, const std::optional<std::size_t> &_discnumber,
+    const std::optional<std::size_t> &_tracknumber,
+    IMediaService *_mediaService)
+    : ITrack(_id + "_" +
+                 (_discnumber.has_value() ? std::to_string(_discnumber.value())
+                                          : "") +
+                 "_" +
+                 (_tracknumber.has_value()
+                      ? std::to_string(_tracknumber.value())
+                      : ""),
              State::Full, _mediaService),
-      imageProvider(_release.lock()->get_imageProvider().get_imageUrl(),
-                    _release.lock()->get_image()),
       name(_name), release(_release), artists(_artists), duration(_duration),
       discnumber(_discnumber), tracknumber(_tracknumber), verified(false) {}
-const std::string &ReleaseTrack::get_name() const { return name; }
-std::string ReleaseTrack::get_artist() const {
+std::optional<std::string> ReleaseTrack::get_name() const { return name; }
+std::optional<std::string> ReleaseTrack::get_artist() const {
     if (artists.empty()) {
-        return release.lock()->get_artist();
+        auto _release = release.lock();
+        if (!_release)
+            return std::nullopt;
+        return _release->get_artist();
     }
     return vecToStr(artists);
 }
-const std::string &ReleaseTrack::get_albumName() const {
-    return release.lock()->get_name();
+std::optional<std::string> ReleaseTrack::get_albumName() const {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_name();
 }
-std::string ReleaseTrack::get_albumArtist() const {
-    return release.lock()->get_artist();
+std::optional<std::string> ReleaseTrack::get_albumArtist() const {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_artist();
 }
-const std::string &ReleaseTrack::get_copyright() const {
-    return release.lock()->get_copyright();
+std::optional<std::string> ReleaseTrack::get_copyright() const {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_copyright();
 }
-const std::string &ReleaseTrack::get_genre() const {
-    return release.lock()->get_stringGenres();
+std::optional<std::string> ReleaseTrack::get_genre() const {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_stringGenres();
 }
-std::size_t ReleaseTrack::get_year() const {
-    return release.lock()->get_year();
+std::optional<size_t> ReleaseTrack::get_year() const {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_year();
 }
-const std::string &ReleaseTrack::get_label() const {
-    return release.lock()->get_label();
+std::optional<std::string> ReleaseTrack::get_label() const {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_label();
 }
-std::size_t ReleaseTrack::get_trackNumber() const { return tracknumber; }
-std::size_t ReleaseTrack::get_discNumber() const { return discnumber; }
+std::optional<size_t> ReleaseTrack::get_trackNumber() const {
+    return tracknumber;
+}
+std::optional<size_t> ReleaseTrack::get_discNumber() const {
+    return discnumber;
+}
 std::size_t ReleaseTrack::get_length() const { return duration; }
 
-std::vector<std::byte> ReleaseTrack::get_image() {
-    return imageProvider.get_image();
-}
-bool ReleaseTrack::is_verified() const { return verified; }
-
-void ReleaseTrack::set_name(const std::string &_name) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_artist(const std::string &_artist) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_albumName(const std::string &_albumName) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_albumArtist(const std::string &_albumArtist) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_copyright(const std::string &_copyright) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_genre(const std::string &_genre) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_year(std::size_t _year) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_label(const std::string &_label) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_trackNumber(std::size_t _trackNumber) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_discNumber(std::size_t _discNumber) {
-    static_assert("Discogs Object is not mutable!");
-}
-void ReleaseTrack::set_verified(bool _verified) { verified = _verified; }
-void ReleaseTrack::set_image(const std::vector<std::byte> &_imageData) {
-    imageProvider.set_image(_imageData);
+std::optional<std::vector<std::byte>> ReleaseTrack::get_image() {
+    auto _release = release.lock();
+    if (!_release)
+        return std::nullopt;
+    return _release->get_image();
 }
 
 std::weak_ptr<IAlbum> ReleaseTrack::get_release() const { return release; }
-
 const std::vector<std::shared_ptr<IArtist>> &ReleaseTrack::get_artists() const {
     return artists;
 }
+
+bool ReleaseTrack::is_verified() const { return verified; }
+void ReleaseTrack::set_verified(bool _verified) { verified = _verified; }
 
 int ReleaseTrack::parseDuration(const std::string &_stringDuration) {
     std::stringstream ss(_stringDuration);

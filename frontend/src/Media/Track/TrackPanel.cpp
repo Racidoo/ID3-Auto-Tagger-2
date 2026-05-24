@@ -106,7 +106,10 @@ void TrackPanel::SetDownloadProgress(std::size_t _row, int _progress) {
                                   {_progress, DownloadState::Downloading});
 }
 
-void TrackPanel::UpdateRow(std::size_t _row) { model->RowChanged(_row); }
+void TrackPanel::UpdateRow(std::size_t _row) {
+    model->GetRowByIndex(_row)->RebuildSortCache();
+    model->RowChanged(_row);
+}
 
 std::shared_ptr<ITrack> TrackPanel::GetTrack(std::size_t _row) const {
     return model->GetTrack(model->GetRowByIndex(_row));

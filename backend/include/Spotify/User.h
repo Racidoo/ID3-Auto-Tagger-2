@@ -10,11 +10,11 @@ class User : public IArtist {
          const std::string &_imageURL, IMediaService *_mediaService);
     ~User() = default;
 
-    const std::string &get_name() const override;
-    std::vector<std::byte> get_image() override;
+    std::optional<std::string> get_name() const override;
+    std::optional<std::vector<std::byte>> get_image() override;
 
   private:
-    std::string name;
+    std::optional<std::string> name;
     IRemoteImageProvider imageProvider;
 };
 

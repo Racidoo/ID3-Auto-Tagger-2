@@ -7,15 +7,15 @@ namespace Discogs {
 
 class Artist : public IArtist {
   public:
-    Artist(int _id, const std::string &_name, State _state,
+    Artist(int _id, const std::optional<std::string> &_name, State _state,
            const std::string &_imageUrl, IMediaService *_mediaService);
     ~Artist() = default;
 
-    const std::string &get_name() const override;
-    std::vector<std::byte> get_image() override;
+    std::optional<std::string> get_name() const override;
+    std::optional<std::vector<std::byte>> get_image() override;
 
   private:
-    std::string name;
+    std::optional<std::string> name;
     IRemoteImageProvider imageProvider;
 };
 

@@ -57,15 +57,18 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
             break;
         }
         case LocalTrack::tag_type_t::YEAR: {
-            local->set_year(std::stoi(_value));
+            local->set_year(_value.empty() ? std::optional<std::size_t>{}
+                                           : std::stoul(_value));
             break;
         }
         case LocalTrack::tag_type_t::TRACK: {
-            local->set_trackNumber(std::stoul(_value));
+            local->set_trackNumber(_value.empty() ? std::optional<std::size_t>{}
+                                                  : std::stoul(_value));
             break;
         }
         case LocalTrack::tag_type_t::DISC: {
-            local->set_discNumber(std::stoul(_value));
+            local->set_discNumber(_value.empty() ? std::optional<std::size_t>{}
+                                                 : std::stoul(_value));
             break;
         }
         case LocalTrack::tag_type_t::FILENAME: {
@@ -73,14 +76,15 @@ void LocalTrackPanel::ApplyChangeToSelectedRows(LocalTrack::tag_type_t _type,
             break;
         }
         }
-        model->RowChanged(rowIndex);
         // make sure that changes are already visible
         row->RebuildSortCache();
+        model->RowChanged(rowIndex);
     }
 }
 
 bool LocalTrackPanel::HandleColumnAction(
-    int _column, std::size_t _rowIndex, const std::shared_ptr<TrackModelRow> &_row,
+    int _column, std::size_t _rowIndex,
+    const std::shared_ptr<TrackModelRow> &_row,
     const std::shared_ptr<ITrack> &_track) {
 
     if (TrackPanel::HandleColumnAction(_column, _rowIndex, _row, _track)) {

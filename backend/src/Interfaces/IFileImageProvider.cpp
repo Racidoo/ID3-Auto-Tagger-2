@@ -7,8 +7,8 @@ void IFileImageProvider::set_filepath(const std::filesystem::path &_filepath) {
     filepath = _filepath;
 }
 
-std::vector<std::byte> IFileImageProvider::get_image() {
-    if (!cachedImage.empty()) {
+std::optional<std::vector<std::byte>> IFileImageProvider::get_image() {
+    if (cachedImage.has_value()) {
         return cachedImage;
     }
 
@@ -45,16 +45,15 @@ std::vector<std::byte> IFileImageProvider::get_image() {
         std::cerr << "APIC frame contains no image data in: " << std::endl;
         return cachedImage;
     }
+    cachedImage.emplace(imageData.size());
 
-    cachedImage.reserve(imageData.size());
-
-    for (auto c : imageData)
-        cachedImage.push_back(static_cast<std::byte>(c));
-
+    std::transform(imageData.begin(), imageData.end(), cachedImage->begin(),
+                   [](char c) { return static_cast<std::byte>(c); });
     return cachedImage;
 }
 
-void IFileImageProvider::set_image(const std::vector<std::byte> &_imageData) {
+void IFileImageProvider::set_image(
+    const std::optional<std::vector<std::byte>> &_imageData) {
 
     auto detectMime = [](const std::vector<std::byte> &data) -> const char * {
         if (data.size() >= 4) {
@@ -73,7 +72,7 @@ void IFileImageProvider::set_image(const std::vector<std::byte> &_imageData) {
         return "image/jpeg"; // fallback
     };
 
-    if (_imageData.empty()) {
+    if (_imageData.value().empty()) {
         std::cerr << "Image is empty" << std::endl;
         return;
     }
@@ -100,11 +99,11 @@ void IFileImageProvider::set_image(const std::vector<std::byte> &_imageData) {
 
     // Create new APIC frame
     auto *pictureFrame = new TagLib::ID3v2::AttachedPictureFrame();
-    pictureFrame->setMimeType(detectMime(_imageData));
+    pictureFrame->setMimeType(detectMime(_imageData.value()));
     pictureFrame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
-    pictureFrame->setPicture(
-        TagLib::ByteVector(reinterpret_cast<const char *>(_imageData.data()),
-                           static_cast<unsigned int>(_imageData.size())));
+    pictureFrame->setPicture(TagLib::ByteVector(
+        reinterpret_cast<const char *>(_imageData.value().data()),
+        static_cast<unsigned int>(_imageData.value().size())));
 
     tag->addFrame(pictureFrame);
 

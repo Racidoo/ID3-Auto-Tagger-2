@@ -13,11 +13,11 @@ class Artist : public IArtist {
                     IMediaService *_mediaService);
     ~Artist() = default;
 
-    const std::string &get_name() const override;
-    std::vector<std::byte> get_image() override;
+    std::optional<std::string> get_name() const override;
+    std::optional<std::vector<std::byte>> get_image() override;
 
   private:
-    std::string name;
+    std::optional<std::string> name;
     IRemoteImageProvider imageProvider;
 };
 

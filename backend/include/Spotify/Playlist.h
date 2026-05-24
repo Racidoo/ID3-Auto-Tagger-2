@@ -12,12 +12,12 @@ class Playlist : public IPlaylist {
              IMediaService *_mediaService);
     ~Playlist() = default;
 
-    const std::string &get_name() const override;
-    std::vector<std::byte> get_image() override;
+    std::optional<std::string> get_name() const override;
+    std::optional<std::vector<std::byte>> get_image() override;
     inline std::shared_ptr<User> get_creator() const { return creator; }
 
   private:
-    std::string name;
+    std::optional<std::string> name;
     IRemoteImageProvider imageProvider;
     std::shared_ptr<User> creator;
 };

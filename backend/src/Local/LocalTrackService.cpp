@@ -184,8 +184,8 @@ void LocalTrackService::makeBlocked(std::shared_ptr<ITrack> _data) {
         return;
     }
 
-    blacklist["blacklist"][filename]["title"] = _data->get_name();
-    blacklist["blacklist"][filename]["artist"] = _data->get_artist();
+    blacklist["blacklist"][filename]["title"] = _data->get_name().value();
+    blacklist["blacklist"][filename]["artist"] = _data->get_artist().value();
     _data->set_verified(true);
 }
 

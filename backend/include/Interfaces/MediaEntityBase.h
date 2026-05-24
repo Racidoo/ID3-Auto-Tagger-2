@@ -9,12 +9,7 @@ class MediaEntityBase : public IMediaEntity {
                              IMediaService *_mediaService);
 
     const std::string &get_id() const override;
-    // const std::string &get_name() const override;
     State get_state() const;
-    // const std::string &get_imageUrl() const;
-    // const std::vector<std::byte> &get_image() override;
-
-    // void set_name(const std::string &_name);
     void set_state(State _state);
 
     void ensureLoaded() override;
@@ -23,8 +18,6 @@ class MediaEntityBase : public IMediaEntity {
   protected:
     std::string id;
     State state = State::Preview;
-    // std::string imageURL;
-    // std::vector<std::byte> cachedImage;
 
     IMediaService *mediaService;
 };

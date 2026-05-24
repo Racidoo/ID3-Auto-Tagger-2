@@ -76,9 +76,14 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
         auto rows = trackPanel->GetSelectedRows();
 
         for (auto row : rows) {
-            auto track = trackPanel->GetTrack(row);
-            TagService::researchMissingTags(track, _searchService);
-            trackPanel->UpdateRow(row);
+            auto track = std::dynamic_pointer_cast<LocalTrack>(
+                trackPanel->GetTrack(row));
+            auto id = TagService::researchMissingTags(track, _searchService);
+            if (!id.empty()) {
+                trackService->renameTrack(track, id);
+                trackService->makeBlocked(track);
+                trackPanel->UpdateRow(row);
+            }
         }
     });
 

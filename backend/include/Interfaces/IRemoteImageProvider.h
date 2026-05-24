@@ -6,14 +6,16 @@
 
 class IRemoteImageProvider : public IImageProvider {
   public:
-    explicit IRemoteImageProvider(const std::string &_imageURL,
-                                  const std::vector<std::byte> _imageData = {});
+    explicit IRemoteImageProvider(
+        const std::string &_imageURL,
+        const std::optional<std::vector<std::byte>> _imageData = {});
 
-    std::vector<std::byte> get_image() override;
+    std::optional<std::vector<std::byte>> get_image() override;
     const std::string &get_imageUrl() const;
-    void set_image(const std::vector<std::byte> &_imageData) override;
+    void
+    set_image(const std::optional<std::vector<std::byte>> &_imageData) override;
 
   private:
     std::string imageURL;
-    std::vector<std::byte> cachedImage;
+    std::optional<std::vector<std::byte>> cachedImage;
 };
