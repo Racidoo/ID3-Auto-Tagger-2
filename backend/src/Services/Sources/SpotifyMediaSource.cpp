@@ -33,6 +33,38 @@ ISearchResult SpotifyMediaSource::search(const std::string &_query,
     return results;
 }
 
+ISearchResult SpotifyMediaSource::search(std::shared_ptr<ITrack> _track,
+                                         const SearchOptions &_options) {
+    ISearchResult results;
+    SearchQuery searchQuery(_track);
+    if (_options.categories.find(ISearchResult::SearchCategory::Track) !=
+        _options.categories.end()) {
+        std::string stringQuery;
+        if (searchQuery.title.has_value()) {
+            stringQuery += " track:" + searchQuery.title.value();
+        }
+        if (searchQuery.artist.has_value()) {
+            stringQuery += " artist:" + searchQuery.artist.value();
+        }
+        if (searchQuery.album.has_value()) {
+            stringQuery += " album:" + searchQuery.album.value();
+        }
+        if (stringQuery.empty()) {
+            stringQuery = searchQuery.filename.value_or("");
+        }
+        results.tracks =
+            spotify.searchTrack(stringQuery, _options.market, _options.limit);
+        // fallback if search was too explicit
+        if (results.tracks.empty()) {
+            stringQuery = searchQuery.title.value_or("") +
+                          searchQuery.artist.value_or("");
+            results.tracks = spotify.searchTrack(stringQuery, _options.market,
+                                                 _options.limit);
+        }
+    }
+    return results;
+}
+
 bool SpotifyMediaSource::supports(const std::string &_input) const {
     std::smatch matches;
     std::string type, id;

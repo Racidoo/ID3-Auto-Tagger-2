@@ -2,14 +2,6 @@
 #include "Discogs/ReleaseTrack.h"
 #include "Spotify/Track.h"
 
-TrackIdentificationService::SearchQuery::SearchQuery(
-    std::shared_ptr<ITrack> _track) {
-    title = _track->get_name().value_or("");
-    album = _track->get_albumName().value_or("");
-    filename = _track->get_id();
-    durationSeconds = _track->get_length();
-}
-
 // std::shared_ptr<ITrack> TrackIdentificationService::findBestMatch(
 //     const SearchQuery &_query,
 //     const std::vector<std::shared_ptr<ITrack>> &_candidates) {

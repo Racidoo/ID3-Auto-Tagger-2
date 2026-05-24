@@ -15,6 +15,8 @@ class SpotifyMediaSource : public IMediaSource {
 
     ISearchResult search(const std::string &_query,
                          const SearchOptions &_options) override;
+    ISearchResult search(std::shared_ptr<ITrack> _track,
+                         const SearchOptions &_options) override;
     bool supports(const std::string &_input) const override;
     ISearchResult resolve(const std::string &_input) override;
 

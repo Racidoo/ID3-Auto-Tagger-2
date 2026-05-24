@@ -11,23 +11,6 @@ std::vector<ISearchResult>
 SearchService::search(std::shared_ptr<ITrack> _track,
                       const SearchOptions &_options) {
     std::vector<ISearchResult> results;
-    if (!_track->get_name().has_value() && !_track->get_artist().has_value() &&
-        _track->get_id().empty())
-        return {};
-
-    std::string query;
-
-    if (!_track->get_albumName().has_value() &&
-        !_track->get_name().has_value()) {
-        query = _track->get_id();
-    } else if (_track->get_artist().has_value()) {
-        query = _track->get_artist().value();
-    }
-    if (_track->get_albumName().has_value()) {
-        query += " - " + _track->get_albumName().value();
-    } else {
-        query += _track->get_name().value();
-    }
 
     for (auto mediaSource : mediaSources) {
         if (!_options.sources.empty() &&
@@ -37,16 +20,16 @@ SearchService::search(std::shared_ptr<ITrack> _track,
                       << static_cast<int>(mediaSource->get_id()) << std::endl;
             continue;
         }
-        // if (dynamic_cast<SpotifyMediaSource *>(mediaSource)) {
-        //     if (Spotify::SpotifyAPI::isValidIdFormat(_track->get_id())) {
-        //         ISearchResult result;
-        //         result.tracks.push_back(
-        //             mediaSource->getTrack(_track->get_id()));
-        //         // return {result};
-        //         continue;
-        //     }
-        // }
-        results.push_back(mediaSource->search(query, _options));
+        if (dynamic_cast<SpotifyMediaSource *>(mediaSource)) {
+            if (Spotify::SpotifyAPI::isValidIdFormat(_track->get_id())) {
+                ISearchResult result;
+                result.tracks.push_back(
+                    mediaSource->getTrack(_track->get_id()));
+                results.push_back(result);
+                continue;
+            }
+        }
+        results.push_back(mediaSource->search(_track, _options));
     }
     return results;
 }

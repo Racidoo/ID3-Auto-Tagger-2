@@ -12,17 +12,7 @@ class IVideo;
 
 class TrackIdentificationService {
   public:
-    struct SearchQuery {
-        std::string title;
-        std::string artist;
-        std::string album;
-        std::string filename;
-        std::size_t durationSeconds = 0;
-
-        SearchQuery(std::shared_ptr<ITrack> _track);
-    };
-
-    struct AggregatedTrack {
+     struct AggregatedTrack {
         std::map<double, std::shared_ptr<ITrack>> sources;
         std::map<double, std::shared_ptr<IVideo>> videos;
 
@@ -35,9 +25,9 @@ class TrackIdentificationService {
         std::shared_ptr<ITrack> primary;
     };
 
-    static std::shared_ptr<ITrack>
-    findBestMatch(const SearchQuery &_query,
-                  const std::vector<std::shared_ptr<ITrack>> &_candidates);
+    // static std::shared_ptr<ITrack>
+    // findBestMatch(const SearchQuery &_query,
+    //               const std::vector<std::shared_ptr<ITrack>> &_candidates);
 
     static std::vector<AggregatedTrack>
     aggregate(const std::vector<ISearchResult> &_results);

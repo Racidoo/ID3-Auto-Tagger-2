@@ -5,18 +5,23 @@
 const std::unordered_map<IMediaService::MediaSourceId, TagService::SourcePolicy>
     TagService::policies = {
         {IMediaService::MediaSourceId::Discogs,
-         {{}, {TagField::AlbumCover, TagField::Genre, TagField::Label}}},
+         {{},
+          {TagField::Title, TagField::Artist, TagField::Album,
+           TagField::AlbumArtist, TagField::AlbumCover, TagField::Genre,
+           TagField::Copyright, TagField::Year, TagField::Label,
+           TagField::TrackNumber, TagField::DiscNumber}}},
         {IMediaService::MediaSourceId::Local,
          {{TagField::Title, TagField::Artist, TagField::Album,
-           TagField::AlbumArtist, TagField::Year, TagField::TrackNumber,
-           TagField::DiscNumber, TagField::Copyright, TagField::Genre,
-           TagField::Label},
-          {TagField::AlbumCover}}},
+           TagField::AlbumArtist, TagField::AlbumCover, TagField::Genre,
+           TagField::Copyright, TagField::Year, TagField::Label,
+           TagField::TrackNumber, TagField::DiscNumber},
+          {}}},
         {IMediaService::MediaSourceId::Spotify,
          {{TagField::Title, TagField::Artist, TagField::Album,
-           TagField::AlbumArtist, TagField::Year, TagField::TrackNumber,
-           TagField::DiscNumber, TagField::Copyright, TagField::Label},
-          {TagField::AlbumCover, TagField::Genre}}},
+           TagField::AlbumArtist, TagField::AlbumCover, TagField::Year,
+           TagField::TrackNumber, TagField::DiscNumber, TagField::Copyright,
+           TagField::Label},
+          {TagField::Genre}}},
 };
 
 const std::vector<std::unique_ptr<TagService::ITrackFieldDescriptor>>
@@ -128,13 +133,8 @@ TagService::researchMissingTags(std::shared_ptr<ITrackMutable> _track,
                 highestScore = &source;
             }
         }
-
         source.second->ensureLoaded();
-        if (!source.second->get_image().has_value()) {
-            std::cout << "get empty image!" << std::endl;
-        } else {
-            std::cout << "image present!" << std::endl;
-        }
+
         if (auto mutableTrack =
                 std::dynamic_pointer_cast<ITrackMutable>(merged.primary)) {
             applyDifferences(mutableTrack, source.second);

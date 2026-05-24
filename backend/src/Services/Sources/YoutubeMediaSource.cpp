@@ -27,6 +27,9 @@ ISearchResult YoutubeMediaSource::search(const std::string &_query,
     return results;
 }
 
+ISearchResult YoutubeMediaSource::search(std::shared_ptr<ITrack> _track,
+                                         const SearchOptions &_options) {}
+
 bool YoutubeMediaSource::supports(const std::string &_input) const {
     std::smatch matches;
     std::string type, id;

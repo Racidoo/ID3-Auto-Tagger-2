@@ -2,12 +2,7 @@
 #define MEDIA_LABEL_H
 
 #include <memory>
-#include <taglib/attachedpictureframe.h>
-#include <taglib/audioproperties.h>
-#include <taglib/fileref.h>
-#include <taglib/id3v2tag.h>
-#include <taglib/mpegfile.h>
-#include <taglib/textidentificationframe.h>
+#include <optional>
 #include <wx/mstream.h>
 #include <wx/wx.h>
 
@@ -24,8 +19,9 @@ class MediaLabel : public wxPanel {
 
     std::shared_ptr<IMediaEntity> get_source() const;
 
-    static wxBitmap loadImage(const std::vector<std::byte> &_imageData,
-                              const wxSize &_size);
+    static wxBitmap
+    loadImage(const std::optional<std::vector<std::byte>> &_imageData,
+              const wxSize &_size);
 
   private:
     std::shared_ptr<IMediaEntity> source;

@@ -20,10 +20,10 @@ class TrackModelRow {
     wxString length;
 
     DownloadStatus status;
-    std::string sortTitle;
-    std::string sortArtist;
-    std::string sortAlbum;
-    std::string sortGenre;
+    std::optional<std::string> sortTitle;
+    std::optional<std::string> sortArtist;
+    std::optional<std::string> sortAlbum;
+    std::optional<std::string> sortGenre;
     std::optional<std::size_t> sortTracknumber;
     std::size_t sortLength;
 
@@ -46,10 +46,10 @@ class TrackModelRow {
     const wxString &get_length() const;
     const wxString &get_tracknumber() const;
 
-    const std::string &get_sortTitle() const;
-    const std::string &get_sortArtist() const;
-    const std::string &get_sortAlbum() const;
-    const std::string &get_sortGenre() const;
+    const std::optional<std::string> &get_sortTitle() const;
+    const std::optional<std::string> &get_sortArtist() const;
+    const std::optional<std::string> &get_sortAlbum() const;
+    const std::optional<std::string> &get_sortGenre() const;
     std::size_t get_sortLength() const;
     std::optional<std::size_t> get_sortTracknumber() const;
 

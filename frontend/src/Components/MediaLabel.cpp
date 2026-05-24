@@ -47,13 +47,15 @@ void MediaLabel::onClick(wxMouseEvent &_event) {
     _event.Skip();
 }
 
-wxBitmap MediaLabel::loadImage(const std::vector<std::byte> &_imageData,
-                               const wxSize &_size) {
-    if (_imageData.empty()) {
+wxBitmap
+MediaLabel::loadImage(const std::optional<std::vector<std::byte>> &_imageData,
+                      const wxSize &_size) {
+    if (!_imageData.has_value() || _imageData.value().empty()) {
         return wxBitmap(_size);
     }
 
-    wxMemoryInputStream imgStream(_imageData.data(), _imageData.size());
+    wxMemoryInputStream imgStream(_imageData.value().data(),
+                                  _imageData.value().size());
 
     wxImage image;
     if (!image.LoadFile(imgStream, wxBITMAP_TYPE_ANY) || !image.IsOk()) {

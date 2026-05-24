@@ -35,7 +35,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
 
     auto albumCoverBitmap = new wxStaticBitmap(
         this, wxID_ANY,
-        MediaLabel::loadImage(album->get_image().value(), wxSize(256, 265)));
+        MediaLabel::loadImage(album->get_image(), wxSize(256, 265)));
 
     // auto albumTypeText =
     //     new wxStaticText(this, wxID_ANY,
@@ -56,8 +56,7 @@ AlbumDetailsPanel::AlbumDetailsPanel(wxWindow *_parent,
 
     auto artistCoverBitmap = new wxStaticBitmap(
         this, wxID_ANY,
-        MediaLabel::loadImage(album->get_artistImage().value(),
-                              wxSize(32, 32)));
+        MediaLabel::loadImage(album->get_artistImage(), wxSize(32, 32)));
     auto artistText = new wxStaticText(
         this, wxID_ANY, wxString::FromUTF8(album->get_artist().value()));
     auto yearText = new wxStaticText(

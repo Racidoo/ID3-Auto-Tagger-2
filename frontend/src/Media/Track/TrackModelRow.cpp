@@ -21,10 +21,18 @@ const wxString &TrackModelRow::get_genre() const { return genre; }
 const wxString &TrackModelRow::get_length() const { return length; }
 const wxString &TrackModelRow::get_tracknumber() const { return tracknumber; }
 
-const std::string &TrackModelRow::get_sortTitle() const { return sortTitle; }
-const std::string &TrackModelRow::get_sortArtist() const { return sortArtist; }
-const std::string &TrackModelRow::get_sortAlbum() const { return sortAlbum; }
-const std::string &TrackModelRow::get_sortGenre() const { return sortGenre; }
+const std::optional<std::string> &TrackModelRow::get_sortTitle() const {
+    return sortTitle;
+}
+const std::optional<std::string> &TrackModelRow::get_sortArtist() const {
+    return sortArtist;
+}
+const std::optional<std::string> &TrackModelRow::get_sortAlbum() const {
+    return sortAlbum;
+}
+const std::optional<std::string> &TrackModelRow::get_sortGenre() const {
+    return sortGenre;
+}
 std::size_t TrackModelRow::get_sortLength() const { return sortLength; }
 std::optional<std::size_t> TrackModelRow::get_sortTracknumber() const {
     return sortTracknumber;
@@ -71,12 +79,11 @@ const wxBitmap &TrackModelRow::GetDeleteBitmap() {
 
 void TrackModelRow::RebuildSortCache() {
 
-    cover = MediaLabel::loadImage(
-        track->get_image().value_or(std::vector<std::byte>{}), wxSize(64, 64));
-    title = wxString::FromUTF8(track->get_name().value());
-    artist = wxString::FromUTF8(track->get_artist().value());
-    album = wxString::FromUTF8(track->get_albumName().value());
-    genre = wxString::FromUTF8(track->get_genre().value());
+    cover = MediaLabel::loadImage(track->get_image(), wxSize(64, 64));
+    title = wxString::FromUTF8(track->get_name().value_or(std::string{}));
+    artist = wxString::FromUTF8(track->get_artist().value_or(std::string{}));
+    album = wxString::FromUTF8(track->get_albumName().value_or(std::string{}));
+    genre = wxString::FromUTF8(track->get_genre().value_or(std::string{}));
     tracknumber = track->get_trackNumber().has_value()
                       ? std::to_string(track->get_trackNumber().value())
                       : "";

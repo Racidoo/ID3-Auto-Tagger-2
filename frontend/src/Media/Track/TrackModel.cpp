@@ -90,10 +90,18 @@ bool TrackModel::MatchesSearch(
     if (filterState.searchQuery.empty())
         return true;
 
-    return _row->get_sortTitle().contains(filterState.searchQuery) ||
-           _row->get_sortArtist().contains(filterState.searchQuery) ||
-           _row->get_sortAlbum().contains(filterState.searchQuery) ||
-           _row->get_sortGenre().contains(filterState.searchQuery);
+    return _row->get_sortTitle()
+               .value_or(std::string{})
+               .contains(filterState.searchQuery) ||
+           _row->get_sortArtist()
+               .value_or(std::string{})
+               .contains(filterState.searchQuery) ||
+           _row->get_sortAlbum()
+               .value_or(std::string{})
+               .contains(filterState.searchQuery) ||
+           _row->get_sortGenre()
+               .value_or(std::string{})
+               .contains(filterState.searchQuery);
 }
 
 bool TrackModel::MatchesFilter(

@@ -26,6 +26,26 @@ ISearchResult DiscogsMediaSource::search(const std::string &_query,
     return results;
 }
 
+ISearchResult DiscogsMediaSource::search(std::shared_ptr<ITrack> _track,
+                                         const SearchOptions &_options) {
+    ISearchResult results;
+    SearchQuery searchQuery(_track);
+    Discogs::DiscogsAPI::SearchParams discogsSearchParams;
+    if (_options.categories.find(ISearchResult::SearchCategory::Track) !=
+        _options.categories.end()) {
+
+        if (searchQuery.album.has_value() || searchQuery.artist.has_value()) {
+            discogsSearchParams.title = searchQuery.album;
+            discogsSearchParams.artist = searchQuery.albumArtist;
+        } else {
+            discogsSearchParams.query = searchQuery.filename.value_or("");
+        }
+        results =
+            discogs.searchReleaseTrack(discogsSearchParams, _options.limit);
+    }
+    return results;
+}
+
 bool DiscogsMediaSource::supports(const std::string &_input) const {
     std::smatch matches;
     std::string type, id;
