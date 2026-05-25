@@ -1,14 +1,14 @@
 #include "Local/LocalTrackService.h"
 #include "Local/LocalTrack.h"
+#include "Services/TrackVerificationIndex.h"
 #include "Spotify/SpotifyAPI.h"
 
-LocalTrackService::LocalTrackService(const std::filesystem::path &_trackPath)
-    : trackPath(_trackPath), stopRequested{false}, generation{0} {
-    loadOrCreateBlacklist();
-}
+LocalTrackService::LocalTrackService(const std::filesystem::path &_trackPath,
+                                     TrackVerificationIndex &_index)
+    : trackPath(_trackPath), verificationIndex(_index), stopRequested{false},
+      generation{0} {}
 
 LocalTrackService::~LocalTrackService() {
-    writeBlacklist();
     if (worker.joinable())
         worker.join();
 }
@@ -62,7 +62,8 @@ void LocalTrackService::loadTracks(bool recursiveSearch) {
 
             auto track = std::make_shared<LocalTrack>(file, this);
 
-            track->set_verified(isBlocked(track));
+            track->set_verified(
+                verificationIndex.isVerifiedTrack(track->get_id()));
 
             batch.push_back(track);
 
@@ -132,70 +133,4 @@ bool LocalTrackService::load(std::shared_ptr<IMediaEntity> _obj) {
 bool LocalTrackService::loadAdditionalData(std::shared_ptr<LocalTrack> _local) {
     _local->ensureFullTagsLoaded();
     return false;
-}
-
-bool LocalTrackService::loadOrCreateBlacklist() {
-    const std::filesystem::path path = "blacklist.json";
-
-    if (!std::filesystem::exists(path)) {
-        // Create missing blacklist.json with default object structure
-        blacklist = {
-            {"blacklist",
-             json::object()} // "blacklist" key maps to an empty array
-        };
-
-        std::ofstream file(path);
-        file << blacklist.dump(4);
-        return false;
-    }
-
-    std::ifstream file(path);
-    if (!file.is_open()) {
-        std::cerr << "Could not open blacklist.json!" << std::endl;
-        return false;
-    }
-
-    file >> blacklist;
-    return true;
-}
-
-bool LocalTrackService::writeBlacklist() const {
-    std::ofstream blacklistFile("blacklist.json");
-    if (!blacklistFile.is_open()) {
-        std::cerr << "Could not write blacklist.json!" << std::endl;
-        return false;
-    }
-    blacklistFile << blacklist.dump(4);
-    return true;
-}
-
-bool LocalTrackService::isBlocked(std::shared_ptr<ITrack> _data) const {
-    if (!_data)
-        return false;
-    const auto &id = _data->get_id();
-    return blacklist.at("blacklist").contains(id);
-}
-
-void LocalTrackService::makeBlocked(std::shared_ptr<ITrack> _data) {
-    if (!_data)
-        return;
-    const auto &filename = _data->get_id();
-    if (!Spotify::SpotifyAPI::isValidIdFormat(filename)) {
-        return;
-    }
-
-    blacklist["blacklist"][filename]["title"] = _data->get_name().value();
-    blacklist["blacklist"][filename]["artist"] = _data->get_artist().value();
-    _data->set_verified(true);
-}
-
-void LocalTrackService::removeBlocked(std::shared_ptr<ITrack> _data) {
-    if (!_data)
-        return;
-
-    if (isBlocked(_data)) {
-        blacklist["blacklist"].erase(_data->get_id());
-        std::cout << "removed '" << _data->get_id() << "' from blocklist"
-                  << std::endl;
-    }
 }

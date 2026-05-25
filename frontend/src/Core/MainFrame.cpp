@@ -57,8 +57,9 @@ MainFrame::MainFrame()
     mainPanel->SetSizer(mainSizer);
 
     // Create panels for different screens (Initially hidden)
-    downloadPanel = new LocalTrackWindow(mainPanel, registry->get_local(),
-                                         registry->get_searchService());
+    downloadPanel = new LocalTrackWindow(
+        mainPanel, registry->get_local(), registry->get_searchService(),
+        *registry->get_trackVerificationIndex());
     spotifyPanel = new SpotifyWindow(mainPanel, registry.get());
     discogsPanel = new DiscogsWindow(mainPanel);
     youtubePanel = new YouTubeWindow(mainPanel);

@@ -4,11 +4,13 @@
 #include "Media/Track/LocalTrackPanel.h"
 #include "Services/SearchService.h"
 #include "Services/TagService.h"
+#include "Services/TrackVerificationIndex.h"
 #include "Windows/TrackEditWindow.h"
 
 LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
                                    LocalTrackService *_trackService,
-                                   SearchService *_searchService)
+                                   SearchService *_searchService,
+                                   TrackVerificationIndex &_verificationIndex)
     : wxScrolledWindow(_parent, wxID_ANY), trackService(_trackService) {
 
     if (!_trackService) {
@@ -72,7 +74,8 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
         trackPanel->ApplyChangeToSelectedRows(type, value);
     });
 
-    this->Bind(EVT_TRACK_VERIFY, [this, _searchService](wxCommandEvent &event) {
+    this->Bind(EVT_TRACK_VERIFY, [this, _searchService,
+                                  &_verificationIndex](wxCommandEvent &event) {
         auto rows = trackPanel->GetSelectedRows();
 
         for (auto row : rows) {
@@ -81,10 +84,14 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
             auto id = TagService::researchMissingTags(track, _searchService);
             if (!id.empty()) {
                 trackService->renameTrack(track, id);
-                trackService->makeBlocked(track);
+                _verificationIndex.addToIndex(track->get_id(),
+                                              track->get_artist().value_or(""),
+                                              track->get_name().value_or(""));
+                track->set_verified(true);
                 trackPanel->UpdateRow(row);
             }
         }
+        _verificationIndex.writeIndex();
     });
 
     size_t currentGen = trackService->getGeneration();

@@ -258,9 +258,10 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
         }
 
         DownloadService::downloadAudio(
-            track, youtubeId, file, registry->get_local(),
-            [this, row](int progress) {
+            track, youtubeId, file, *registry->get_local(),
+            *registry->get_trackVerificationIndex(), [this, row](int progress) {
                 trackPanel->SetDownloadProgress(row, progress);
             });
     }
+    registry->get_trackVerificationIndex()->writeIndex();
 }

@@ -9,6 +9,8 @@
 
 class ITrack;
 class LocalTrackService;
+class TrackVerificationIndex;
+
 class DownloadService {
   public:
     DownloadService() = delete;
@@ -17,6 +19,7 @@ class DownloadService {
     static bool
     downloadAudio(std::shared_ptr<ITrack> _track, const std::string &_youtubeId,
                   const std::filesystem::path &_filepath,
-                  LocalTrackService *_localTrackService,
+                  LocalTrackService &_localTrackService,
+                  TrackVerificationIndex &_verificationIndex,
                   std::function<void(int)> _onProgressCallback = {});
 };

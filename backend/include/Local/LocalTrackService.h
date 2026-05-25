@@ -2,24 +2,28 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
 
-using json = nlohmann::json;
-
 #include "Services/IMediaService.hpp"
 
-class LocalTrack;
 class ITrack;
+class LocalTrack;
+class TrackVerificationIndex;
+
 class LocalTrackService : public IMediaService {
 
   public:
-    LocalTrackService(const std::filesystem::path &_trackPath);
+    LocalTrackService(const std::filesystem::path &_trackPath,
+                      TrackVerificationIndex &_index);
     ~LocalTrackService();
+
+    LocalTrackService(const LocalTrackService &) = delete;
+    LocalTrackService &operator=(const LocalTrackService &) = delete;
+    LocalTrackService(LocalTrackService &&) = delete;
+    LocalTrackService &operator=(LocalTrackService &&) = delete;
 
     inline constexpr IMediaService::MediaSourceId get_id() const override {
         return MediaSourceId::Local;
@@ -42,17 +46,10 @@ class LocalTrackService : public IMediaService {
     bool load(std::shared_ptr<IMediaEntity> _obj) override;
     bool loadAdditionalData(std::shared_ptr<LocalTrack> _local);
 
-    bool isBlocked(std::shared_ptr<ITrack> _data) const;
-    void makeBlocked(std::shared_ptr<ITrack> _data);
-    void removeBlocked(std::shared_ptr<ITrack> _data);
-
   private:
-    bool loadOrCreateBlacklist();
-    bool writeBlacklist() const;
-
     std::filesystem::path trackPath;
 
-    json blacklist;
+    TrackVerificationIndex &verificationIndex;
     std::thread worker;
     std::atomic<bool> stopRequested;
     std::atomic<size_t> generation;

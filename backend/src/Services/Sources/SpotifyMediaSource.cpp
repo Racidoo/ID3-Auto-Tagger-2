@@ -40,13 +40,16 @@ ISearchResult SpotifyMediaSource::search(std::shared_ptr<ITrack> _track,
     if (_options.categories.find(ISearchResult::SearchCategory::Track) !=
         _options.categories.end()) {
         std::string stringQuery;
-        if (searchQuery.title.has_value()) {
+        if (searchQuery.title.has_value() &&
+            !searchQuery.title.value().empty()) {
             stringQuery += " track:" + searchQuery.title.value();
         }
-        if (searchQuery.artist.has_value()) {
+        if (searchQuery.artist.has_value() &&
+            !searchQuery.artist.value().empty()) {
             stringQuery += " artist:" + searchQuery.artist.value();
         }
-        if (searchQuery.album.has_value()) {
+        if (searchQuery.album.has_value() &&
+            !searchQuery.album.value().empty()) {
             stringQuery += " album:" + searchQuery.album.value();
         }
         if (stringQuery.empty()) {

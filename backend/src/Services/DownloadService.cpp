@@ -3,25 +3,18 @@
 #include "Local/LocalTrack.h"
 #include "Local/LocalTrackService.h"
 #include "Services/TagService.h"
+#include "Services/TrackVerificationIndex.h"
 
 bool DownloadService::downloadAudio(
     std::shared_ptr<ITrack> _track, const std::string &_youtubeId,
     const std::filesystem::path &_filepath,
-    LocalTrackService *_localTrackService,
+    LocalTrackService &_localTrackService,
+    TrackVerificationIndex &_verificationIndex,
     std::function<void(int)> _onProgressCallback) {
 
     std::thread([_youtubeId, _onProgressCallback, _filepath, _track,
-                 _localTrackService]() mutable {
-        _onProgressCallback(0);
-        // auto bestMatch = youTube->findBestMatch(_track, _onProgress);
-        // if (bestMatch.empty()) {
-        //     _onProgress(-1);
-        //     return;
-        // }
+                 &_localTrackService, &_verificationIndex]() mutable {
         _onProgressCallback(10);
-
-        // std::filesystem::path trackName =
-        //     trackPath / (_track->get_id() + ".mp3");
 
         // download resource
         std::string command =
@@ -78,13 +71,12 @@ bool DownloadService::downloadAudio(
         }
 
         auto localTrack(
-            std::make_shared<LocalTrack>(_filepath, _localTrackService));
-        // get additianl tags that are not relevant in normal search
-        // _track->ensureLoaded(*spotify);
-        // localTrack->applyDifferences(_track);
+            std::make_shared<LocalTrack>(_filepath, &_localTrackService));
         TagService::applyDifferences(localTrack, _track);
         _onProgressCallback(99);
-        _localTrackService->makeBlocked(localTrack);
+        _verificationIndex.addToIndex(localTrack->get_id(),
+                                      localTrack->get_artist().value_or(""),
+                                      localTrack->get_name().value_or(""));
         _onProgressCallback(100);
         return true;
     }).detach();

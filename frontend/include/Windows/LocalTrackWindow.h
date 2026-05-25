@@ -9,6 +9,7 @@ class LocalTrackPanel;
 class TrackEditWindow;
 class LocalTrackService;
 class SearchService;
+class TrackVerificationIndex;
 
 class LocalTrackWindow : public wxScrolledWindow {
   private:
@@ -27,7 +28,8 @@ class LocalTrackWindow : public wxScrolledWindow {
 
   public:
     LocalTrackWindow(wxWindow *_parent, LocalTrackService *_trackService,
-                     SearchService *_searchService);
+                     SearchService *_searchService,
+                     TrackVerificationIndex &_verificationIndex);
     ~LocalTrackWindow();
 
     void refresh();

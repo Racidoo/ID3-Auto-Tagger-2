@@ -12,6 +12,7 @@
 #include "Services/Sources/DiscogsMediaSource.h"
 #include "Services/Sources/SpotifyMediaSource.h"
 #include "Services/Sources/YoutubeMediaSource.h"
+#include "Services/TrackVerificationIndex.h"
 
 class IMediaService;
 namespace Spotify {
@@ -29,12 +30,18 @@ class MediaServiceRegistry {
     MediaServiceRegistry();
     ~MediaServiceRegistry() = default;
 
+    MediaServiceRegistry(const MediaServiceRegistry &) = delete;
+    MediaServiceRegistry &operator=(const MediaServiceRegistry &) = delete;
+    MediaServiceRegistry(MediaServiceRegistry &&) = delete;
+    MediaServiceRegistry &operator=(MediaServiceRegistry &&) = delete;
+
     Spotify::SpotifyAPI *get_spotify();
     Discogs::DiscogsAPI *get_discogs();
     LocalTrackService *get_local();
     YouTube::YouTubeAPI *get_youtube();
 
     SearchService *get_searchService();
+    TrackVerificationIndex *get_trackVerificationIndex();
 
     const std::filesystem::path &get_trackPath() const;
     void set_trackPath(const std::filesystem::path &_path);
@@ -49,6 +56,7 @@ class MediaServiceRegistry {
     bool isInitialized() const;
 
     bool initializeSearchService();
+    bool initializeTrackVerificationIndex();
 
     bool loadOrCreateConfig();
     bool writeConfig() const;
@@ -66,6 +74,7 @@ class MediaServiceRegistry {
     std::vector<IMediaSource *> sources;
 
     std::unique_ptr<SearchService> searchService;
+    std::unique_ptr<TrackVerificationIndex> trackVerificationIndex;
 
     std::filesystem::path trackPath;
 

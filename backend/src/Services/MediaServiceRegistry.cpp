@@ -18,11 +18,15 @@ Discogs::DiscogsAPI *MediaServiceRegistry::get_discogs() {
     return discogs.get();
 }
 LocalTrackService *MediaServiceRegistry::get_local() { return local.get(); }
+YouTube::YouTubeAPI *MediaServiceRegistry::get_youtube() {
+    return youtube.get();
+}
+
 SearchService *MediaServiceRegistry::get_searchService() {
     return searchService.get();
 }
-YouTube::YouTubeAPI *MediaServiceRegistry::get_youtube() {
-    return youtube.get();
+TrackVerificationIndex *MediaServiceRegistry::get_trackVerificationIndex() {
+    return trackVerificationIndex.get();
 }
 
 const std::filesystem::path &MediaServiceRegistry::get_trackPath() const {
@@ -36,8 +40,9 @@ void MediaServiceRegistry::set_trackPath(const std::filesystem::path &_path) {
 }
 
 bool MediaServiceRegistry::initialize() {
-    return initializeSpotify() && initializeYouTube() && initializeDiscogs() &&
-           initializeLocal() && initializeSearchService();
+    return initializeTrackVerificationIndex() && initializeSpotify() &&
+           initializeYouTube() && initializeDiscogs() && initializeLocal() &&
+           initializeSearchService();
 }
 
 bool MediaServiceRegistry::initializeSpotify(const std::string &_id,
@@ -90,7 +95,11 @@ bool MediaServiceRegistry::initializeDiscogs(const std::string &_token) {
 }
 
 bool MediaServiceRegistry::initializeLocal() {
-    return (local = std::make_unique<LocalTrackService>(trackPath)) != nullptr;
+    if (!trackVerificationIndex) {
+        return false;
+    }
+    return (local = std::make_unique<LocalTrackService>(
+                trackPath, *trackVerificationIndex)) != nullptr;
 }
 
 bool MediaServiceRegistry::isInitialized() const {
@@ -100,6 +109,11 @@ bool MediaServiceRegistry::isInitialized() const {
 bool MediaServiceRegistry::initializeSearchService() {
     searchService = std::make_unique<SearchService>(sources);
     return true;
+}
+
+bool MediaServiceRegistry::initializeTrackVerificationIndex() {
+    return (trackVerificationIndex =
+                std::make_unique<TrackVerificationIndex>()) != nullptr;
 }
 
 bool MediaServiceRegistry::loadOrCreateConfig() {
