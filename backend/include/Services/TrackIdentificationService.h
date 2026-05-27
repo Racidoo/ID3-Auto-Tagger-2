@@ -12,22 +12,12 @@ class IVideo;
 
 class TrackIdentificationService {
   public:
-     struct AggregatedTrack {
+    struct AggregatedTrack {
         std::map<double, std::shared_ptr<ITrack>> sources;
         std::map<double, std::shared_ptr<IVideo>> videos;
 
-        // std::string title;
-        // std::string album;
-        // std::vector<std::string> artists;
-
-        // int duration = 0;
-
         std::shared_ptr<ITrack> primary;
     };
-
-    // static std::shared_ptr<ITrack>
-    // findBestMatch(const SearchQuery &_query,
-    //               const std::vector<std::shared_ptr<ITrack>> &_candidates);
 
     static std::vector<AggregatedTrack>
     aggregate(const std::vector<ISearchResult> &_results);

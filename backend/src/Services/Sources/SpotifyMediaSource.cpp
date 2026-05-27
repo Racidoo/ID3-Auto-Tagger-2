@@ -1,4 +1,5 @@
 #include "Services/Sources/SpotifyMediaSource.h"
+#include "Services/TagService.h"
 
 SpotifyMediaSource::SpotifyMediaSource(Spotify::SpotifyAPI &_spotify)
     : spotify(_spotify) {}
@@ -59,8 +60,13 @@ ISearchResult SpotifyMediaSource::search(std::shared_ptr<ITrack> _track,
             spotify.searchTrack(stringQuery, _options.market, _options.limit);
         // fallback if search was too explicit
         if (results.tracks.empty()) {
-            stringQuery = searchQuery.title.value_or("") +
-                          searchQuery.artist.value_or("");
+            std::string title;
+            if (searchQuery.title.has_value()) {
+                title =
+                    TagService::normalizeTrackTitle(searchQuery.title.value());
+            }
+
+            stringQuery = title + " " + searchQuery.artist.value_or("");
             results.tracks = spotify.searchTrack(stringQuery, _options.market,
                                                  _options.limit);
         }

@@ -20,6 +20,11 @@ const wxString &TrackModelRow::get_album() const { return album; }
 const wxString &TrackModelRow::get_genre() const { return genre; }
 const wxString &TrackModelRow::get_length() const { return length; }
 const wxString &TrackModelRow::get_tracknumber() const { return tracknumber; }
+const wxString &TrackModelRow::get_albumArtist() const { return albumArtist; }
+const wxString &TrackModelRow::get_discnumber() const { return discnumber; }
+const wxString &TrackModelRow::get_copyright() const { return copyright; }
+const wxString &TrackModelRow::get_label() const { return label; }
+const wxString &TrackModelRow::get_year() const { return year; }
 
 const std::optional<std::string> &TrackModelRow::get_sortTitle() const {
     return sortTitle;
@@ -36,6 +41,21 @@ const std::optional<std::string> &TrackModelRow::get_sortGenre() const {
 std::size_t TrackModelRow::get_sortLength() const { return sortLength; }
 std::optional<std::size_t> TrackModelRow::get_sortTracknumber() const {
     return sortTracknumber;
+}
+const std::optional<std::string> &TrackModelRow::get_sortAlbumArtist() const {
+    return sortAlbumArtist;
+}
+std::optional<std::size_t> TrackModelRow::get_sortDiscnumber() const {
+    return sortDiscnumber;
+}
+const std::optional<std::string> &TrackModelRow::get_sortCopyright() const {
+    return sortCopyright;
+}
+const std::optional<std::string> &TrackModelRow::get_sortLabel() const {
+    return sortLabel;
+}
+std::optional<std::size_t> TrackModelRow::get_sortYear() const {
+    return sortYear;
 }
 
 void TrackModelRow::set_status(const DownloadStatus &_status) {
@@ -87,6 +107,17 @@ void TrackModelRow::RebuildSortCache() {
     tracknumber = track->get_trackNumber().has_value()
                       ? std::to_string(track->get_trackNumber().value())
                       : "";
+    albumArtist =
+        wxString::FromUTF8(track->get_albumArtist().value_or(std::string{}));
+    discnumber = track->get_discNumber().has_value()
+                     ? std::to_string(track->get_discNumber().value())
+                     : "";
+    copyright =
+        wxString::FromUTF8(track->get_copyright().value_or(std::string{}));
+    label = wxString::FromUTF8(track->get_label().value_or(std::string{}));
+    year = track->get_year().has_value()
+               ? std::to_string(track->get_year().value())
+               : "";
 
     if (track->is_verified()) {
         status = {100, DownloadState::Verified};
@@ -103,6 +134,11 @@ void TrackModelRow::RebuildSortCache() {
     sortGenre = genre.Lower();
     sortLength = track->get_length();
     sortTracknumber = track->get_trackNumber();
+    sortAlbumArtist = track->get_albumArtist();
+    sortDiscnumber = track->get_discNumber();
+    sortCopyright = track->get_copyright();
+    sortLabel = track->get_label();
+    sortYear = track->get_year();
 
     int minutes = (sortLength / 60) % 60;
     int seconds = sortLength % 60;

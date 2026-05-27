@@ -1,10 +1,12 @@
 #include "Windows/LocalTrackWindow.h"
 #include "Components/LabeledTextCtrl.h"
+#include "Dialogs/TrackSelectionDialog.h"
 #include "Local/LocalTrackService.h"
 #include "Media/Track/LocalTrackPanel.h"
 #include "Services/SearchService.h"
 #include "Services/TagService.h"
 #include "Services/TrackVerificationIndex.h"
+#include "Spotify/SpotifyAPI.h"
 #include "Windows/TrackEditWindow.h"
 
 LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
@@ -81,7 +83,34 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
         for (auto row : rows) {
             auto track = std::dynamic_pointer_cast<LocalTrack>(
                 trackPanel->GetTrack(row));
-            auto id = TagService::researchMissingTags(track, _searchService);
+            auto result = TagService::identifyTrack(track, _searchService);
+
+            std::string id;
+            if (result.state == TagService::VerificationState::Accepted) {
+                result.acceptedTrack->ensureLoaded();
+                TagService::applyTagDifferences(track, result.acceptedTrack);
+                if (Spotify::SpotifyAPI::isValidIdFormat(
+                        result.acceptedTrack->get_id())) {
+                    id = result.acceptedTrack->get_id();
+                }
+            } else if (!result.candidates.empty()) {
+                TrackSelectionDialog dialog(this, track, result);
+
+                if (dialog.ShowModal() == wxID_OK) {
+                    auto selected = dialog.getSelectedTrack();
+                    if (selected) {
+                        selected->ensureLoaded();
+                        TagService::applyTagDifferences(track, selected);
+                        if (Spotify::SpotifyAPI::isValidIdFormat(
+                                selected->get_id())) {
+                            id = selected->get_id();
+                        }
+                    }
+                }
+            } else {
+                wxLogInfo(wxT("Could not fetch any similar meta-data!"));
+            }
+
             if (!id.empty()) {
                 trackService->renameTrack(track, id);
                 _verificationIndex.addToIndex(track->get_id(),

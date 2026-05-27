@@ -99,6 +99,9 @@ bool TrackModel::MatchesSearch(
            _row->get_sortAlbum()
                .value_or(std::string{})
                .contains(filterState.searchQuery) ||
+           _row->get_sortAlbumArtist()
+               .value_or(std::string{})
+               .contains(filterState.searchQuery) ||
            _row->get_sortGenre()
                .value_or(std::string{})
                .contains(filterState.searchQuery);
@@ -134,7 +137,6 @@ wxString TrackModel::GetColumnType(unsigned int _col) const {
         return "wxBitmap";
     case COL_DELETE:
         return "wxBitmap";
-
     default:
         return "string";
     }
@@ -163,11 +165,26 @@ void TrackModel::GetValueByRow(wxVariant &_variant, unsigned int _row,
     case COL_ALBUM:
         _variant = r->get_album();
         break;
+    case COL_ALBUM_ARTIST:
+        _variant = r->get_albumArtist();
+        break;
     case COL_GENRE:
         _variant = r->get_genre();
         break;
     case COL_LENGTH:
         _variant = r->get_length();
+        break;
+    case COL_DISCNUMBER:
+        _variant = r->get_discnumber();
+        break;
+    case COL_COPYRIGHT:
+        _variant = r->get_copyright();
+        break;
+    case COL_LABEL:
+        _variant = r->get_label();
+        break;
+    case COL_YEAR:
+        _variant = r->get_year();
         break;
     case COL_VERIFY:
         _variant << TrackModelRow::GetVerifyBitmap();
@@ -215,6 +232,16 @@ void TrackModel::SortByHeader(unsigned int _column, bool _ascending) {
                 return compare(a->get_sortGenre(), b->get_sortGenre());
             case COL_LENGTH:
                 return compare(a->get_sortLength(), b->get_sortLength());
+            case COL_ALBUM_ARTIST:
+                return compare(a->get_albumArtist(), b->get_albumArtist());
+            case COL_DISCNUMBER:
+                return compare(a->get_discnumber(), b->get_discnumber());
+            case COL_COPYRIGHT:
+                return compare(a->get_copyright(), b->get_copyright());
+            case COL_LABEL:
+                return compare(a->get_label(), b->get_label());
+            case COL_YEAR:
+                return compare(a->get_year(), b->get_year());
             default:
                 wxLogDebug(wxT("Sorting not supported for column " +
                                std::to_string(_column)));

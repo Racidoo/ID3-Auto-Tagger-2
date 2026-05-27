@@ -72,7 +72,7 @@ bool DownloadService::downloadAudio(
 
         auto localTrack(
             std::make_shared<LocalTrack>(_filepath, &_localTrackService));
-        TagService::applyDifferences(localTrack, _track);
+        TagService::applyTagDifferences(localTrack, _track);
         _onProgressCallback(99);
         _verificationIndex.addToIndex(localTrack->get_id(),
                                       localTrack->get_artist().value_or(""),

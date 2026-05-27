@@ -1,7 +1,7 @@
 #include "Services/SearchService.h"
 #include "Services/Sources/IMediaSource.hpp"
 #include "Services/Sources/SpotifyMediaSource.h"
-#include "Services/TrackIdentificationService.h"
+#include "Services/TagService.h"
 #include "Spotify/SpotifyAPI.h"
 
 SearchService::SearchService(std::vector<IMediaSource *> _mediaSources)
@@ -47,7 +47,7 @@ SearchService::search(const std::string &_query,
         results.push_back(mediaSource->search(_query, _options));
     }
 
-    auto agg = TrackIdentificationService::aggregate(results);
+    auto agg = TagService::aggregate(results);
 
     for (auto &&aggTrack : agg) {
         std::cout << aggTrack.primary->get_name().value() << " - "

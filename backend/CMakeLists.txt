@@ -25,7 +25,7 @@ set(SOURCES
     src/Services/Sources/SpotifyMediaSource.cpp
     src/Services/Sources/YoutubeMediaSource.cpp
     src/Services/TagService.cpp
-    src/Services/TrackIdentificationService.cpp
+    # src/Services/TrackIdentificationService.cpp
     src/Services/TrackVerificationIndex.cpp
     src/Spotify/Album.cpp
     src/Spotify/Artist.cpp

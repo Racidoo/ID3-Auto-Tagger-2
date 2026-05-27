@@ -1,9 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <regex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 using json = nlohmann::json;
@@ -83,6 +85,10 @@ class DiscogsAPI : public Query, public IMediaService {
     std::string accessToken;
     inline static const std::string urlAPI = "https://api.discogs.com";
 
+    std::unordered_map<std::size_t, std::shared_ptr<Release>> cachedReleases;
+    // std::unordered_map<std::size_t, std::shared_ptr<Artist>> cachedArtists;
+    // std::unordered_map<std::string, std::shared_ptr<Track>> cachedTracks;
+
     std::shared_ptr<Artist> createArtistFromRelease(const json &_jsonArtist);
     std::shared_ptr<Artist> createArtistFromArtist(const json &_jsonArtist,
                                                    bool &_fallbackUsed);
@@ -91,8 +97,6 @@ class DiscogsAPI : public Query, public IMediaService {
     std::vector<Label> createLabels(const json &_jsonLabels,
                                     bool &_fallbackUsed);
 
-    // std::shared_ptr<Release> createReleaseFromSearch(const json
-    // &_jsonRelease);
     std::shared_ptr<Release> createRelease(const json &_jsonRelease);
 
     bool insertTracklist(std::shared_ptr<Release> _release,

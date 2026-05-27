@@ -9,7 +9,9 @@ set(SOURCES
     src/Components/MediaLabel.cpp
     src/Components/ScrollText.cpp
     src/Dialogs/MultiInputDialog.cpp
+    src/Dialogs/TrackSelectionDialog.cpp
     src/Media/Album/AlbumDetailsPanel.cpp
+    src/Media/Track/ComparisonTrackPanel.cpp
     src/Media/Track/LocalTrackPanel.cpp
     src/Media/Track/TrackPanel.cpp
     src/Media/Track/TrackModel.cpp
@@ -22,7 +24,7 @@ set(SOURCES
     src/Windows/TrackEditWindow.cpp
     src/Windows/YouTubeWindow.cpp
     src/main.cpp
-    )
+)
 
 # Find wxWidgets
 find_package(wxWidgets REQUIRED COMPONENTS core base adv)

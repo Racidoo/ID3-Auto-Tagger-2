@@ -218,6 +218,9 @@ ISearchResult DiscogsAPI::searchReleaseTrack(SearchParams _params,
 
 std::shared_ptr<Release> DiscogsAPI::getRelease(int _releaseId,
                                                 const std::string &_currAbbr) {
+    if (auto it = cachedReleases.find(_releaseId); it != cachedReleases.end()) {
+        return it->second;
+    }
     return createRelease(performRequest(
         "/releases/" + std::to_string(_releaseId) + "?" + _currAbbr));
 }
@@ -299,6 +302,12 @@ std::vector<Label> DiscogsAPI::createLabels(const json &_jsonLabels,
 }
 
 std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
+
+    const auto id = _jsonRelease.at("id").get<std::size_t>();
+    if (auto it = cachedReleases.find(id); it != cachedReleases.end()) {
+        return it->second;
+    }
+
     bool fallbackUsed(false);
     std::optional<std::size_t> year;
     if (_jsonRelease.contains("year")) {
@@ -310,8 +319,7 @@ std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
     }
 
     auto release = std::make_shared<Release>(
-        _jsonRelease.at("id").get<int>(),
-        normalizeReleaseName(_jsonRelease.at("title").get<std::string>()),
+        id, normalizeReleaseName(_jsonRelease.at("title").get<std::string>()),
         Release::State::Full, parseImageUrl(_jsonRelease, fallbackUsed),
         createArtists(
             getOptional<json>(_jsonRelease, "artists", {}, fallbackUsed)),
@@ -329,7 +337,8 @@ std::shared_ptr<Release> DiscogsAPI::createRelease(const json &_jsonRelease) {
     if (fallbackUsed || !insertTracklist(release, _jsonRelease)) {
         release->set_state(Release::State::Partial);
     }
-    return release;
+
+    return cachedReleases.emplace(id, std::move(release)).first->second;
 }
 
 bool DiscogsAPI::insertTracklist(std::shared_ptr<Release> _release,

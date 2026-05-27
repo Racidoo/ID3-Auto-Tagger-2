@@ -18,6 +18,11 @@ class TrackModelRow {
     wxString genre;
     wxString tracknumber;
     wxString length;
+    wxString albumArtist;
+    wxString discnumber;
+    wxString copyright;
+    wxString label;
+    wxString year;
 
     DownloadStatus status;
     std::optional<std::string> sortTitle;
@@ -26,6 +31,11 @@ class TrackModelRow {
     std::optional<std::string> sortGenre;
     std::optional<std::size_t> sortTracknumber;
     std::size_t sortLength;
+    std::optional<std::string> sortAlbumArtist;
+    std::optional<std::size_t> sortDiscnumber;
+    std::optional<std::string> sortCopyright;
+    std::optional<std::string> sortLabel;
+    std::optional<std::size_t> sortYear;
 
   public:
     TrackModelRow(const std::shared_ptr<ITrack> &_trackInterface);
@@ -45,6 +55,11 @@ class TrackModelRow {
     const wxString &get_genre() const;
     const wxString &get_length() const;
     const wxString &get_tracknumber() const;
+    const wxString &get_albumArtist() const;
+    const wxString &get_discnumber() const;
+    const wxString &get_copyright() const;
+    const wxString &get_label() const;
+    const wxString &get_year() const;
 
     const std::optional<std::string> &get_sortTitle() const;
     const std::optional<std::string> &get_sortArtist() const;
@@ -52,6 +67,11 @@ class TrackModelRow {
     const std::optional<std::string> &get_sortGenre() const;
     std::size_t get_sortLength() const;
     std::optional<std::size_t> get_sortTracknumber() const;
+    const std::optional<std::string> &get_sortAlbumArtist() const;
+    std::optional<std::size_t> get_sortDiscnumber() const;
+    const std::optional<std::string> &get_sortCopyright() const;
+    const std::optional<std::string> &get_sortLabel() const;
+    std::optional<std::size_t> get_sortYear() const;
 
     void set_status(const DownloadStatus &_status);
 

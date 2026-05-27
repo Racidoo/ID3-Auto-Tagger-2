@@ -18,8 +18,13 @@ class TrackModel : public wxDataViewVirtualListModel {
         COL_TITLE,
         COL_ARTIST,
         COL_ALBUM,
+        COL_ALBUM_ARTIST,
         COL_GENRE,
         COL_LENGTH,
+        COL_DISCNUMBER,
+        COL_COPYRIGHT,
+        COL_LABEL,
+        COL_YEAR,
         COL_VERIFY,
         COL_DELETE,
         COL_MAX
