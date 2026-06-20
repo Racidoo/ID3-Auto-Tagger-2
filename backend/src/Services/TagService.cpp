@@ -181,7 +181,7 @@ std::string TagService::researchVideoId(std::shared_ptr<ITrack> _track,
         return {};
     }
 
-    return merged.videos[0]->get_id();
+    return merged.videos.rbegin()->second->get_id();
 }
 
 void TagService::applyTagDifferences(std::shared_ptr<ITrackMutable> _current,
@@ -312,15 +312,13 @@ double TagService::scoreTracks(const std::shared_ptr<IVideo> &_a,
         similarityScore(_a->get_length(), _b->get_length()) * 0.2;
     auto score = nameScore + artistScore + lengthScore;
 
-    // std::cout << _a->get_id() << " == " << _b->get_id() << ": " << score
-    //           << "\n\tname: " << _a->get_name().value_or("")
-    //           << " == " << _b->get_name().value_or("") << ": " << nameScore
-    //           << "\n\tartist: " << _a->get_name().value_or("")
-    //           << " == " << _b->get_artist().value_or("") << ": " <<
-    //           artistScore
-    //           << "\n\tlength: " << _a->get_length()
-    //           << " == " << _b->get_length() << ": " << lengthScore <<
-    //           std::endl;
+    std::cout << _a->get_id() << " == " << _b->get_id() << ": " << score
+              << "\n\tname: " << _a->get_name().value_or("")
+              << " == " << _b->get_name().value_or("") << ": " << nameScore
+              << "\n\tartist: " << _a->get_name().value_or("")
+              << " == " << _b->get_artist().value_or("") << ": " << artistScore
+              << "\n\tlength: " << _a->get_length()
+              << " == " << _b->get_length() << ": " << lengthScore << std::endl;
     return score;
 }
 

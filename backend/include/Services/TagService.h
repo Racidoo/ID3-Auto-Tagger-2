@@ -10,7 +10,7 @@
 class TagService {
   public:
     static constexpr double AUTO_ACCEPT_THRESHOLD = 0.80;
-    static constexpr double USER_VERIFY_THRESHOLD = 0.60;
+    static constexpr double USER_VERIFY_THRESHOLD = 0.40;
 
     enum class TagField {
         Title,
