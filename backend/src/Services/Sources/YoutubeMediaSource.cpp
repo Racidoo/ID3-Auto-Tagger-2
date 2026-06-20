@@ -11,24 +11,22 @@ IMediaService::MediaSourceId YoutubeMediaSource::get_id() const {
 ISearchResult YoutubeMediaSource::search(const std::string &_query,
                                          const SearchOptions &_options) {
     ISearchResult results;
-    // if (_options.categories.find(ISearchResult::SearchCategory::Track) !=
-    //     _options.categories.end()) {
-    // Youtube::YoutubeAPI::SearchParams params{};
 
-    // params.query = _query;
-    // params.releaseTitle = _options->get_albumName();
-    // params.artist = _options->get_albumArtist();
-    // params.year = _options->get_year();
-    // params.categories.insert(ISearchResult::SearchCategory::Album);
     results.videos = youtube.searchVideo(_query, nullptr, _options.limit);
-    // results.tracks =
-    //     youtube.search(_query, _options.market, _options.limit);
-    // }
+
     return results;
 }
 
 ISearchResult YoutubeMediaSource::search(std::shared_ptr<ITrack> _track,
-                                         const SearchOptions &_options) {}
+                                         const SearchOptions &_options) {
+    ISearchResult results;
+    std::string query;
+    query += _track->get_artist().value_or("") + " - " +
+             _track->get_name().value_or("");
+
+    results.videos = youtube.searchVideo(query, nullptr, _options.limit);
+    return results;
+}
 
 bool YoutubeMediaSource::supports(const std::string &_input) const {
     std::smatch matches;

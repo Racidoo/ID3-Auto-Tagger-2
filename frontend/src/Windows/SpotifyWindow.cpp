@@ -163,12 +163,12 @@ void SpotifyWindow::search(const wxString &_searchText) {
     if (videoButton->GetValue())
         options.categories.insert(ISearchResult::SearchCategory::Video);
 
-    // if (discogsButton->GetValue())
-    //     options.sources.insert(IMediaService::MediaSourceId::Discogs);
+    if (discogsButton->GetValue())
+        options.sources.insert(IMediaService::MediaSourceId::Discogs);
     if (spotifyButton->GetValue())
         options.sources.insert(IMediaService::MediaSourceId::Spotify);
-    // if (youtubeButton->GetValue())
-    //     options.sources.insert(IMediaService::MediaSourceId::YouTube);
+    if (youtubeButton->GetValue())
+        options.sources.insert(IMediaService::MediaSourceId::YouTube);
 
     std::vector<ISearchResult> results;
     if (registry->get_searchService()->supports(_searchText.ToStdString())) {
@@ -256,12 +256,14 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
         if (youtubeId.empty()) {
             continue;
         }
+        std::cout << "youtubeID:" << (youtubeId) << std::endl;
 
-        DownloadService::downloadAudio(
-            track, youtubeId, file, *registry->get_local(),
-            *registry->get_trackVerificationIndex(), [this, row](int progress) {
-                trackPanel->SetDownloadProgress(row, progress);
-            });
+        // DownloadService::downloadAudio(
+        //     track, youtubeId, file, *registry->get_local(),
+        //     *registry->get_trackVerificationIndex(), [this, row](int
+        //     progress) {
+        //         trackPanel->SetDownloadProgress(row, progress);
+        //     });
     }
     registry->get_trackVerificationIndex()->writeIndex();
 }
