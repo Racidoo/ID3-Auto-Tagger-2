@@ -1,13 +1,16 @@
 #if !defined(MEDIA_WINDOW_H)
 #define MEDIA_WINDOW_H
 
-#include "Core/IconProvider.h"
 #include <unordered_map>
 #include <wx/wx.h>
 
+#include "Components/MediaLabel.h"
+#include "Core/IconProvider.h"
+
 wxDEFINE_EVENT(EVT_MEDIA_WINDOW_EXPAND_CLICKED, wxCommandEvent);
 
-template <typename LabelT> class MediaWindow : public wxScrolledWindow {
+template <typename LabelT = MediaLabel>
+class MediaWindow : public wxScrolledWindow {
   public:
     MediaWindow(wxWindow *_parent) : wxScrolledWindow(_parent, wxID_ANY) {
         SetScrollRate(15, 15);

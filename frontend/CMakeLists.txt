@@ -8,6 +8,7 @@ set(SOURCES
     src/Components/LabeledTextCtrl.cpp
     src/Components/MediaLabel.cpp
     src/Components/ScrollText.cpp
+    src/Dialogs/VideoSelectionDialog.cpp
     src/Dialogs/MultiInputDialog.cpp
     src/Dialogs/TrackSelectionDialog.cpp
     src/Media/Album/AlbumDetailsPanel.cpp
@@ -17,6 +18,9 @@ set(SOURCES
     src/Media/Track/TrackModel.cpp
     src/Media/Track/TrackModelRow.cpp
     src/Media/Track/Renderers/DownloadStatusRenderer.cpp
+    src/Media/Video/VideoModel.cpp
+    src/Media/Video/VideoModelRow.cpp
+    src/Media/Video/VideoPanel.cpp
     src/Windows/DiscogsWindow.cpp
     src/Windows/LocalTrackWindow.cpp
     src/Windows/SettingsWindow.cpp

@@ -2,8 +2,7 @@
 #include "Media/Track/ComparisonTrackPanel.h"
 
 TrackSelectionDialog::TrackSelectionDialog(
-    wxWindow *_parent, std::shared_ptr<ITrackMutable> _current,
-    const TagService::TagResearchResult &_result)
+    wxWindow *_parent, const TagService::TagResearchResult &_result)
     : wxDialog(_parent, wxID_ANY, "Choose a source track", wxDefaultPosition,
                wxSize(800, 600), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
 

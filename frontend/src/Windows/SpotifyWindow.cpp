@@ -1,5 +1,6 @@
 #include "Windows/SpotifyWindow.h"
 #include "Core/IconProvider.h"
+#include "Dialogs/VideoSelectionDialog.h"
 #include "Media/Track/TrackPanel.h"
 #include "Services/DownloadService.h"
 #include "Services/MediaServiceRegistry.h"
@@ -250,20 +251,27 @@ void SpotifyWindow::startDownload(wxCommandEvent &_event) {
         std::filesystem::path file =
             registry->get_trackPath() / std::string(track->get_id() + ".mp3");
 
-        std::string youtubeId =
-            TagService::researchVideoId(track, registry->get_searchService());
+        auto aggregations =
+            TagService::researchVideos(track, registry->get_searchService());
 
-        if (youtubeId.empty()) {
-            continue;
+        std::vector<std::shared_ptr<IVideo>> candidates;
+        for (auto &&candidate : aggregations.videos) {
+            candidates.push_back(candidate.second);
         }
-        std::cout << "youtubeID:" << (youtubeId) << std::endl;
 
-        // DownloadService::downloadAudio(
-        //     track, youtubeId, file, *registry->get_local(),
-        //     *registry->get_trackVerificationIndex(), [this, row](int
-        //     progress) {
-        //         trackPanel->SetDownloadProgress(row, progress);
-        //     });
+        VideoSelectionDialog dialog(this, candidates);
+
+        if (dialog.ShowModal() == wxID_OK) {
+            auto selected = dialog.getSelectedVideo();
+            if (selected) {
+                DownloadService::downloadAudio(
+                    track, selected->get_id(), file, *registry->get_local(),
+                    *registry->get_trackVerificationIndex(),
+                    [this, row](int progress) {
+                        trackPanel->SetDownloadProgress(row, progress);
+                    });
+            }
+        }
     }
     registry->get_trackVerificationIndex()->writeIndex();
 }

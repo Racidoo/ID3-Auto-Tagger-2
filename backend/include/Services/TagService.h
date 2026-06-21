@@ -89,8 +89,9 @@ class TagService {
     static TagResearchResult
     identifyTrack(std::shared_ptr<ITrackMutable> _track,
                   SearchService *_searchService);
-    static std::string researchVideoId(std::shared_ptr<ITrack> _track,
-                                       SearchService *_searchService);
+    static TagService::AggregatedTrack
+    researchVideos(std::shared_ptr<ITrack> _track,
+                   SearchService *_searchService);
     static void applyTagDifferences(std::shared_ptr<ITrackMutable> _current,
                                     std::shared_ptr<ITrack> _incoming);
 

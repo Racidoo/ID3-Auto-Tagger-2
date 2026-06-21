@@ -15,7 +15,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
                                    TrackVerificationIndex &_verificationIndex)
     : wxScrolledWindow(_parent, wxID_ANY), trackService(_trackService) {
 
-    if (!_trackService) {
+    if (!trackService) {
         wxLogInfo(wxT("Local service is currently unavailable!"));
         return;
     }
@@ -94,7 +94,7 @@ LocalTrackWindow::LocalTrackWindow(wxWindow *_parent,
                     id = result.acceptedTrack->get_id();
                 }
             } else if (!result.candidates.empty()) {
-                TrackSelectionDialog dialog(this, track, result);
+                TrackSelectionDialog dialog(this, result);
 
                 if (dialog.ShowModal() == wxID_OK) {
                     auto selected = dialog.getSelectedTrack();

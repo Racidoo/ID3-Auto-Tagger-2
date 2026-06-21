@@ -12,4 +12,7 @@ class IVideo : public MediaEntityBase {
     ~IVideo() = default;
 
     virtual std::size_t get_length() const = 0;
+    virtual const std::string &get_channelTitle() const = 0;
+    virtual const std::string &get_uploadDate() const = 0;
+    virtual bool get_licensed() const = 0;
 };

@@ -18,10 +18,10 @@ class Video : public IVideo {
 
     std::optional<std::string> get_name() const override;
     std::optional<std::vector<std::byte>> get_image() override;
-    const std::string &get_channelTitle() const;
-    const std::string &get_uploadDate() const;
+    const std::string &get_channelTitle() const override;
+    const std::string &get_uploadDate() const override;
     std::size_t get_length() const override;
-    bool get_licensed() const;
+    bool get_licensed() const override;
 
   private:
     std::optional<std::string> name;

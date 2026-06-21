@@ -162,8 +162,9 @@ TagService::identifyTrack(std::shared_ptr<ITrackMutable> _track,
     return result;
 }
 
-std::string TagService::researchVideoId(std::shared_ptr<ITrack> _track,
-                                        SearchService *_searchService) {
+TagService::AggregatedTrack
+TagService::researchVideos(std::shared_ptr<ITrack> _track,
+                           SearchService *_searchService) {
     SearchOptions options;
 
     options.sources.insert(IMediaService::MediaSourceId::YouTube);
@@ -178,10 +179,8 @@ std::string TagService::researchVideoId(std::shared_ptr<ITrack> _track,
     if (merged.videos.empty()) {
         std::cerr << "Unable to fetch videos for " << _track->get_id() << "!"
                   << std::endl;
-        return {};
     }
-
-    return merged.videos.rbegin()->second->get_id();
+    return merged;
 }
 
 void TagService::applyTagDifferences(std::shared_ptr<ITrackMutable> _current,
